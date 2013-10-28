@@ -2,7 +2,7 @@ citHeader("To cite quantregGrowth in publications use:")
 
 citEntry(entry="Article",
          title = "Estimating growth charts via nonparametric quantile regression: a practical framework with application in ecology",
-         author = personList(as.person("V.M.R. Muggeo","M. Sciandra","A. Tomasello","S. Calvo")),
+         author = personList(as.person("V.M.R. Muggeo"),as.person("M. Sciandra"), as.person("A. Tomasello"), as.person("S. Calvo")),
          journal      = "Environmental and Ecological Statistics",
          year         = "2013",
 	       volume       = "xx",

@@ -83,7 +83,7 @@ Rho <- function(u, tau) u * (tau - (u < 0))
       o.start<-rq.fit(x=B,y=y,tau=start.tau,method="fnc",R=RR,r=rr)
         }
 #-------------------------------
-      all.COEF<-cbind(COEF.NEG[,n.neg.taus:1], o.start$coef, COEF.POS)
+      all.COEF<-cbind(COEF.NEG[,n.neg.taus:1,drop=FALSE], o.start$coef, COEF.POS)
       colnames(all.COEF)<-paste(taus)
       all.df<- c(df.neg.tau[n.neg.taus:1], sum(round(o.start$residuals[1:n],2)==0), df.pos.tau)
       all.rho<-c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals, start.tau)) , rho.pos.tau)

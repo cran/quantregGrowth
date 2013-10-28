@@ -1,5 +1,5 @@
 gcrq <-
-function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, y=TRUE, foldid=NULL, nfolds=10, cv=FALSE, ...){
+function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, y=TRUE, interc=FALSE, foldid=NULL, nfolds=10, cv=FALSE, ...){
 #Growth Charts via QR
 #**************weights??
 #se cv=TRUE restituisce anche una componente 'cv' che è una matrice di n.righe=n.valori di lambda e colonne nfolds
@@ -15,7 +15,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     # deg: il grado della spline
     # Restituisce ndx+deg basis functions per ndx-1 inner nodi
     #ci sono "ndx+1" nodi interni + "2*deg" nodi esterni
-    require(splines)
+#    require(splines)
   if(is.null(knots)) {
     if (is.null(xlr)) {
         xl <- min(x) - 0.01 * diff(range(x))
@@ -45,7 +45,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     mf[[1L]] <- as.name("model.frame")
     mf <- eval(mf, parent.frame())
     mt <- attr(mf, "terms")
-    interc<-attr(mt,"intercept")
+    intercMt<-attr(mt,"intercept")
     Y <- model.response(mf, "any")
     if (length(dim(Y)) == 1L) {
         nm <- rownames(Y)
@@ -117,18 +117,19 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           nomiCoefPEN[[length(nomiCoefPEN)+1]]<-paste(nomiPS[j],"ps",1:ncol(B[[length(B)]]),sep=".")
               }
         nomiVariabPEN<-nomiPS
-        drop.id<-id.ps-1+interc
+        drop.id<-id.ps-1+intercMt
         } #end length(testo.ps)>0
 #    if(length(testo.ridge)>0){
 #.......[SNIP].......
 #        }
     id.interc<-match("(Intercept)",colnames(X))
     X<-if(is.na(id.interc)) X[,-drop.id, drop=FALSE] else X[,-c(id.interc,drop.id), drop=FALSE]
+    if(interc) X<-cbind("(Intercept)"=1,X)
 #    if(!is.null(lambda)&&(length(lambda)!=length(S))) stop("lambda tutti noti o ignoti")
     if(length(id.ps)>1 && (length(lambda)!=length(id.ps))) stop("a unique 'lambda' parameter is allowed with several smooth terms ")
     if(length(lambda)>1 && length(id.ps)==1){
       lambdas<-lambda
-      r.cv<-gcrq.rq.cv(Y, B[[1]], X, tau, vMonot, vNdx, lambda, vDeg, vDiff, var.pen, cv, nfolds, foldid)
+      r.cv<-gcrq.rq.cv(Y, B[[1]], X, tau, interc, vMonot, vNdx, lambda, vDeg, vDiff, var.pen, cv, nfolds, foldid)
       lambda<-r.cv[[1]]
     } else {
       cv<-FALSE
@@ -138,7 +139,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       fit<-ncross.rq.fitB(y=Y, B=B[[1]], taus=tau, monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg,
         dif=vDiff, var.pen=var.pen)
         } else {
-      fit<-ncross.rq.fitXB(y=Y, B=B[[1]], X=X, taus=tau, monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg,
+      fit<-ncross.rq.fitXB(y=Y, B=B[[1]], X=X, taus=tau, interc=interc, monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg,
         dif=vDiff, var.pen=var.pen)
       nomiCoefUNPEN<-rownames(fit$coefficients)[1:ncol(X)]
       }
@@ -147,7 +148,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     rownames(fit$coefficients)<-nn
     names(BB)<-nomiVariabPEN
     #tolto "info.smooth" perché si può estrarre da BB..
-    #fit$info.smooth<-list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff)
+    fit$info.smooth<-list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff)
     #names(BB)<-names(fit$lambda)<-names(fit$edf.smooth)<-nomiVariabPEN
     #fit$B<-B  #n righe..
     fit$BB<-BB #35 righe e attr "covariate.n" "covariate.35". #NB attr(,"covariate.n") contiene altri attributi "ndx", "deg", "pdiff", "monot", "lambda","nomeX"

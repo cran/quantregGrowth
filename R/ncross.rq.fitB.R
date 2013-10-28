@@ -22,7 +22,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     # deg: il grado della spline
     # Restituisce ndx+deg basis functions per ndx-1 inner nodi
     #ci sono "ndx+1" nodi interni + "2*deg" nodi esterni
-    require(splines)
+#    require(splines)
   if(is.null(knots)) {
     if (is.null(xlr)) {
         xl <- min(x) - 0.01 * diff(range(x))

@@ -11,7 +11,7 @@ more biologically plausible. Linear terms are allowed in the model specification
 }
 \usage{
 gcrq(formula, tau = c(0.1, 0.25, 0.5, 0.75, 0.9), data, subset, weights, 
-  na.action, y = TRUE, foldid = NULL, nfolds = 10, cv = FALSE, ...)
+  na.action, y = TRUE, interc=FALSE, foldid = NULL, nfolds = 10, cv = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -35,7 +35,13 @@ Currently unimplemented.
 a function which indicates how the possible `NA's are handled.
 }
   \item{y}{
-if \code{TRUE} (default) the returned object includes also the responses vector.
+logical. If \code{TRUE} (default) the returned object includes also the responses vector.
+}
+  \item{interc}{
+logical. If \code{formula} includes a \code{"ps"} term, \code{interc=TRUE} means that a model intercept is also estimated.
+If this is the case, a very small ridge penalty is exploited to allow estimation with a design matrix containing both 
+a full B-spline basis and a column of ones. This argument overwrites the intercept specification in the formula (e.g., \code{~0+..}), 
+and it is ignored if the model does not include a \code{"ps"} term.
 }
   \item{foldid}{
 optional. A numeric vector identifying the group labels to perform cross validation to select the smoothing parameter. 
@@ -67,8 +73,9 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
   \item{B}{the design matrix of the final fit.}
   \item{df}{a vector reporting the df values for each quantile curve. See the section 'Warning' below.  }
   \item{rho}{a vector including the values of the objective functions at the solution for each quantile curve.}
-  \item{BB}{some information on the smoothing term (if included in the formula via \code{ps}).}
-  \item{BB}{further information on the smoothing term (if included in the formula via \code{ps}).}
+  \item{info.smooth}{some information on the smoothing term (if included in the formula via \code{ps}).}
+  \item{BB}{further information on the smoothing term (if present in the formula via \code{ps}), including 
+    stuff useful for plotting via \code{plot.gcrq()}.}
   \item{Bderiv}{if the smooth term is included, the first derivative of the B spline basis.}
   \item{y}{the response vector (if gcrq() has been called with \code{y=TRUE}).}
   \item{contrasts}{the contrasts used, when the model contains a factor.}
@@ -132,3 +139,4 @@ plot(m5, pch=20, y=TRUE, legend=TRUE)
 % R documentation directory.
 \keyword{ regression }
 \keyword{ model }% __ONLY ONE__ keyword per line
+\keyword{ smooth }% __ONLY ONE__ keyword per line

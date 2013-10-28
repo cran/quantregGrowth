@@ -1,5 +1,5 @@
 ncross.rq.fitXB <-
-function(y, x, B=NULL, X=NULL, taus, monotone=FALSE, adj.middle=FALSE,
+function(y, x, B=NULL, X=NULL, taus, interc=FALSE, monotone=FALSE, adj.middle=FALSE,
     ndx=10, lambda=0, deg=3, dif=3, eps=.0001, plott=0, var.pen=NULL, ...){
 #Stima dei non-crossing rq, possibly monotone
 #A differenza di ncross.rq.fit1() questa usa semplici B-spline con un linear inequality constraint on the
@@ -20,7 +20,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     # deg: il grado della spline
     # Restituisce ndx+deg basis functions per ndx-1 inner nodi
     #ci sono "ndx+1" nodi interni + "2*deg" nodi esterni
-    require(splines)
+#    require(splines)
   if(is.null(knots)) {
     if (is.null(xlr)) {
         xl <- min(x) - 0.01 * diff(range(x))
@@ -95,12 +95,14 @@ blockdiag <- function(...) {
           R<-cbind(matrix(0,nrow(D1),p2), D1) #era cbind(rep(0,p2), D1)
           DD<- xx.var.pen*diff(diag(p1), diff=dif) #ridge: diag(c(0,rep(1,p-1)))
           P<-blockdiag(diag(rep(0,p2), ncol=p2),lambda*DD)
+          if(interc) P<-rbind(P, .000001*diag(ncol(XB))) #a small ridge penalty
           XB<-rbind(XB, P)
           y<-c(y, rep(0,nrow(P)))
           o.start<-rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=R,r=rep(0,p1-1))
           } else {
               DD<-xx.var.pen*diff(diag(p1), diff=dif) #ridge: diag(p) #diff(diag(p), diff=1)
               P<-blockdiag(diag(rep(0,p2),ncol=p2),lambda*DD)
+              if(interc) P<-rbind(P, .000001*diag(ncol(XB))) #a small ridge penalty
               XB<-rbind(XB, P)
               y<-c(y, rep(0,nrow(P)))
               o.start<-rq.fit(x=XB,y=y,tau=start.tau)

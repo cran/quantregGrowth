@@ -34,6 +34,8 @@ function(x, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE,
           nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
           b<-x$coefficients[nomi.ok,select.tau]
           fit.35<-if(deriv) drop(x$Bderiv%*%b) else drop(BB%*%b)
+          if("(Intercept)"%in%rownames(x$coefficients)) {
+                fit.35<-fit.35 + matrix(x$coefficients["(Intercept)",], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)}
           l<-c(list(x=xvar.35, y=fit.35),list(...))
           if(y && is.null(x$y)) warning("y=TRUE ignored.. the fit does not include the data", call.=FALSE)
           if(y && !is.null(x$y)) {

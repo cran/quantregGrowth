@@ -1,0 +1,24 @@
+*****************************************
+*				  	*
+*	Changes in quantregGrowth	*
+*				  	*
+*****************************************
+
+
+
+
+
+===============
+version 0.1-2
+===============
+
+* argument 'interc' added to cgrq() to include B-splines and the model intercept 
+* Some bugs fixed: gcrq() was not working with formulas such as 'gcrq(y~0+x)';
+ the component info.smooth was not correctly named in "gcrq" objects causing troubles
+with predictQR() (thanks to Oscar Camacho for finding the error)
+
+===============
+version 0.1-1
+===============
+
+* first public release on CRAN

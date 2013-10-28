@@ -14,9 +14,9 @@ called by the user.
 }
 
 \usage{
-ncross.rq.fitXB(y, x, B = NULL, X = NULL, taus, monotone = FALSE, 
-  adj.middle = FALSE, ndx = 10, lambda = 0, deg = 3, dif = 3, eps = 1e-04, 
-  plott = 0, var.pen = NULL, ...)
+ncross.rq.fitXB(y, x, B = NULL, X = NULL, taus, interc=FALSE, 
+  monotone = FALSE, adj.middle = FALSE, ndx = 10, lambda = 0, 
+  deg = 3, dif = 3, eps = 1e-04, plott = 0, var.pen = NULL, ...)
 
 ncross.rq.fitX(y, X = NULL, taus, lambda = 0, adj.middle = FALSE, 
   eps = 1e-04, ...)
@@ -25,8 +25,8 @@ ncross.rq.fitB(y, x, B = NULL, taus, monotone = FALSE, adj.middle =
   FALSE, ndx = 10, lambda = 0, deg = 3, dif = 3, plott = 0, 
   var.pen = NULL, eps = 1e-04, ...)
 
-gcrq.rq.cv(y, B, X, taus, monotone, ndx, lambda, deg, dif, var.pen = NULL, 
-    cv = TRUE, nfolds = 10, foldid = NULL)
+gcrq.rq.cv(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, 
+  var.pen = NULL, cv = TRUE, nfolds = 10, foldid = NULL)
 }
 
 %- maybe also 'usage' for other objects documented here.
@@ -44,6 +44,9 @@ the design matrix for the linear parameters.
 }
   \item{taus}{
 the percentiles of interest.
+}
+  \item{interc}{
+should the model intercept be estimated? see the same argument in \code{\link{gcrq}}
 }
   \item{monotone}{
 numerical value (-1/0/+1) to define a non-increasing, unconstrained, and non-decreasing flexible fit, respectively. 
