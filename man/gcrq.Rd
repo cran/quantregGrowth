@@ -11,7 +11,8 @@ more biologically plausible. Linear terms are allowed in the model specification
 }
 \usage{
 gcrq(formula, tau = c(0.1, 0.25, 0.5, 0.75, 0.9), data, subset, weights, 
-  na.action, y = TRUE, interc=FALSE, foldid = NULL, nfolds = 10, cv = FALSE, ...)
+      na.action, transf=NULL, y = TRUE, interc=FALSE, 
+      foldid = NULL, nfolds = 10, cv = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,6 +34,10 @@ Currently unimplemented.
 }
   \item{na.action}{
 a function which indicates how the possible `NA's are handled.
+}
+  \item{transf}{
+An optional character string (with "y" as argument) meaning a function to apply to the response variable 
+  before fitting. E.g. \code{"log(y+0.1)"}.
 }
   \item{y}{
 logical. If \code{TRUE} (default) the returned object includes also the responses vector.
@@ -62,8 +67,9 @@ further arguments.
 \details{
 The function fits regression quantiles at specified percentiles given in \code{tau} as a function of 
 covariates specified in the \code{formula} argument. The \code{formula} may optionally include a \code{\link{ps}} 
-term to model a nonlinear relationship with a quantitative covariate, usually age. When the \code{lambda} argument in \code{ps()} is scalar, it represents the actual smoothing 
-parameter. When it is a vector, cross validation is performed to select the `optimal' lambda value: at this aim \code{foldid} or \code{nfolds} 
+term to model a nonlinear relationship with a quantitative covariate, usually age in growth charts. When the \code{lambda} argument in \code{ps()} is scalar, it represents the actual smoothing 
+parameter. When it is a vector, cross validation is performed to select the `optimal' lambda value and the model is 
+fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} 
 may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely 
 \code{sample(rep(seq(nfolds), length = n))}
 }
@@ -87,7 +93,7 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
 V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).
 Estimating growth charts via nonparametric quantile
 regression: a practical framework with application
-in ecology, Environ Ecol Stat, to appear.
+in ecology, Environ Ecol Stat, 20, 519-531.
 }
 \author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 

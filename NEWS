@@ -7,18 +7,29 @@
 
 
 
+===============
+version 0.1-3
+===============
+
+* Argument 'transf' added to cgrq() and plot.gcrq(). This argument can be useful when modelling bounded oucomes (whereby monotone transformations could be employed). 
+* The returned "gcrq" object now also includes 'fitted.values' and 'residuals'.
+* gcrq() was not working with values of tau always greater than .5 (or always less then .5); also a single value of tau was not allowed. 
+* The objective values for taus < 0.5 returned in the 'rho' components of the fitted "gcrq" object were wrong.
+* Some minor graphical arguments added to plot.gcrq() to better control graphical display.
+
 
 ===============
 version 0.1-2
 ===============
 
-* argument 'interc' added to cgrq() to include B-splines and the model intercept 
+* Argument 'interc' added to cgrq() to include B-splines and the model intercept. 
 * Some bugs fixed: gcrq() was not working with formulas such as 'gcrq(y~0+x)';
  the component info.smooth was not correctly named in "gcrq" objects causing troubles
 with predictQR() (thanks to Oscar Camacho for finding the error)
+
 
 ===============
 version 0.1-1
 ===============
 
-* first public release on CRAN
+* First public release on CRAN

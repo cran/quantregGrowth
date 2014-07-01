@@ -1,5 +1,6 @@
 plot.gcrq <-
-function(x, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE,...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
+function(x, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
+  transf=NULL, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
 #x: un oggetto restituito da gcrq()
 #add: se TRUE aggiunge le linee.....
 #y: se TRUE e se l'oggetto x contiene y (i dati) allora li disegna. Se add=TRUE, y viene posto a FALSE
@@ -18,6 +19,7 @@ function(x, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE,
                return(invisible(NULL))
               }
           if(is.null(x$BB)) stop(" plot.gcrq() only works with a single smooth variable")          
+          if(length(x$tau)<=1) select.tau<-1
           if(missing(select.tau)) {
               select.tau<-1:ncol(x$coefficients)
               } else {
@@ -32,22 +34,31 @@ function(x, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE,
           xvar.n<-attr(BB,"covariate.n")
           xvar.35<-attr(BB,"covariate.35")
           nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
-          b<-x$coefficients[nomi.ok,select.tau]
+          b<-if(length(x$tau)<=1) x$coefficients else x$coefficients[nomi.ok,select.tau]
           fit.35<-if(deriv) drop(x$Bderiv%*%b) else drop(BB%*%b)
           if("(Intercept)"%in%rownames(x$coefficients)) {
-                fit.35<-fit.35 + matrix(x$coefficients["(Intercept)",], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)}
+                fit.35<-fit.35 + matrix(x$coefficients["(Intercept)",], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
+                }
           l<-c(list(x=xvar.35, y=fit.35),list(...))
+          cexL<-if(is.null(l$cex)) .6 else l$cex #sarà usato solo se legend=TRUE
+          if(!is.null(transf)) l$y <- eval(parse(text=transf), list(y=l$y))
           if(y && is.null(x$y)) warning("y=TRUE ignored.. the fit does not include the data", call.=FALSE)
           if(y && !is.null(x$y)) {
               l1<-c(list(x=xvar.n, y=x$y),list(...))
+              if(!is.null(transf)) l1$y <- eval(parse(text=transf), list(y=l1$y))              
               if(is.null(l1$xlab)) l1$xlab<-term
               if(is.null(l1$ylab)) l1$ylab<-"Growth variable"
+              if(!is.null(l1$col.p)) l1$col<-l1$col.p;l1$col.p<-NULL
+              if(!is.null(l1$cex.p)) l1$cex<-l1$cex.p;l1$cex.p<-NULL
+              if(!is.null(l1$pch.p)) l1$pch<-l1$pch.p;l1$pch.p<-NULL              
               if(legend) l1$xlim <- c(min(xvar.n),1.1*max(xvar.n))
               do.call(plot, l1)              
               #plot(xvar.n, x$y, xlab=term, ylab="Growth variable")
               if(legend) {
-                  cexL<-if(is.null(l1$cex)) .6 else l1$cex
-                  text(1.05*max(xvar.n),  l$y[nrow(l$y),], x$taus[select.tau], cex=cexL)
+                  #cexL<-if(is.null(l1$cex)) .6 else l1$cex TOGLIERE
+                  #text(1.05*max(xvar.n),  l$y[nrow(l$y),], x$taus[select.tau], cex=cexL)
+                  text(1.05*max(xvar.n),  l$y[nrow(l$y),], formatC(x$taus[select.tau], digits=2, format="f"),
+                      cex=cexL)
                   legend<-FALSE
                   }
               add<-TRUE
@@ -57,18 +68,21 @@ function(x, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE,
             l$x[(length(l$x)-11):(length(l$x)-5)]<-NA
           }
           if(add){
-              do.call(matlines, l)
+                do.call(matlines, l)
               } else {
-              if(is.null(l$xlab)) l$xlab<-term
-              if(is.null(l$ylab)) {l$ylab<-if(deriv) "Growth variable (first derivative)" else "Growth variable"}
-              l$type<-"l"
-              do.call(matplot, l)
-              #if(y && !is.null(x$y)) points(xvar.n, x$y)
-              #matplot(xvar.35, fit.35, type="l", xlab=term, ylab="", ...)
+                if(is.null(l$xlab)) l$xlab<-term
+                if(is.null(l$ylab)) {l$ylab<-if(deriv) "Growth variable (first derivative)" else "Growth variable"}
+                l$type<-"l"
+                l$col.p<-NULL
+                l$cex.p<-NULL
+                l$pch.p<-NULL
+                do.call(matplot, l)
+                #if(y && !is.null(x$y)) points(xvar.n, x$y)
+                #matplot(xvar.35, fit.35, type="l", xlab=term, ylab="", ...)
               }
           if(legend)  {
-              cexL<-if(is.null(l$cex)) .6 else l$cex
-              text(x.leg,  l$y[(length(l$x)-8),], x$taus[select.tau], cex=cexL)
+              #cexL<-if(is.null(l$cex)) .6 else l$cex TOGLIERE
+              text(x.leg,  l$y[(length(l$x)-8),], formatC(x$taus[select.tau], digits=2, format="f"), cex=cexL)
             #tau<-x$tau; mtext(bquote(tau == .(tau)),line=-2)
             }
           }

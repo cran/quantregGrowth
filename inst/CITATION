@@ -5,10 +5,10 @@ citEntry(entry="Article",
          author = personList(as.person("V.M.R. Muggeo"),as.person("M. Sciandra"), as.person("A. Tomasello"), as.person("S. Calvo")),
          journal      = "Environmental and Ecological Statistics",
          year         = "2013",
-	       volume       = "xx",
-	       pages        = "xx--xx",
+	       volume       = "20",
+	       pages        = "519--531",
          textVersion = 
          paste("V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).", 
                "Estimating growth charts via nonparametric quantile regression: a practical framework with application in ecology.",
-               "Environmental and Ecological Statistics, to appear.")
+               "Environmental and Ecological Statistics, 20, 519-531.")
 )

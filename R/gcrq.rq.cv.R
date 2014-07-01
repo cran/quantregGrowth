@@ -25,13 +25,13 @@ function(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, var.pen=N
           xreg<-cbind(X,B)[which,,drop=FALSE]
           }
           fit.values<-predictQR(fit, xreg=xreg)
-          fit.values<-rbind(as.numeric(colnames(fit.values)),fit.values)
+          fit.values<-if(is.matrix(fit.values)) rbind(as.numeric(colnames(fit.values)),fit.values) else matrix(c(taus, fit.values), ncol=1)
           rho.values<-apply(fit.values, 2, function(z) sum(Rho(y[which]-z[-1],z[1])))        
           CV[j,i]<-sum(rho.values)
           }
       }
     attr(CV, "foldid")<-foldid
     lambda.ok <- lambda[which.min(apply(CV, 1, mean))]
-    if(cv) lambda.ok<-list(lambda.ok, CV)
+    if(cv) lambda.ok<-list(lambda.ok=lambda.ok, CV=CV)
     return(lambda.ok)
     }

@@ -31,7 +31,16 @@ Rho <- function(u, tau) u * (tau - (u < 0))
         y<-c(y, rep(0,nrow(DD)))
         }
       o.start<-rq.fit(x=B,y=y,tau=start.tau)
-
+      if(length(taus)<=1){ #se length(taus)==1
+            all.COEF<-o.start$coef
+            #colnames(all.COEF)<-paste(taus)
+            all.df<- sum(round(o.start$residuals[1:n],2)==0)
+            all.rho<-sum(Rho(o.start$residuals[1:n], start.tau)) 
+            r<-list(coefficients=all.COEF,B=B, df=all.df, rho=all.rho,
+                    fitted.values=o.start$fitted.values[1:n],residuals=o.start$residuals[1:n])
+            } else { #se length(taus)>1
+    COEF.POS<-COEF.NEG<-FIT.POS<-FIT.NEG<-RES.POS<-RES.NEG<-NULL
+    df.pos.tau<-df.neg.tau<-rho.pos.tau<-rho.neg.tau<-NULL
     if(n.pos.taus>0){
       rho.pos.tau <-df.pos.tau <- vector(length=n.pos.taus)
       COEF.POS<-matrix(,ncol(B),n.pos.taus)
@@ -40,12 +49,14 @@ Rho <- function(u, tau) u * (tau - (u < 0))
 
       RR<- Ident
       rr<- b.start + eps
-
+      FIT.POS<-RES.POS<-matrix(,n,n.pos.taus)
       for(i in 1:n.pos.taus){
             o<-rq.fit(x=B,y=y,tau=pos.taus[i],method="fnc",R=RR,r=rr)
+            FIT.POS[,i]<-o$fitted.values[1:n]
+            RES.POS[,i]<-o$residuals[1:n]
             #estrai la f. obiettivo
             df.pos.tau[i] <- length(o$coef) #sum(round(o$residuals[1:n],2)==0)
-            rho.pos.tau[i] <- sum(Rho(o$residuals, pos.taus[i]))
+            rho.pos.tau[i] <- sum(Rho(o$residuals[1:n], pos.taus[i]))
             b.start<-o$coef
             COEF.POS[,i]<-b.start
             rr<- b.start + eps
@@ -60,10 +71,13 @@ Rho <- function(u, tau) u * (tau - (u < 0))
       neg.taus<-sort(neg.taus,TRUE)
       RR<- -Ident
       rr<- -b.start + eps
+      FIT.NEG<-RES.NEG<-matrix(,n,n.neg.taus)
       for(i in 1:n.neg.taus){
             o<-rq.fit(x=B,y=y,tau=neg.taus[i],method="fnc",R=RR,r=rr)
+            FIT.NEG[,i]<-o$fitted.values[1:n]
+            RES.NEG[,i]<-o$residuals[1:n]
             df.neg.tau[i] <- length(o$coef) #sum(round(o$residuals[1:n],2)==0)
-            rho.neg.tau[i] <- sum(Rho(o$residuals, pos.taus[i]))
+            rho.neg.tau[i] <- sum(Rho(o$residuals[1:n], neg.taus[i]))
             b.start<-o$coef
             COEF.NEG[,i]<-b.start
             rr<- -b.start + eps
@@ -85,8 +99,13 @@ Rho <- function(u, tau) u * (tau - (u < 0))
 #-------------------------------
       all.COEF<-cbind(COEF.NEG[,n.neg.taus:1,drop=FALSE], o.start$coef, COEF.POS)
       colnames(all.COEF)<-paste(taus)
+      all.FIT<-cbind(FIT.NEG[,n.neg.taus:1,drop=FALSE], o.start$fitted.values[1:n], FIT.POS)
+      colnames(all.FIT)<-paste(taus)
+      all.RES<-cbind(RES.NEG[,n.neg.taus:1,drop=FALSE], o.start$residuals[1:n], RES.POS)
+      colnames(all.RES)<-paste(taus)
       all.df<- c(df.neg.tau[n.neg.taus:1], sum(round(o.start$residuals[1:n],2)==0), df.pos.tau)
-      all.rho<-c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals, start.tau)) , rho.pos.tau)
-      r<-list(coefficients=all.COEF,B=B, df=all.df, rho=all.rho)
+      all.rho<-c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals[1:n], start.tau)) , rho.pos.tau)
+      r<-list(coefficients=all.COEF,B=B, df=all.df, rho=all.rho, fitted.values=all.FIT, residuals=all.RES)
+      }
       return(r)
       }

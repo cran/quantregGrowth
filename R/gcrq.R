@@ -1,9 +1,9 @@
 gcrq <-
-function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, y=TRUE, interc=FALSE, foldid=NULL, nfolds=10, cv=FALSE, ...){
+function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, transf=NULL,
+    y=TRUE, interc=FALSE, foldid=NULL, nfolds=10, cv=FALSE, ...){
 #Growth Charts via QR
 #**************weights??
 #se cv=TRUE restituisce anche una componente 'cv' che è una matrice di n.righe=n.valori di lambda e colonne nfolds
-#cosa succede se tau è uno scalare?
 #eps in control??
 #foldid, nfold usati se lambda in ps() è un vettore
 #... 
@@ -52,6 +52,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         dim(Y) <- NULL
         if (!is.null(nm)) names(Y) <- nm
         }
+    if(!is.null(transf)) Y <- eval(parse(text=transf), list(y=Y)) 
     X <- if (!is.empty.model(mt))
         model.matrix(mt, mf, contrasts)
     else stop("error in the design matrix")#matrix(, NROW(Y), 0L)
@@ -145,7 +146,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       }
     nn<-c(nomiCoefUNPEN,unlist(nomiCoefPEN))
     #if(ncol(X)>0) nn<-c("(Intercept)",nn)
-    rownames(fit$coefficients)<-nn
+    if(length(tau)>1) rownames(fit$coefficients)<-nn else names(fit$coefficients)<-nn
     names(BB)<-nomiVariabPEN
     #tolto "info.smooth" perché si può estrarre da BB..
     fit$info.smooth<-list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff)

@@ -10,7 +10,8 @@ The function actually does not evaluate a (spline) smooth, but simply it
 passes relevant information to proper fitter functions.
      }
 \usage{
-ps(x, monotone = 0, lambda = 0, pdiff = 3, ndx = NULL, deg = 3, var.pen = NULL)
+ps(x, monotone = 0, lambda = 0, pdiff = 3, ndx = NULL, deg = 3, 
+    var.pen = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,8 +22,8 @@ In growth charts this variable is typically the age.
   \item{monotone}{
 Numeric value to set up monotonicity restrictions on the fitted smooth function
 \itemize{
- \item '0' = no constrain;
- \item '1' = non decreasing smooth function;
+ \item  '0' = no constrain;
+ \item  '1' = non decreasing smooth function;
  \item '-1' = non increasing smooth function.
 }
 }

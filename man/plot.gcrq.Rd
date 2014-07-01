@@ -9,7 +9,7 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 }
 \usage{
 \method{plot}{gcrq}(x, add = FALSE, y = FALSE, legend = FALSE, select.tau, 
-    deriv = FALSE, cv = FALSE, ...)
+    deriv = FALSE, cv = FALSE, transf=NULL,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -35,8 +35,13 @@ logical. If \code{TRUE} the first derivative of the curve is displayed.
 logical. If \code{TRUE} and the \code{"gcrq"} object contains the matrix \code{cv}, then 
 the cross-validation scores against the lambda values are plotted.
 }
+  \item{transf}{
+An optional character string (with "y" as argument) meaning a function to apply to the response variable 
+  before plotting. E.g. \code{"(exp(y)-0.1)"}. See argument \code{"transf"} in \code{gcrq()}.
+}
   \item{\dots}{
-Additional graphical parameters, such as `xlab', `ylab', and `xlim'.
+Additional graphical parameters, such as `xlab', `ylab', and `xlim'; 'lwd', 'col' and 'lty' for the fitted quantile lines; `cex' for 
+the legend (if \code{legend=TRUE}); 'cex.p', 'col.p', and 'pch.p' for the points (if \code{y=TRUE}).
 }
 }
 \details{
