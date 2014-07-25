@@ -8,14 +8,17 @@ Plot method for gcrq objects
 Displaying the estimated growth charts from a \code{gcrq} fit.
 }
 \usage{
-\method{plot}{gcrq}(x, add = FALSE, y = FALSE, legend = FALSE, select.tau, 
-    deriv = FALSE, cv = FALSE, transf=NULL,...)
+\method{plot}{gcrq}(x, term, add = FALSE, y = FALSE, legend = FALSE, select.tau, 
+    deriv = FALSE, cv = FALSE, transf=NULL, lambda0=FALSE,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{
 a fitted \code{"gcrq"} object.
 }
+  \item{term}{
+the smooth variable name entering the model via \code{ps}. Relevant fitted quantile curves will be plotted.
+It may be missing if the model includes a single smooth term.}
   \item{add}{
 logical. If \code{TRUE} the fitted quantile curves are added on the current plot.
 }
@@ -38,6 +41,11 @@ the cross-validation scores against the lambda values are plotted.
   \item{transf}{
 An optional character string (with "y" as argument) meaning a function to apply to the response variable 
   before plotting. E.g. \code{"(exp(y)-0.1)"}. See argument \code{"transf"} in \code{gcrq()}.
+}
+  \item{lambda0}{
+logical. If \code{cv=TRUE}, should the CV plot include also the first CV value? Usually the first CV value is at lambda=0, 
+and typically it is much bigger than the other values making the plot not easy to read. Default to \code{FALSE} to ignore the
+first CV value in the plot.
 }
   \item{\dots}{
 Additional graphical parameters, such as `xlab', `ylab', and `xlim'; 'lwd', 'col' and 'lty' for the fitted quantile lines; `cex' for 

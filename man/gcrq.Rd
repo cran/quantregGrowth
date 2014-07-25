@@ -12,7 +12,7 @@ more biologically plausible. Linear terms are allowed in the model specification
 \usage{
 gcrq(formula, tau = c(0.1, 0.25, 0.5, 0.75, 0.9), data, subset, weights, 
       na.action, transf=NULL, y = TRUE, interc=FALSE, 
-      foldid = NULL, nfolds = 10, cv = FALSE, ...)
+      foldid = NULL, nfolds = 10, cv = FALSE, n.boot=0, eps=.0001, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -36,7 +36,7 @@ Currently unimplemented.
 a function which indicates how the possible `NA's are handled.
 }
   \item{transf}{
-An optional character string (with "y" as argument) meaning a function to apply to the response variable 
+an optional character string (with \code{"y"} as argument) meaning a function to apply to the response variable 
   before fitting. E.g. \code{"log(y+0.1)"}.
 }
   \item{y}{
@@ -45,7 +45,7 @@ logical. If \code{TRUE} (default) the returned object includes also the response
   \item{interc}{
 logical. If \code{formula} includes a \code{"ps"} term, \code{interc=TRUE} means that a model intercept is also estimated.
 If this is the case, a very small ridge penalty is exploited to allow estimation with a design matrix containing both 
-a full B-spline basis and a column of ones. This argument overwrites the intercept specification in the formula (e.g., \code{~0+..}), 
+a full B-spline basis and a column of ones. \code{interc=TRUE} overwrites the intercept specification in the formula (e.g., \code{~0+..}), 
 and it is ignored if the model does not include a \code{"ps"} term.
 }
   \item{foldid}{
@@ -57,8 +57,17 @@ optional. If \code{foldid} is not provided, it is scalar specifying the number o
 the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} argument in \code{ps()} is not a vector.
 }
   \item{cv}{
-logical. If \code{TRUE} and the \code{lambda} argument in \code{ps()} is a vector, the returned object includes also the matrix \code{cv} 
-having number of rows equal to length of \code{lambda} and number of columns equal to \code{nfolds}. 
+logical. If \code{TRUE}, the returned object includes also the matrix \code{cv} 
+having number of rows equal to length of \code{lambda} and number of columns equal to \code{nfolds}.
+Ignored if the \code{lambda} argument in \code{ps()} is not a vector. 
+}
+  \item{n.boot}{
+Number of nonparametric (cases resampling) bootstrap samples to be used. Notice that the smoothing parameter (if relevant) does change 
+throughout the bootstrap replicates.
+}
+  \item{eps}{
+A small positive constant to ensure noncrossing curves. Use it at your risk! If \code{eps} is large, the resulting fitted quantile 
+curves could appear unreasonable.
 }
   \item{\dots}{
 further arguments.
@@ -66,12 +75,13 @@ further arguments.
 }
 \details{
 The function fits regression quantiles at specified percentiles given in \code{tau} as a function of 
-covariates specified in the \code{formula} argument. The \code{formula} may optionally include a \code{\link{ps}} 
-term to model a nonlinear relationship with a quantitative covariate, usually age in growth charts. When the \code{lambda} argument in \code{ps()} is scalar, it represents the actual smoothing 
-parameter. When it is a vector, cross validation is performed to select the `optimal' lambda value and the model is 
+covariates specified in the \code{formula} argument. The \code{formula} may optionally include several \code{\link{ps}} 
+terms to model nonlinear relationships with quantitative covariates, usually age in growth charts. When the \code{lambda} argument 
+in \code{ps()} is scalar, it represents the actual smoothing 
+parameter. When it is a vector, 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is 
 fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} 
 may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely 
-\code{sample(rep(seq(nfolds), length = n))}
+\code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter is allowed with a unique ps() term in the formula.
 }
 \value{
 This function returns an object of class \code{gcrq}, that is a list with the following components
@@ -83,10 +93,11 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
   \item{BB}{further information on the smoothing term (if present in the formula via \code{ps}), including 
     stuff useful for plotting via \code{plot.gcrq()}.}
   \item{Bderiv}{if the smooth term is included, the first derivative of the B spline basis.}
+  \item{boot.coef}{The array including the estimated coefficients at different bootstrap samples.}
   \item{y}{the response vector (if gcrq() has been called with \code{y=TRUE}).}
   \item{contrasts}{the contrasts used, when the model contains a factor.}
   \item{xlevels}{the levels of the factors (when included) used in fitting.}
-  \item{taus}{a vector of values between 0 and 1 indicating the quantile curves to be estimated.}
+  \item{taus}{a vector of values between 0 and 1 indicating the estimated quantile curves.}
   \item{call}{the matched call.}
 }
 \references{
@@ -99,7 +110,7 @@ in ecology, Environ Ecol Stat, 20, 519-531.
 
 \note{
 This function is based upon the package quantreg by R. Koenker.
-Currently methods specific to the class \code{"gcrq"} are \code{plot.gcrq} and \code{summary.gcrq}
+Currently methods specific to the class \code{"gcrq"} are \code{plot.gcrq}, \code{print.gcrq} and \code{summary.gcrq}
 }
 
 \section{Warning}{
@@ -110,8 +121,9 @@ there are some important limitations affecting the theory and the relevant packa
 \item Computation of model degrees of freedom
 \item Computation of standard errors
 }
-Currently the function does not return standard errors for the parameter estimates and degrees of freedom are roughtly computed 
-by summing the zero residuals for model containing the smooth term, or simply by the number of parameters in linear models.
+Currently the function does not return standard errors for the parameter estimates (unless \code{n.boot}>0) and degrees of freedom 
+are roughtly computed by summing the 'zero' residuals for model containing the smooth term, or simply by the number of parameters 
+in linear models.
 }
 
 \seealso{
@@ -124,7 +136,7 @@ tauss<-seq(.1,.9,by=.1) #fix the percentiles of interest
 
 m1<-gcrq(y~ps(x, mon=0), tau=tauss, data=growthData) #unpenalized.. very wiggly curves
 #strongly penalized models
-m2<-gcrq(y~ps(x, mon=0, lambda=1000, pdiff=2), tau=tauss, data=growthData) #lines 
+m2<-gcrq(y~ps(x, mon=0, lambda=1000, pdiff=2), tau=tauss, data=growthData) #linear 
 m3<-gcrq(y~ps(x, mon=0, lambda=1000, pdiff=3), tau=tauss, data=growthData) #quadratic  
 
 #penalized model with monotonicity restrictions
@@ -139,6 +151,13 @@ plot(m2, pch=20, y=TRUE)
 plot(m3, add=TRUE, lwd=2)
 plot(m4, pch=20, y=TRUE)
 plot(m5, pch=20, y=TRUE, legend=TRUE)
+
+#select lambda via 'K-fold' CV
+m6<-gcrq(y~ps(x, lambda=seq(0,100,l=20)), tau=tauss, data=growthData) 
+par(mfrow=c(1,2))
+plot(m6, cv=TRUE) #display CV score versus lambda values
+plot(m6, y=TRUE) #fitting at the best lambda value
+
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

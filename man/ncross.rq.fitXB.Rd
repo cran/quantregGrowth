@@ -1,7 +1,7 @@
 \name{ncross.rq.fitXB}
 \alias{ncross.rq.fitXB}
 \alias{ncross.rq.fitX}
-\alias{ncross.rq.fitB}
+%\alias{ncross.rq.fitB}
 \alias{gcrq.rq.cv}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -21,12 +21,12 @@ ncross.rq.fitXB(y, x, B = NULL, X = NULL, taus, interc=FALSE,
 ncross.rq.fitX(y, X = NULL, taus, lambda = 0, adj.middle = FALSE, 
   eps = 1e-04, ...)
 
-ncross.rq.fitB(y, x, B = NULL, taus, monotone = FALSE, adj.middle = 
-  FALSE, ndx = 10, lambda = 0, deg = 3, dif = 3, plott = 0, 
-  var.pen = NULL, eps = 1e-04, ...)
+%ncross.rq.fitB(y, x, B = NULL, taus, monotone = FALSE, adj.middle = 
+%  FALSE, ndx = 10, lambda = 0, deg = 3, dif = 3, plott = 0, 
+%  var.pen = NULL, eps = 1e-04, ...)
 
 gcrq.rq.cv(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, 
-  var.pen = NULL, cv = TRUE, nfolds = 10, foldid = NULL)
+  var.pen = NULL, cv = TRUE, nfolds = 10, foldid = NULL,eps = 1e-04)
 }
 
 %- maybe also 'usage' for other objects documented here.

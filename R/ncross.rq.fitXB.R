@@ -60,53 +60,85 @@ blockdiag <- function(...) {
   ret
 }
 #-------------------------------------
+build.D<-function(var.pen.ok, p.ok, dif.ok, lambda.ok){
+#build the penalty matrix to be appended below the design matrix
+      if(is.null(var.pen.ok)){
+        xx.var.pen <- rep(1,(p.ok-dif.ok))
+        } else {
+      f.var.pen <- function(k) eval(parse(text = var.pen.ok))
+      xx.var.pen <- 1:(p.ok - dif.ok)
+      xx.var.pen <- sqrt(f.var.pen(max(xx.var.pen)))
+      }
+      D.ok<-lambda.ok*xx.var.pen*diff(diag(p.ok), diff=dif.ok) #ridge: diag(p) #diff(diag(p), diff=1)
+      D.ok
+      }
+#-------------------------------------
 #      require(quantreg)
-      n<-length(y)
-      if(is.null(B)) B<-bspline(x, ndx=ndx, deg=deg)
-      if(missing(x)) plott<-0
-      p1<-ncol(B)
-      XB<-cbind(X,B)
-      p2<-ncol(XB)-p1 #n. termini lineari
-      p<-p1+p2
-
-      Ident<-diag(p)
-
       taus<-sort(taus)
+      n<-length(y)
+      #lambda<-sqrt(lambda)
+      if(is.null(B)) {
+        #if(missing(x) || !is.matrix(x)) stop("'B' (list) or 'x' (matrix) have to be supplied")
+        if(missing(x) || !(is.matrix(x)||is.data.frame(x))) stop("'B' (list) or 'x' (matrix) have to be supplied")
+        B<-vector("list", length=ncol(x))      
+        for(j in 1:ncol(x)) B[[j]]<-bspline(x[,j], ndx=ndx[j], deg=deg[j])
+      }
+      if(missing(x)) plott<-0
+      #deve diventare una matrice..
+      all.p<-sapply(B, ncol)
+      pSmooth<- sum(all.p)
+      H<-length(B) #no. of smooth terms
+      B<-matrix(unlist(B), n, pSmooth)
+      XB<-cbind(X,B)
+      pLin<-ncol(XB)-pSmooth #pSmooth=p1 #n. termini lineari
+      p<-ncol(XB) #p1+p2
+      DD<-D1<-vector("list", length=H)
+      for(j in 1:H){
+          D1[[j]]<-if(monotone[j]!=0) sign(monotone[j])*diff(diag(all.p[j]), diff=1) else matrix(0,all.p[j]-1,all.p[j])
+          DD[[j]]<- build.D(var.pen[j], all.p[j], dif[j], lambda[j])
+          }      
+
+      R.monot<-if(length(D1)<=1) D1[[1]] else do.call("blockdiag",D1)
+      R.monot<-cbind(matrix(0,nrow=nrow(R.monot), ncol=pLin), R.monot)
+      r.monot<-rep(0, sum(all.p-1))
+      D.pen<-if(length(DD)<=1) DD[[1]] else do.call("blockdiag",DD)
+      P<-blockdiag(diag(rep(0,pLin), ncol=pLin),D.pen)
 
       id.start.tau<-which.min(abs(taus-0.5))
       start.tau<-taus[id.start.tau]
-
       pos.taus<-taus[(taus-start.tau)>0]
       neg.taus<-taus[(taus-start.tau)<0]
       n.pos.taus<-length(pos.taus)
       n.neg.taus<-length(neg.taus)
 
-      #if varying penalty
-      if(is.null(var.pen)){
-        xx.var.pen <- rep(1,(p1-dif))
-        } else {
-      f.var.pen <- function(k) eval(parse(text = var.pen))
-      xx.var.pen <- 1:(p1-dif)
-      xx.var.pen <- sqrt(f.var.pen(max(xx.var.pen)))
-      }
-
-      if(monotone!=0) {
-          D1<-sign(monotone)*diff(diag(p1), diff=1)
-          R<-cbind(matrix(0,nrow(D1),p2), D1) #era cbind(rep(0,p2), D1)
-          DD<- xx.var.pen*diff(diag(p1), diff=dif) #ridge: diag(c(0,rep(1,p-1)))
-          P<-blockdiag(diag(rep(0,p2), ncol=p2),lambda*DD)
-          if(interc) P<-rbind(P, .000001*diag(ncol(XB))) #a small ridge penalty
+      if(any(lambda>0)){
           XB<-rbind(XB, P)
-          y<-c(y, rep(0,nrow(P)))
-          o.start<-rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=R,r=rep(0,p1-1))
-          } else {
-              DD<-xx.var.pen*diff(diag(p1), diff=dif) #ridge: diag(p) #diff(diag(p), diff=1)
-              P<-blockdiag(diag(rep(0,p2),ncol=p2),lambda*DD)
-              if(interc) P<-rbind(P, .000001*diag(ncol(XB))) #a small ridge penalty
-              XB<-rbind(XB, P)
-              y<-c(y, rep(0,nrow(P)))
-              o.start<-rq.fit(x=XB,y=y,tau=start.tau)
-              }
+          }
+      if(interc || H>1) XB<-rbind(XB, .001*diag(ncol(XB))) #a small ridge penalty
+      
+      y<-c(y, rep(0,nrow(XB)-n))
+      
+      o.start<-if(any(monotone!=0)) rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=R.monot,r=r.monot)
+       else rq.fit(x=XB,y=y,tau=start.tau)
+      
+#      if(monotone!=0) {
+#          D1<-sign(monotone)*diff(diag(p1), diff=1)
+#          R<-cbind(matrix(0,nrow(D1),p2), D1) #era cbind(rep(0,p2), D1)
+#          DD<- xx.var.pen*diff(diag(p1), diff=dif) #ridge: diag(c(0,rep(1,p-1)))
+#          P<-blockdiag(diag(rep(0,p2), ncol=p2),lambda*DD)
+#          if(interc) P<-rbind(P, .000001*diag(ncol(XB))) #a small ridge penalty
+#          XB<-rbind(XB, P)
+#          y<-c(y, rep(0,nrow(P)))
+#          o.start<-rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=R,r=rep(0,p1-1))
+#          } else {
+#          DD<-xx.var.pen*diff(diag(p1), diff=dif) #ridge: diag(p) #diff(diag(p), diff=1)
+#          P<-blockdiag(diag(rep(0,p2),ncol=p2),lambda*DD)
+#          if(interc) P<-rbind(P, .000001*diag(ncol(XB))) #a small ridge penalty
+#          XB<-rbind(XB, P)
+#          y<-c(y, rep(0,nrow(P)))
+#          o.start<-rq.fit(x=XB,y=y,tau=start.tau)
+#          }
+
     if(length(taus)<=1){ #se length(taus)==1
       all.COEF<-o.start$coef
       #colnames(all.COEF)<-paste(taus)
@@ -115,6 +147,7 @@ blockdiag <- function(...) {
       r<-list(coefficients=all.COEF,B=XB, df=all.df, rho=all.rho,
               fitted.values=o.start$fitted.values[1:n],residuals=o.start$residuals[1:n])
       } else { #se length(taus)>1
+    Ident<-diag(p)
     COEF.POS<-COEF.NEG<-FIT.POS<-FIT.NEG<-RES.POS<-RES.NEG<-NULL
     df.pos.tau<-df.neg.tau<-rho.pos.tau<-rho.neg.tau<-NULL
     if(n.pos.taus>0){
@@ -122,14 +155,21 @@ blockdiag <- function(...) {
       COEF.POS<-matrix(,ncol(XB),n.pos.taus)
       colnames(COEF.POS)<-paste(pos.taus)
       b.start<-o.start$coef
-      #se global penalty
-      if(monotone!=0){
-          RR<-rbind(Ident,R)
-          rr<-c(b.start + eps, rep(0,p1-1))
+      if(any(monotone!=0)){
+          RR<-rbind(Ident,R.monot)
+          rr<-c(b.start + eps, r.monot)
           } else {
           RR<- Ident
           rr<- b.start + eps
           }
+      #se global penalty
+#      if(monotone!=0){
+#          RR<-rbind(Ident,R)
+#          rr<-c(b.start + eps, rep(0,p1-1))
+#          } else {
+#          RR<- Ident
+#          rr<- b.start + eps
+#          }
       FIT.POS<-RES.POS<-matrix(,n,n.pos.taus)
       for(i in 1:n.pos.taus){
             o<-rq.fit(x=XB,y=y,tau=pos.taus[i],method="fnc",R=RR,r=rr)
@@ -140,7 +180,8 @@ blockdiag <- function(...) {
             rho.pos.tau[i] <- sum(Rho(o$residuals[1:n], pos.taus[i]))
             b.start<-o$coef
             COEF.POS[,i]<-b.start
-            rr<- if(monotone!=0) c(b.start+eps, rep(0,p1-1) ) else b.start+eps
+            rr<- if(any(monotone!=0)) c(b.start+eps, r.monot) else b.start + eps
+#            rr<- if(monotone!=0) c(b.start+eps, rep(0,p1-1) ) else b.start+eps
             }#end for
       }#end if(n.pos.taus>0)
 
@@ -150,13 +191,22 @@ blockdiag <- function(...) {
       colnames(COEF.NEG)<-paste(neg.taus)
       b.start<-o.start$coef
       neg.taus<-sort(neg.taus,TRUE)
-      if(monotone!=0){
-          RR<-rbind(-Ident,R)
-          rr<-c(-b.start+eps, rep(0, p1-1) )
+#      if(monotone!=0){
+#          RR<-rbind(-Ident,R)
+#          rr<-c(-b.start+eps, rep(0, p1-1) )
+#          } else {
+#          RR<- -Ident
+#          rr<- -b.start+eps
+#          }
+      if(any(monotone!=0)){
+          Ident<-diag(p)
+          RR<-rbind(-Ident,R.monot)
+          rr<-c(-b.start + eps, r.monot)
           } else {
           RR<- -Ident
-          rr<- -b.start+eps
+          rr<- -b.start + eps
           }
+
       FIT.NEG<-RES.NEG<-matrix(,n,n.neg.taus)
       for(i in 1:n.neg.taus){
             o<-rq.fit(x=XB,y=y,tau=neg.taus[i],method="fnc",R=RR,r=rr)
@@ -166,20 +216,21 @@ blockdiag <- function(...) {
             rho.neg.tau[i] <- sum(Rho(o$residuals[1:n], neg.taus[i]))
             b.start<-o$coef
             COEF.NEG[,i]<-b.start
-            rr<- if(monotone!=0) c(-b.start+eps, rep(0,p1-1) ) else -b.start+eps
+#            rr<- if(monotone!=0) c(-b.start+eps, rep(0,p1-1) ) else -b.start+eps
+            rr<- if(any(monotone!=0)) c(-b.start+eps, r.monot) else -b.start + eps
             }#end for
       }#end if(n.neg.taus>0)
 #------------------------------
-      if(adj.middle){
-            if(monotone!=0){
-              RR<-rbind(Ident,-Ident,R)
-              rr<-c(COEF.NEG[,1],-COEF.POS[,1], rep(0, p-1))
-              } else {
-              RR<-rbind(Ident, -Ident)
-              rr<-c(COEF.NEG[,1],-COEF.POS[,1])
-              }
-      o.start<-rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=RR,r=rr)
-        }
+#      if(adj.middle){
+#            if(monotone!=0){
+#              RR<-rbind(Ident,-Ident,R)
+#              rr<-c(COEF.NEG[,1],-COEF.POS[,1], rep(0, p-1))
+#              } else {
+#              RR<-rbind(Ident, -Ident)
+#              rr<-c(COEF.NEG[,1],-COEF.POS[,1])
+#              }
+#      o.start<-rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=RR,r=rr)
+#        }
 #-------------------------------
       all.COEF<-cbind(COEF.NEG[,n.neg.taus:1], o.start$coef, COEF.POS)
       colnames(all.COEF)<-paste(taus)
@@ -192,6 +243,7 @@ blockdiag <- function(...) {
       r<-list(coefficients=all.COEF,B=XB, df=all.df, rho=all.rho, fitted.values=all.FIT, residuals=all.RES)
       }
       if(plott>0){
+          p2=NULL
           if(plott==1) {matlines(x, B[1:n,]%*%all.COEF[-(1:p2),] ,lwd=2,...)
               } else {plot(x,y[1:n]); matpoints(x, B[1:n,]%*%all.COEF[-(1:p2),] ,lwd=2, type="l",...)}
           }

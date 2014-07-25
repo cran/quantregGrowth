@@ -1,6 +1,6 @@
 \name{summary.gcrq}
 \alias{summary.gcrq}
-\alias{print.gcrq}
+%\alias{print.gcrq}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Summarizing model fits for growth charts regression quantiles
@@ -10,6 +10,9 @@ summary and print methods for class \code{gcrq}
 }
 \usage{
 \method{summary}{gcrq}(object, digits = max(3, getOption("digits") - 3), ...)
+
+#\method{print}{summary.gcrq}(x,
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

@@ -1,5 +1,6 @@
 gcrq.rq.cv <-
-function(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, var.pen=NULL, cv=TRUE, nfolds=10, foldid=NULL){
+function(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, var.pen=NULL, cv=TRUE, nfolds=10, 
+foldid=NULL, eps=.0001){
 #perform 'nfolds' cross-validation to select lambda.
 #B e X devono essere (eventualmente) matrici!!!
     Rho <- function(u, tau) u * (tau - (u < 0))
@@ -15,12 +16,13 @@ function(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, var.pen=N
       for(i in seq(nfolds)) {
           which <- foldid == i
           y_sub = y[!which]
+          B_sub<-list(B[!which, , drop = FALSE])
           if(ncol(X)<=0){
-          fit<-ncross.rq.fitB(y=y_sub, B=B[!which, , drop = FALSE], taus=taus, monotone=monotone, ndx=ndx, lambda=lambda1, deg=deg,
+          fit<-ncross.rq.fitXB(y=y_sub, B=B_sub, X=NULL, taus=taus, monotone=monotone, ndx=ndx, lambda=lambda1, deg=deg,
               dif=dif, var.pen=var.pen)
           xreg<-B[which,,drop=FALSE]
           } else {
-          fit<-ncross.rq.fitXB(y=y_sub, B=B[!which, , drop = FALSE], X=X[!which, , drop = FALSE], taus=taus, interc=interc, monotone=monotone, ndx=ndx, 
+          fit<-ncross.rq.fitXB(y=y_sub, B=B_sub, X=X[!which, , drop = FALSE], taus=taus, interc=interc, monotone=monotone, ndx=ndx, 
               lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen)
           xreg<-cbind(X,B)[which,,drop=FALSE]
           }

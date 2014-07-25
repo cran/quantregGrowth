@@ -7,13 +7,13 @@ Growth charts via regression quantiles
 }
 \description{
 Fits noncrossing regression quantiles as a function of linear covariates and
-  a smooth term via B-splines with quadratic penalty.}
+  smooth terms via B-splines with quadratic penalties.}
 \details{
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 0.1-3\cr
-Date: \tab 2014-07-01\cr
+Version: \tab 0.3-0\cr
+Date: \tab 2014-07-25\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles, \code{gcrq}

@@ -53,7 +53,7 @@ a different amount of smoothing. For instance for a
 constant smoothing (\code{var.pen=NULL}) the penalty is \eqn{\lambda\sum_k \Delta_k^2}{lambda sum_k \Delta^2_k} where 
 \eqn{\Delta_k}{Delta_k} is the k-th difference (of order \code{pdiff}) of the spline coefficients. When a varying penalty is set, 
 the penalty becomes \eqn{\lambda\sum_k \Delta_k^2 w_k}{lambda sum_k \Delta^2_k w_k}. The weights \eqn{w_k}{w_k} depend on \code{var.pen}; 
-for instance \code{var.pen="((1:k)^2)"} results in \eqn{w_k=k^2}{w_k=k}. See model \code{m5} in examples of \code{\link{gcrq}}.
+for instance \code{var.pen="((1:k)^2)"} results in \eqn{w_k=k^2}{w_k=k^2}. See model \code{m5} in examples of \code{\link{gcrq}}.
 }
 \value{
 The function simply returns the covariate with added attributes relevant to 

@@ -1,10 +1,12 @@
 import(splines)
 import(quantreg)
 
-export(gcrq, gcrq.rq.cv, ncross.rq.fitB, ncross.rq.fitX, ncross.rq.fitXB, 
-      ps, predictQR, summary.gcrq, print.gcrq, plot.gcrq)
+export(gcrq, gcrq.rq.cv, ncross.rq.fitX, ncross.rq.fitXB, 
+      ps, predictQR, summary.gcrq, print.gcrq, plot.gcrq, vcov.gcrq)
 
 S3method(plot,gcrq)
 S3method(print,gcrq)
 S3method(summary,gcrq)
+S3method(vcov,gcrq)
+
 
