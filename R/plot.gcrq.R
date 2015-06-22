@@ -4,7 +4,7 @@ function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=
 #x: un oggetto restituito da gcrq()
 #add: se TRUE aggiunge le linee.....
 #y: se TRUE e se l'oggetto x contiene y (i dati) allora li disegna. Se add=TRUE, y viene posto a FALSE
-#... argomenti da passare a plot() e a matplot/matlines e text(). Quindi se c'è col questo viene applicato sia a plot (se i dati devono essere disegnati) 
+#... argomenti da passare a plot() e a matplot/matlines e text(). Quindi se c'e' col questo viene applicato sia a plot (se i dati devono essere disegnati) 
 #   sia a matlines/matplot se lwd solo a matlines() se cex a plot e a text per legend.
 #  alla legenda (se legend=TRUE) e sia a plot() 
 #select.tau: which quantile curves should be drawn? default (missing) is all
@@ -49,7 +49,7 @@ function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=
                 fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)",], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
                 }
           l<-c(list(x=xvar.35, y=fit.35),list(...))
-          cexL<-if(is.null(l$cex)) .6 else l$cex #sarà usato solo se legend=TRUE
+          cexL<-if(is.null(l$cex)) .6 else l$cex #sara' usato solo se legend=TRUE
           if(!is.null(transf)) l$y <- eval(parse(text=transf), list(y=l$y))
           if(y && is.null(x$y)) warning("'y=TRUE' ignored.. the fit does not include the data", call.=FALSE)
           if(y && !is.null(x$y)) {

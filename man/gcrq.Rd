@@ -6,7 +6,7 @@ Growth charts regression quantiles
 }
 \description{
 Estimation of nonparametric growth charts via quantile regression. Quantile curves are estimated via B-splines with 
-a quadratic penalty on the spline coefficient differences, and non-crossing and monotonicity restrictions are set to obtain estimates
+a L1 penalty on the spline coefficient differences, and non-crossing and monotonicity restrictions are set to obtain estimates
 more biologically plausible. Linear terms are allowed in the model specification.
 }
 \usage{
@@ -44,7 +44,7 @@ logical. If \code{TRUE} (default) the returned object includes also the response
 }
   \item{interc}{
 logical. If \code{formula} includes a \code{"ps"} term, \code{interc=TRUE} means that a model intercept is also estimated.
-If this is the case, a very small ridge penalty is exploited to allow estimation with a design matrix containing both 
+If this is the case, a very small ridge-type penalty is exploited to allow estimation with a design matrix containing both 
 a full B-spline basis and a column of ones. \code{interc=TRUE} overwrites the intercept specification in the formula (e.g., \code{~0+..}), 
 and it is ignored if the model does not include a \code{"ps"} term.
 }
@@ -122,8 +122,9 @@ there are some important limitations affecting the theory and the relevant packa
 \item Computation of standard errors
 }
 Currently the function does not return standard errors for the parameter estimates (unless \code{n.boot}>0) and degrees of freedom 
-are roughtly computed by summing the 'zero' residuals for model containing the smooth term, or simply by the number of parameters 
-in linear models.
+are roughtly computed by summing the 'zero' residuals. Due to noncrossing constraints, the number of zero residuals 
+might not be equal to the number of estimated parameters even in unpenalized models - except for the median, or for models
+where a single quantile curve has been fitted. 
 }
 
 \seealso{

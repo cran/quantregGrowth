@@ -3,7 +3,7 @@ function(object, newdata, xreg){
 #xreg o newdata have to be provided. Nessun controllo (neanche sull'ordine dei coef)
 #if xreg is provided, newdata is ignored
 #
-#Attenzione: può dare problemi se la formula contiene "factor" 
+#Attenzione: puo' dare problemi se la formula contiene "factor" 
 #model.matrix(as.formula(m1$call$formula), data=newdata)
 bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
     # x: vettore di dati
@@ -33,7 +33,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
     B
     }
-    b<-object$coefficients
+    b<-as.matrix(object$coefficients)  #corretto in 0.3-1
     if(missing(xreg)){
       if(missing(newdata)) stop("please, provide `newdata' or 'xreg'")
       nomiCoef<-rownames(b)

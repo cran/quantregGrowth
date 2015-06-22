@@ -3,9 +3,9 @@ function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, tra
     y=TRUE, interc=FALSE, foldid=NULL, nfolds=10, cv=FALSE, n.boot=0, eps=0.0001, ...){
 #Growth Charts via QR
 #**************weights??
-#se cv=TRUE restituisce anche una componente 'cv' che è una matrice di n.righe=n.valori di lambda e colonne nfolds
+#se cv=TRUE restituisce anche una componente 'cv' che e' una matrice di n.righe=n.valori di lambda e colonne nfolds
 #eps in control??
-#foldid, nfold usati se lambda in ps() è un vettore
+#foldid, nfold usati se lambda in ps() e' un vettore
 #... 
 #... passati all'interno di ps()? vedi
 bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
@@ -62,22 +62,22 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     if(!is.null(weights) && !is.numeric(weights)) stop("'weights' must be a numeric vector")
     if(!is.null(weights) && any(weights < 0)) stop("negative weights not allowed")
     tf <- terms(formula, specials = c("ps","ridge"))
-    id.ps<-attr(tf,"specials")$ps #può essere un vettore se ci sono più termini..non dipende se c'è intercetta o meno..
+    id.ps<-attr(tf,"specials")$ps #puo' essere un vettore se ci sono piu' termini..non dipende se c'e' intercetta o meno..
     id.ridge<-attr(tf,"specials")$ridge
     #NB: (id.ps e id.ridge) posizione della variabile ps(x) nel modelframe (include y ma non dipende da l'intercetta)
     #---- se vuoi controllare il numero di termini ps
-    #Il problema è che devi modificare le funzioni fitter ncross.rq.fitB() et al.. in cui devi modificare le matrici R e r per consentire 
-    #monot, noncrossing ecc.. (in realtà noncrossing credo che sia già garantito perché è soltanto sui coeff.)
+    #Il problema e' che devi modificare le funzioni fitter ncross.rq.fitB() et al.. in cui devi modificare le matrici R e r per consentire 
+    #monot, noncrossing ecc.. (in realta' noncrossing credo che sia gia' garantito perche' e' soltanto sui coeff.)
     #if(length(id.ps)>1) stop("A single smooth term is allowed")
     #------------------------------------------------------
     nomiCoefUNPEN<-names(mf)[-c(1,id.ps,id.ridge)]
-    testo.ps<-names(mf)[id.ps] #colnames(X)[id.ps-1+interc] #questa è la stringa del tipo csda(..)
+    testo.ps<-names(mf)[id.ps] #colnames(X)[id.ps-1+interc] #questa e' la stringa del tipo csda(..)
     testo.ridge<-names(mf)[id.ridge]
     #se NON ci sono termini di penalizz.
     if(length(testo.ps)<=0 && length(testo.ridge)<=0){
 #        fitter<- if(length(tau)>1) get("arq.fitMulti") else get("arq.fit")
 #        fit<-fitter(y=Y,X=X,tau=tau,g=g,beta0=b.start,control=control)
-      fit<-ncross.rq.fitX(y=Y, X=X, taus=tau, eps=eps) #X già include l'intercetta
+      fit<-ncross.rq.fitX(y=Y, X=X, taus=tau, eps=eps) #X gia' include l'intercetta
       if(n.boot>0){
           coef.boot<-array(, dim=c(nrow(as.matrix(fit$coef)), length(tau), n.boot))
           for(i in 1:n.boot) {
@@ -103,7 +103,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         vDiff<-sapply(l,function(xx)attr(xx,"pdiff"))
         lambda<-unlist(sapply(l,function(xx)attr(xx,"lambda")))
         nomeX<-unlist(sapply(l,function(xx)attr(xx,"nomeX")))
-        var.pen<-unlist(sapply(l,function(xx)attr(xx,"var.pen"))) #c'è bisogno di unlist()?
+        var.pen<-unlist(sapply(l,function(xx)attr(xx,"var.pen"))) #c'e' bisogno di unlist()?
         #nomeBy<-unlist(sapply(l,function(xx)attr(xx,"nomeBy")))
         origName<-names(mf)
         nomiPS<-all.vars(formula)[c(1,match(nomeX,all.vars(formula)))] #estrae i nomi delle variabili nella formula in comune con nomeX
@@ -190,7 +190,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     if(y) fit$y<-Y
     fit$contrasts <- attrContr  
     colnames(mf)[id.ps]<-testo.ps #devi sostituire i nome altrimenti .getXlevels() non funziona
-    #non capisco (o non ricordo) perché lo avevo messo..
+    #non capisco (o non ricordo) perche' lo avevo messo..
     fit$xlevels <- .getXlevels(mt, mf) 
     fit$taus<-tau
     fit$call<-call

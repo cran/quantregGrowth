@@ -3,22 +3,22 @@
 \alias{quantregGrowth}
 \docType{package}
 \title{
-Growth charts via regression quantiles
+Growth Charts via Regression Quantiles
 }
 \description{
-Fits noncrossing regression quantiles as a function of linear covariates and
-  smooth terms via B-splines with quadratic penalties.}
+Fits non-crossing regression quantiles as a function of linear covariates 
+  and a smooth terms via B-splines with difference penalties.}
 \details{
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 0.3-0\cr
-Date: \tab 2014-07-25\cr
+Version: \tab 0.3-1\cr
+Date: \tab 2015-06-22\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles, \code{gcrq}
 estimates non-crossing quantile curves as a flexible function of a quantitative covariate (typically age), and possibly 
-additional linear terms. To ensure flexibility, B-splines with a quadratic penalty are employed to estimate nonparametrically 
+additional linear terms. To ensure flexibility, B-splines with a difference L1 penalty are employed to estimate nonparametrically 
 the curves;  additionally monotonicity constraints may be also set. \code{plot.gcrq} displays the fitted lines. 
 }
 \author{

@@ -5,9 +5,9 @@ function(y, x, B=NULL, X=NULL, taus, interc=FALSE, monotone=FALSE, adj.middle=FA
 #A differenza di ncross.rq.fit1() questa usa semplici B-spline con un linear inequality constraint on the
 #   B-spline coefficients
 #B: la base di spline, se NULL viene costruita attraverso la variabile x
-#x: la variabile rispetto a cui viene costruita la base, ammesso che B sia NULL. Quando B è fornita
+#x: la variabile rispetto a cui viene costruita la base, ammesso che B sia NULL. Quando B e' fornita
 #   questa viene usata per la stima, e x viene usata solo per disegnare, ammesso che plott>0
-#plott {0,1,2} se 0 non disegna, se 1 aggiunge se 2 apre un nuovo device. Se x non è fornita
+#plott {0,1,2} se 0 non disegna, se 1 aggiunge se 2 apre un nuovo device. Se x non e' fornita
 #   plott viene posto a 0.
 #Aggiungere una matrice di esplicative lineari?
 #--------------------------------------------------------
@@ -176,7 +176,7 @@ build.D<-function(var.pen.ok, p.ok, dif.ok, lambda.ok){
             FIT.POS[,i]<-o$fitted.values[1:n]
             RES.POS[,i]<-o$residuals[1:n]
             #estrai la f. obiettivo
-            df.pos.tau[i] <- sum(round(o$residuals[1:n],3)==0)
+            df.pos.tau[i] <- sum(abs(o$residuals[1:n])<=0.000001)
             rho.pos.tau[i] <- sum(Rho(o$residuals[1:n], pos.taus[i]))
             b.start<-o$coef
             COEF.POS[,i]<-b.start
@@ -212,7 +212,7 @@ build.D<-function(var.pen.ok, p.ok, dif.ok, lambda.ok){
             o<-rq.fit(x=XB,y=y,tau=neg.taus[i],method="fnc",R=RR,r=rr)
             FIT.NEG[,i]<-o$fitted.values[1:n]
             RES.NEG[,i]<-o$residuals[1:n]
-            df.neg.tau[i] <- sum(round(o$residuals[1:n],3)==0)
+            df.neg.tau[i] <- sum(abs(o$residuals[1:n])<=0.000001)
             rho.neg.tau[i] <- sum(Rho(o$residuals[1:n], neg.taus[i]))
             b.start<-o$coef
             COEF.NEG[,i]<-b.start
@@ -238,7 +238,7 @@ build.D<-function(var.pen.ok, p.ok, dif.ok, lambda.ok){
       colnames(all.FIT)<-paste(taus)
       all.RES<-cbind(RES.NEG[,n.neg.taus:1,drop=FALSE], o.start$residuals[1:n], RES.POS)
       colnames(all.RES)<-paste(taus)
-      all.df<- c(df.neg.tau[n.neg.taus:1], sum(round(o.start$residuals[1:n],2)==0), df.pos.tau)
+      all.df<- c(df.neg.tau[n.neg.taus:1], sum(abs(o.start$residuals[1:n])<=.0000001), df.pos.tau)
       all.rho<-c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals[1:n], start.tau)) , rho.pos.tau)
       r<-list(coefficients=all.COEF,B=XB, df=all.df, rho=all.rho, fitted.values=all.FIT, residuals=all.RES)
       }

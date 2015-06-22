@@ -4,6 +4,14 @@
 *				  	*
 *****************************************
 
+
+=============
+version 0.3-1  
+=============
+* predictQR() did not work for objects fitted with a scalar tau (thanks to Michael Frank for reporting) 
+* some corrections in the help files
+
+
 =============
 version 0.3-0 
 =============
