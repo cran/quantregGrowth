@@ -12,7 +12,7 @@ more biologically plausible. Linear terms are allowed in the model specification
 \usage{
 gcrq(formula, tau = c(0.1, 0.25, 0.5, 0.75, 0.9), data, subset, weights, 
       na.action, transf=NULL, y = TRUE, interc=FALSE, 
-      foldid = NULL, nfolds = 10, cv = FALSE, n.boot=0, eps=.0001, ...)
+      foldid = NULL, nfolds = 10, cv = TRUE, n.boot=0, eps=.0001, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -57,9 +57,9 @@ optional. If \code{foldid} is not provided, it is scalar specifying the number o
 the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} argument in \code{ps()} is not a vector.
 }
   \item{cv}{
-logical. If \code{TRUE}, the returned object includes also the matrix \code{cv} 
+logical. If \code{TRUE} (default)), the returned object includes also the matrix \code{cv} 
 having number of rows equal to length of \code{lambda} and number of columns equal to \code{nfolds}.
-Ignored if the \code{lambda} argument in \code{ps()} is not a vector. 
+Ignored if the \code{lambda} argument in \code{ps()} is \emph{not} a vector. 
 }
   \item{n.boot}{
 Number of nonparametric (cases resampling) bootstrap samples to be used. Notice that the smoothing parameter (if relevant) does change 

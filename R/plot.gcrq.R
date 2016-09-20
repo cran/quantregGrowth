@@ -57,6 +57,8 @@ function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=
               if(!is.null(transf)) l1$y <- eval(parse(text=transf), list(y=l1$y))              
               if(is.null(l1$xlab)) l1$xlab<-term
               if(is.null(l1$ylab)) l1$ylab<-"Growth variable"
+              if(!is.null(l1$lwd)) l1$lwd<-NULL                            
+              if(!is.null(l1$col)) l1$col<-NULL                            
               if(!is.null(l1$col.p)) l1$col<-l1$col.p;l1$col.p<-NULL
               if(!is.null(l1$cex.p)) l1$cex<-l1$cex.p;l1$cex.p<-NULL
               if(!is.null(l1$pch.p)) l1$pch<-l1$pch.p;l1$pch.p<-NULL              

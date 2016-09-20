@@ -1,6 +1,6 @@
 gcrq <-
 function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, transf=NULL,
-    y=TRUE, interc=FALSE, foldid=NULL, nfolds=10, cv=FALSE, n.boot=0, eps=0.0001, ...){
+    y=TRUE, interc=FALSE, foldid=NULL, nfolds=10, cv=TRUE, n.boot=0, eps=0.0001, ...){
 #Growth Charts via QR
 #**************weights??
 #se cv=TRUE restituisce anche una componente 'cv' che e' una matrice di n.righe=n.valori di lambda e colonne nfolds
@@ -146,7 +146,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       lambdas<-lambda
       r.cv<-gcrq.rq.cv(Y, B[[1]], X, tau, interc, vMonot, vNdx, lambda, vDeg, vDiff, var.pen, cv, nfolds, foldid, eps=eps)
       lambda<-r.cv[[1]]
-    } else {
+      } else {
       cv<-FALSE
     }
     names(lambda)<-nomiVariabPEN
