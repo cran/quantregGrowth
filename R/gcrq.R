@@ -74,7 +74,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     testo.ps<-names(mf)[id.ps] #colnames(X)[id.ps-1+interc] #questa e' la stringa del tipo csda(..)
     testo.ridge<-names(mf)[id.ridge]
     #se NON ci sono termini di penalizz.
-    if(length(testo.ps)<=0 && length(testo.ridge)<=0){
+    if(length(testo.ps)<=0 && length(testo.ridge)<=0){ #senza termini smooth
+      cv<-FALSE
 #        fitter<- if(length(tau)>1) get("arq.fitMulti") else get("arq.fit")
 #        fit<-fitter(y=Y,X=X,tau=tau,g=g,beta0=b.start,control=control)
       fit<-ncross.rq.fitX(y=Y, X=X, taus=tau, eps=eps) #X gia' include l'intercetta

@@ -1,9 +1,9 @@
-predictQR <-
-function(object, newdata, xreg){
+predict.gcrq <-
+function(object, newdata, se.fit=FALSE, xreg,...){
 #xreg o newdata have to be provided. Nessun controllo (neanche sull'ordine dei coef)
 #if xreg is provided, newdata is ignored
 #
-#Attenzione: puo' dare problemi se la formula contiene "factor" 
+#Attenzione: puo' dare problemi (in realta' non funziona) se la formula contiene "factor" o "poly"
 #model.matrix(as.formula(m1$call$formula), data=newdata)
 bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
     # x: vettore di dati
@@ -54,14 +54,19 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       m<-min(attr(object$BB[[1]], "covariate.35"))       #as.numeric(attr(object$BB[[1]], "covariate.n"))
       M<-max(attr(object$BB[[1]], "covariate.35"))
       B.new<-bspline(c(m, x.new, M), ndx=info.smooth$ndx, deg=info.smooth$deg)
-      B.new<-B.new[-c(1,nrow(B.new)),] #???
-      XREG<-as.matrix(cbind(newdata,B.new))
-      colnames(XREG)<-c(nomiCoefUnpen, nomiCoefPen)
-      if("(Intercept)" %in% nomiCoef ) XREG<-cbind("(Intercept)"=1,XREG)
-      fit<-drop(XREG[,nomiCoef]%*%b)
+      B.new<-B.new[-c(1,nrow(B.new)),,drop=FALSE] #rimuovi le righe relative al min e max aggiunte sopra!
+      xreg <-as.matrix(cbind(newdata,B.new))
+      colnames(xreg)<-c(nomiCoefUnpen, nomiCoefPen)
+      if("(Intercept)" %in% nomiCoef ) xreg<-cbind("(Intercept)"=1, xreg)
+      fit<-drop(xreg[,nomiCoef]%*%b)
       } else {
       if(!missing(newdata)) warning("`newdata' ignored when 'xreg' is provided")      
       fit<-drop(xreg%*%b)
+      }
+      if(se.fit){
+             V<-vcov.gcrq(object)
+             se<-sapply(V, function(x)sqrt(rowSums((xreg %*% x * xreg))))
+             fit<-list(fit=fit, se=se)
       }
       return(fit)
       }

@@ -26,7 +26,7 @@ foldid=NULL, eps=.0001){
               lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen)
           xreg<-cbind(X,B)[which,,drop=FALSE]
           }
-          fit.values<-predictQR(fit, xreg=xreg)
+          fit.values<-predict.gcrq(fit, xreg=xreg)
           fit.values<-if(is.matrix(fit.values)) rbind(as.numeric(colnames(fit.values)),fit.values) else matrix(c(taus, fit.values), ncol=1)
           rho.values<-apply(fit.values, 2, function(z) sum(Rho(y[which]-z[-1],z[1])))        
           CV[j,i]<-sum(rho.values)

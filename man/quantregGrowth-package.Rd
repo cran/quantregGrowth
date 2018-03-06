@@ -7,19 +7,19 @@ Growth Charts via Regression Quantiles
 }
 \description{
 Fits non-crossing regression quantiles as a function of linear covariates 
-  and a smooth terms via B-splines with difference penalties.}
+  and smooth terms via B-splines with difference penalties.}
 \details{
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 0.3-2\cr
-Date: \tab 2016-09-20\cr
+Version: \tab 0.4-0\cr
+Date: \tab 2018-03-06\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles, \code{gcrq}
-estimates non-crossing quantile curves as a flexible function of a quantitative covariate (typically age), and possibly 
-additional linear terms. To ensure flexibility, B-splines with a difference L1 penalty are employed to estimate nonparametrically 
-the curves;  additionally monotonicity constraints may be also set. \code{plot.gcrq} displays the fitted lines. 
+estimates non-crossing quantile curves as a flexible function of quantitative covariates (typically age), and possibly 
+additional linear terms. To ensure flexibility, B-splines with a difference \eqn{L_1}{L1} penalty are employed to estimate nonparametrically 
+the curves;  additionally monotonicity constraints may be also set. \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 
 }
 \author{
 Vito M.R. Muggeo
@@ -33,6 +33,8 @@ Estimating growth charts via nonparametric quantile
 regression: a practical framework with application
 in ecology, \emph{Environ Ecol Stat}, \bold{20}, 519-531.
 
+Muggeo VMR. (2018). Using the R package quantregGrowth: some examples. 
+https://www.researchgate.net/publication/323573492
 
 Some references on growth charts (the first two papers employ the so-called LMS method)
 

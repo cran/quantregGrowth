@@ -1,6 +1,6 @@
 plot.gcrq <-
-function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
-  transf=NULL, lambda0=FALSE, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
+function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
+  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=FALSE, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
 #x: un oggetto restituito da gcrq()
 #add: se TRUE aggiunge le linee.....
 #y: se TRUE e se l'oggetto x contiene y (i dati) allora li disegna. Se add=TRUE, y viene posto a FALSE
@@ -10,6 +10,7 @@ function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=
 #select.tau: which quantile curves should be drawn? default (missing) is all
 #f.deriv: if TRUE, the first derivatives ofthe growth curves  are plotted
 #cv: se TRUE disegna la cross validation versus lambdas
+          y<-res
           if(is.null(x$info.smooth)) stop("plot for simple linear fits is not allowed")
           if(is.null(x$BB)) stop(" plot.gcrq() only works with smooth terms")          
           if(cv){
@@ -23,6 +24,8 @@ function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=
                plot(valoriL, valoriCV ,type="o",ylab="Cross Validation score",
                 xlab="lambda values",xaxt="n",...)
                axis(1, at=x$cv[,1], labels=round(x$cv[,1],2), las=2, cex.axis=.7)
+               points(valoriL[which.min(valoriCV)], min(valoriCV), pch=19)
+               #matlines(valoriL, x$cv[-1, -1], type="l", col=grey(.5))
                #boxplot(unlist(apply(m$cv[,-1],1,function(x)list(x)), recursive=FALSE))
                return(invisible(NULL))
               }
@@ -44,56 +47,129 @@ function(x, term, add=FALSE, y=FALSE, legend=FALSE, select.tau, deriv=FALSE, cv=
           nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
           b<-if(length(x$tau)<=1) x$coefficients[nomi.ok] else x$coefficients[nomi.ok,select.tau]
           fit.35<-if(deriv) x$Bderiv%*%b else BB%*%b #matrici
-          #se <-. BB%*% V(b) %*%t(BB)
           if("(Intercept)"%in%rownames(as.matrix(x$coefficients))) {
                 fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)",], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
                 }
+          m.x<- if(is.null(list(...)$xlim)) min(xvar.35) else min(list(...)$xlim)
+          M.x<- if(is.null(list(...)$xlim)) max(xvar.35) else max(list(...)$xlim)
+          select.n<-xvar.n>=m.x & xvar.n<= M.x
+          xvar.n<-xvar.n[select.n]
+          select.35<-xvar.35>=m.x & xvar.35<=M.x
+          xvar.35<-xvar.35[select.35]
+          fit.35<-fit.35[select.35, , drop=FALSE]
+
+          ####per disegnare IC
+          if(conf.level>0){
+              alpha <- 1 - conf.level
+              a <- alpha/2
+              a <- c(a, 1 - a)
+              fac <- qnorm(a)
+              V<-vcov.gcrq(x,term)
+              se<-sapply(V, function(x)sqrt(rowSums((BB %*% x * BB))))
+              low.q <- fit.35 + fac[1]*se[select.35, select.tau, drop=FALSE]
+              up.q <-  fit.35 + fac[2]*se[select.35, select.tau, drop=FALSE]
+              if (shade) {
+                     yy <- sapply(seq.int(ncol(fit.35)), function(.i) c(low.q[, .i], tail(up.q[, .i], 1), rev(up.q[, .i]), low.q[, .i][1]))
+                     xx <- c(xvar.35, tail(xvar.35, 1), rev(xvar.35), xvar.35[1])
+                     l2 <- c(list(x=xx, y=yy), list(...))
+                     l2$col <- if(is.null(l2$col)) adjustcolor(grey(.3), alpha.f = 0.25) else adjustcolor(l2$col, alpha.f = 0.25)
+                     if(is.null(l2$border)) l2$border <- NA
+                     } else {
+                       l2 <- c(list(x = xvar.35, y = low.q), list(...))
+                       l3 <- c(list(x = xvar.35, y = up.q), list(...))
+                       l2$type<-l3$type<-"l"
+                       if(is.null(l2$cex)) l2$cex <- l3$cex <- .25
+                       }
+              }          
+          #######
           l<-c(list(x=xvar.35, y=fit.35),list(...))
           cexL<-if(is.null(l$cex)) .6 else l$cex #sara' usato solo se legend=TRUE
           if(!is.null(transf)) l$y <- eval(parse(text=transf), list(y=l$y))
-          if(y && is.null(x$y)) warning("'y=TRUE' ignored.. the fit does not include the data", call.=FALSE)
-          if(y && !is.null(x$y)) {
+
+
+          #if(y && is.null(x$y)) warning("'y=TRUE' ignored.. the fit does not include the data", call.=FALSE)
+
+
+
+          #if(y && !is.null(x$y)) {
+          if(y) {
+              id.res.ok<-which.min(abs(x$taus[select.tau]-.5))
+              ff<-splinefun(xvar.35, fit.35[,id.res.ok])
+              #x$y <- as.matrix(x$residuals)[, id.res.ok] + ff(xvar.n)
+              x$y<- (as.matrix(x$residuals)[select.n,select.tau,drop=FALSE])[,id.res.ok] + ff(xvar.n)
               l1<-c(list(x=xvar.n, y=x$y),list(...))
+              l1$cex<-NULL
               if(!is.null(transf)) l1$y <- eval(parse(text=transf), list(y=l1$y))              
               if(is.null(l1$xlab)) l1$xlab<-term
-              if(is.null(l1$ylab)) l1$ylab<-"Growth variable"
+              if(is.null(l1$ylab)) l1$ylab<- all.vars(formula(x))[1]
               if(!is.null(l1$lwd)) l1$lwd<-NULL                            
               if(!is.null(l1$col)) l1$col<-NULL                            
               if(!is.null(l1$col.p)) l1$col<-l1$col.p;l1$col.p<-NULL
               if(!is.null(l1$cex.p)) l1$cex<-l1$cex.p;l1$cex.p<-NULL
               if(!is.null(l1$pch.p)) l1$pch<-l1$pch.p;l1$pch.p<-NULL              
-              if(legend) l1$xlim <- c(min(xvar.n),1.1*max(xvar.n))
+
+              if(is.null(l1$xlim)) l1$xlim <- c(min(xvar.35), max(xvar.35))  #era xvar.n
+              l1$x[l1$x>max(l1$xlim)]<-NA #metti NA prima di incrementare il limite
+              if(legend && !overlap) l1$xlim <- l1$xlim*c(1,1.1) 
+              if(conf.level>0 & is.null(l1$ylim)) {
+                      l1$ylim <- if(shade) range(c(l2$y, l1$y)) else c(min(c(l2$y,l1$y)), max(c(l3$y,l1$y)))
+                              }
               do.call(plot, l1)              
-              #plot(xvar.n, x$y, xlab=term, ylab="Growth variable")
-              if(legend) {
-                  #cexL<-if(is.null(l1$cex)) .6 else l1$cex TOGLIERE
-                  #text(1.05*max(xvar.n),  l$y[nrow(l$y),], x$taus[select.tau], cex=cexL)
-                  text(1.05*max(xvar.n),  l$y[nrow(l$y),], formatC(x$taus[select.tau], digits=2, format="f"),
-                      cex=cexL)
-                  legend<-FALSE
-                  }
               add<-TRUE
-              }
-          if(legend) {
-            x.leg<-l$x[(length(l$x)-8)]
-            l$x[(length(l$x)-11):(length(l$x)-5)]<-NA
-          }
+              } #end if(res)
+              
+              if(legend) {
+                         if(overlap) { #se xlim e' fornito come modificare??
+                            xleg<-l$x[92]  #xleg<-rev(l$x[l$x<max(l$xlim)])[8]
+                            yleg<-l$y[92,]
+                            l$x[89:95]<-NA
+                            } else {
+                              #l$xlim <- if(is.null(l$xlim)) c(min(xvar.n),1.1*max(xvar.n)) else c(min(l$xlim),1.1*max(l$xlim))
+                              #xleg<-1.05*max(xvar.n)
+                              if(is.null(l$xlim)) l$xlim <- c(min(xvar.35),max(xvar.35)) 
+                              l$xlim<- l$xlim*c(1, 1.1) 
+                              xleg<-.985*max(l$xlim)
+                              #yleg<- l$y[100,] #yleg<-tail(l$y,1)
+                              yleg<-tail(l$y[l$x<max(l$xlim), ],1)
+                              }
+                         }
+          M.x<- if(is.null(l$xlim)) max(xvar.35) else max(l$xlim) 
+          l$x[l$x>M.x]<-NA
           if(add){
                 do.call(matlines, l)
               } else {
                 if(is.null(l$xlab)) l$xlab<-term
-                if(is.null(l$ylab)) {l$ylab<-if(deriv) "Growth variable (first derivative)" else "Growth variable"}
+                if(is.null(l$ylab)) {l$ylab<-if(deriv) paste(all.vars(formula(x))[1]," (first derivative)") else all.vars(formula(x))[1]}
                 l$type<-"l"
                 l$col.p<-NULL
                 l$cex.p<-NULL
                 l$pch.p<-NULL
+                if(conf.level>0 & is.null(l$ylim)) {
+                     if(shade) l$ylim <- range(l2$y) else l$ylim <- c(min(l2$y), max(l3$y))
+                     }
                 do.call(matplot, l)
                 #if(y && !is.null(x$y)) points(xvar.n, x$y)
                 #matplot(xvar.35, fit.35, type="l", xlab=term, ylab="", ...)
               }
-          if(legend)  {
-              #cexL<-if(is.null(l$cex)) .6 else l$cex TOGLIERE
-              text(x.leg,  l$y[(length(l$x)-8),], formatC(x$taus[select.tau], digits=2, format="f"), cex=cexL)
-            #tau<-x$tau; mtext(bquote(tau == .(tau)),line=-2)
-            }
+          if(conf.level>0){
+               if(shade){
+                 l2$cex.p<- l2$col.p<-l2$pch.p<-NULL
+                 if(length(l2$col)!=length(select.tau)) l2$col<-rep(l2$col, length(select.tau))
+                 sapply(seq.int(ncol(fit.35)), function(.i){
+                                             l3 <- l2; l3$y <- l3$y[,.i]; l3$col <- l3$col[.i]; do.call("polygon", l3)
+                                             })
+                 } else {
+               l2$col<-l3$col<-l$col
+               l2$lwd<-l3$lwd<-l$lwd*.5
+               l2$lty<-l3$lty<-if(length(l$lty)==1) l$lty+1 else l$lty 
+               l2$x<-  l3$x<- l$x
+               do.call(matlines, l2)
+               do.call(matlines, l3) 
+               }
+          }
+
+          if(legend) {
+             
+             text(xleg, yleg, formatC(x$taus[select.tau], digits=2, format="f"), cex=cexL)
+             }
           }

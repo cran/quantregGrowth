@@ -6,7 +6,7 @@ Growth charts regression quantiles
 }
 \description{
 Estimation of nonparametric growth charts via quantile regression. Quantile curves are estimated via B-splines with 
-a L1 penalty on the spline coefficient differences, and non-crossing and monotonicity restrictions are set to obtain estimates
+a L1 penalty on the spline coefficient differences, while non-crossing and monotonicity restrictions are set to obtain estimates
 more biologically plausible. Linear terms are allowed in the model specification.
 }
 \usage{
@@ -20,7 +20,7 @@ gcrq(formula, tau = c(0.1, 0.25, 0.5, 0.75, 0.9), data, subset, weights,
 a standard R formula to specify the response in the left hand side, and the covariates in the right hand side. See Details.
 }
   \item{tau}{
-a numeric vector to specify the percentiles of interest. Default to \eqn{(.1,.25,.5,.75,.9)}.
+a numeric vector to specify the percentiles of interest. Default to probability values \eqn{(.1,.25,.5,.75,.9)}.
 }
   \item{data}{
 the dataframe where the variables required by the formula, subset and weights arguments are stored.
@@ -57,13 +57,12 @@ optional. If \code{foldid} is not provided, it is scalar specifying the number o
 the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} argument in \code{ps()} is not a vector.
 }
   \item{cv}{
-logical. If \code{TRUE} (default)), the returned object includes also the matrix \code{cv} 
-having number of rows equal to length of \code{lambda} and number of columns equal to \code{nfolds}.
+logical. If \code{TRUE} (default) and there is a single smooth term wherein \code{lambda} is a vector, the returned object includes also the matrix \code{cv} having number of rows equal to length of \code{lambda} and number of columns equal to \code{nfolds}.
 Ignored if the \code{lambda} argument in \code{ps()} is \emph{not} a vector. 
 }
   \item{n.boot}{
 Number of nonparametric (cases resampling) bootstrap samples to be used. Notice that the smoothing parameter (if relevant) does change 
-throughout the bootstrap replicates.
+throughout the bootstrap replicates.  Set \code{n.boot>0} if you plan to plot the fitted quantiles along with pointwise confidence intervals.
 }
   \item{eps}{
 A small positive constant to ensure noncrossing curves. Use it at your risk! If \code{eps} is large, the resulting fitted quantile 
@@ -81,19 +80,26 @@ in \code{ps()} is scalar, it represents the actual smoothing
 parameter. When it is a vector, 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is 
 fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} 
 may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely 
-\code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter is allowed with a unique ps() term in the formula.
+\code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter is allowed only with a unique ps() term in the formula.
 }
 \value{
 This function returns an object of class \code{gcrq}, that is a list with the following components
   \item{coefficients}{The matrix of estimated regression parameters; the number of columns equals the number of the fitted quantile curves.}
-  \item{B}{the design matrix of the final fit.}
+  \item{x}{the design matrix of the final fit (including the dummy rows used by penalty).}
   \item{df}{a vector reporting the df values for each quantile curve. See the section 'Warning' below.  }
   \item{rho}{a vector including the values of the objective functions at the solution for each quantile curve.}
+
+  \item{fitted.values}{a matrix of fitted quantiles (a column for each \code{tau} value)}
+  \item{residuals}{a matrix of residuals (a column for each \code{tau} value)}
+  \item{D.matrix}{the penalty matrix (multiplied by the smoothing parameter value).}
+  \item{D.matrix.nolambda}{the penalty matrix.}
+  \item{pLin}{number of linear covariates in the model.}
+
   \item{info.smooth}{some information on the smoothing term (if included in the formula via \code{ps}).}
   \item{BB}{further information on the smoothing term (if present in the formula via \code{ps}), including 
     stuff useful for plotting via \code{plot.gcrq()}.}
   \item{Bderiv}{if the smooth term is included, the first derivative of the B spline basis.}
-  \item{boot.coef}{The array including the estimated coefficients at different bootstrap samples.}
+  \item{boot.coef}{The array including the estimated coefficients at different bootstrap samples (provided that \code{n.boot}>0 has been set).}
   \item{y}{the response vector (if gcrq() has been called with \code{y=TRUE}).}
   \item{contrasts}{the contrasts used, when the model contains a factor.}
   \item{xlevels}{the levels of the factors (when included) used in fitting.}
@@ -105,12 +111,16 @@ V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).
 Estimating growth charts via nonparametric quantile
 regression: a practical framework with application
 in ecology, Environ Ecol Stat, 20, 519-531.
+
+V. M. R. Muggeo (2018). Using the R package quantregGrowth: some examples. 
+https://www.researchgate.net/publication/323573492
+
 }
 \author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 
 \note{
 This function is based upon the package quantreg by R. Koenker.
-Currently methods specific to the class \code{"gcrq"} are \code{plot.gcrq}, \code{print.gcrq} and \code{summary.gcrq}
+Currently methods specific to the class \code{"gcrq"} are \code{print.gcrq}, \code{summary.gcrq}, \code{vcov.gcrq}, and \code{plot.gcrq}.
 }
 
 \section{Warning}{
@@ -119,7 +129,7 @@ Typically this is the main (and unique) goal when dealing with growth charts. Ho
 there are some important limitations affecting the theory and the relevant package,
 \enumerate{
 \item Computation of model degrees of freedom
-\item Computation of standard errors
+\item Computation of standard errors, currently implemented via the nonparametric (cases resampling) bootstrap (if \code{n.boot>0})
 }
 Currently the function does not return standard errors for the parameter estimates (unless \code{n.boot}>0) and degrees of freedom 
 are roughtly computed by summing the 'zero' residuals. Due to noncrossing constraints, the number of zero residuals 
@@ -137,8 +147,8 @@ tauss<-seq(.1,.9,by=.1) #fix the percentiles of interest
 
 m1<-gcrq(y~ps(x, mon=0), tau=tauss, data=growthData) #unpenalized.. very wiggly curves
 #strongly penalized models
-m2<-gcrq(y~ps(x, mon=0, lambda=1000, pdiff=2), tau=tauss, data=growthData) #linear 
-m3<-gcrq(y~ps(x, mon=0, lambda=1000, pdiff=3), tau=tauss, data=growthData) #quadratic  
+m2<-gcrq(y~ps(x, mon=0, lambda=1000, d=2), tau=tauss, data=growthData) #linear 
+m3<-gcrq(y~ps(x, mon=0, lambda=1000, d=3), tau=tauss, data=growthData) #quadratic  
 
 #penalized model with monotonicity restrictions
 m4<-gcrq(y~ps(x, mon=1, lambda=10), tau=tauss, data=growthData)
@@ -147,17 +157,17 @@ m4<-gcrq(y~ps(x, mon=1, lambda=10), tau=tauss, data=growthData)
 m5<-gcrq(y~ps(x, mon=1, lambda=10, var.pen="(1:k)^3"), tau=tauss, data=growthData) 
 
 par(mfrow=c(2,2))
-plot(m1, pch=20, y=TRUE)
-plot(m2, pch=20, y=TRUE)
+plot(m1, pch=20, res=TRUE)
+plot(m2, pch=20, res=TRUE)
 plot(m3, add=TRUE, lwd=2)
-plot(m4, pch=20, y=TRUE)
-plot(m5, pch=20, y=TRUE, legend=TRUE)
+plot(m4, pch=20, res=TRUE)
+plot(m5, pch=20, res=TRUE, legend=TRUE)
 
 #select lambda via 'K-fold' CV
 m6<-gcrq(y~ps(x, lambda=seq(0,100,l=20)), tau=tauss, data=growthData) 
 par(mfrow=c(1,2))
 plot(m6, cv=TRUE) #display CV score versus lambda values
-plot(m6, y=TRUE) #fitting at the best lambda value
+plot(m6, res=TRUE) #fitting at the best lambda value
 
 }
 }

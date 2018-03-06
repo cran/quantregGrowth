@@ -11,13 +11,13 @@ summary and print methods for class \code{gcrq}
 \usage{
 \method{summary}{gcrq}(object, digits = max(3, getOption("digits") - 3), ...)
 
-#\method{print}{summary.gcrq}(x,
+%\method{print}{summary.gcrq}(x,
 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{
-An object of class "gcrq".
+An object of class \code{"gcrq"}.
 }
   \item{digits}{
 controls number of digits printed in output.
@@ -27,9 +27,8 @@ further arguments.
 }
 }
 \details{
-These methods are a very preliminary stage. Currently \code{print.gcrq} only warns that there exist no print method :-). 
-\code{summary.gcrq} simply returns some information on the fitted object, such as the call, number of parameters and 
-values of the objective functions at solution.
+This method is at a preliminary stage. \code{summary.gcrq} returns some information on the fitted quantile curve at different probability values, such as the estimates, standard errors, values of check (objective) function values at solution. Currently there is no \code{print.summary.gcrq} method, so 
+\code{summary.gcrq} itself prints results.
 }
 %\value{
 %%  ~Describe the value returned

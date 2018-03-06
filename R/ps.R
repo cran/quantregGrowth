@@ -1,5 +1,5 @@
 ps <-
-function(x,monotone=0,lambda=0,pdiff=3,ndx=NULL,deg=3,var.pen=NULL){
+function(x,monotone=0,lambda=0,d=3,ndx=NULL,deg=3,var.pen=NULL){
 #se ndx NULL the empirical rule of Ruppert (2001) is used: min(n/4,40)
 #se lambda<0 allora viene stimato, altrimenti deve essere un valore numerico
 #var.pen: una stringa del tipo "1:k" per varying penalty
@@ -8,7 +8,7 @@ function(x,monotone=0,lambda=0,pdiff=3,ndx=NULL,deg=3,var.pen=NULL){
     r<-x
     attr(r,"ndx")<-ndx
     attr(r,"deg")<-deg
-    attr(r,"pdiff")<-pdiff
+    attr(r,"pdiff")<-d# pdiff
     attr(r,"monot")<-monotone #isTRUE(monotone)
     attr(r,"lambda")<-lambda
     attr(r,"nomeX")<-deparse(substitute(x))

@@ -4,6 +4,13 @@
 *				  	*
 *****************************************
 
+=============
+version 0.4-0  
+=============
+* plot.gcrq() gains arguments 'conf.level', 'shade', and 'overlap' to portray fitted quantiles along with pointwise confidence intervals (based on cases resampling bootstrap). Thanks to Shervin Asgari for the final input.
+* predict.gcrq() introduced (it replaces predicQR()). It gains argument 'se.fit' to compute standard errors of the fitted quantiles
+* Some minor corrections/changes/bug fixes. 
+
 
 =============
 version 0.3-2  

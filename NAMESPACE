@@ -2,17 +2,20 @@ import(splines)
 import(quantreg)
 
 importFrom("graphics", "axis", "matlines", "matplot", "matpoints",
-             "plot", "text")
+             "plot", "text","points")
 importFrom("stats", ".getXlevels", "contrasts", "is.empty.model",
              "model.matrix", "model.response", "model.weights", "terms",
-             "var")
+             "var","formula","qnorm","splinefun","update","printCoefmat")
+importFrom("grDevices", "adjustcolor", "grey")
+importFrom("utils", "tail")
+
 export(gcrq, gcrq.rq.cv, ncross.rq.fitX, ncross.rq.fitXB, 
-      ps, predictQR, summary.gcrq, print.gcrq, plot.gcrq, vcov.gcrq)
+      ps, summary.gcrq, print.gcrq, plot.gcrq, vcov.gcrq, predict.gcrq)
 
 S3method(plot,gcrq)
 S3method(print,gcrq)
 S3method(summary,gcrq)
 S3method(vcov,gcrq)
-
+S3method(predict,gcrq)
 
 

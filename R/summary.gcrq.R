@@ -20,11 +20,12 @@ function(object, digits = max(3, getOption("digits") - 3), ...){
               ris<-cbind(Est=est)
               }
           rownames(ris)<-rownames(as.matrix(object$coefficients))
-          cat("\nPercentile:", object$taus[j], "  Check function: ", object$rho[j] , "\n")
+          cat("\nPercentile:", object$taus[j], "  Check function: ", round(object$rho[j], digits-1) , "\n")
 #          cat("Coefficients:\n")
-          print(ris)
+          #print(ris)
+          printCoefmat(ris, digits = digits)
           }          
-          cat("\nNo. of obs:", n, "  Check function =", round(sum(object$rho),digits), "  SIC =", round(sic,digits),"\n")
+          cat("\nNo. of obs:", n, "  Check function =", round(sum(object$rho),digits-1), "  SIC =", round(sic,digits-1),"\n")
           cat("No. of est. params:", p,"(for each curve);", p*n.tau,"(total)\n")       
           }
        

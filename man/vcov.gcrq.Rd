@@ -7,11 +7,11 @@ Variance-Covariance Matrix for a Fitted 'cgrq' Model
 }
 
 \description{
-Returns the variance-covariance matrix of the parameter estimates of a fitted gcrq model object.
+Returns the (currently only bootstrap-based) variance-covariance matrix of the parameter estimates of a fitted gcrq model object.
 }
 
 \usage{
-\method{vcov}{gcrq}(object, ...)
+\method{vcov}{gcrq}(object, term, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 
@@ -19,13 +19,16 @@ Returns the variance-covariance matrix of the parameter estimates of a fitted gc
   \item{object}{
 a fitted model object of class \code{"gcrq"} returned by \code{gcrq()}.
   }
+  \item{term}{
+if specified the returned covariance matrix includes entries relevant to parameter estimates for that 'term' only. If missing, teh returned matrices refer to all model parameter estimates.
+  }
   \item{...}{
 additional arguments.  
 }
 }
 \details{
 If the \code{"gcrq"} object includes results from bootstrap runs (namely the component \code{boot.coef} is not \code{NULL}),
-\code{vcov.gcrq()} computes the covariance matrix for teh parameter estimates of each quantile curve .
+\code{vcov.gcrq()} computes the covariance matrix for the parameter estimates of each quantile curve. If not, 100 bootstrap replicates are run.
 }
 \value{
 A list including the covariance matrices of the parameter estimates for each regression quantile curve.
