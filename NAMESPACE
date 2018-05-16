@@ -2,11 +2,11 @@ import(splines)
 import(quantreg)
 
 importFrom("graphics", "axis", "matlines", "matplot", "matpoints",
-             "plot", "text","points")
+             "plot", "text","points", "abline", "par", "segments")
 importFrom("stats", ".getXlevels", "contrasts", "is.empty.model",
              "model.matrix", "model.response", "model.weights", "terms",
              "var","formula","qnorm","splinefun","update","printCoefmat")
-importFrom("grDevices", "adjustcolor", "grey")
+importFrom("grDevices", "adjustcolor", "grey", "colorRampPalette")
 importFrom("utils", "tail")
 
 export(gcrq, gcrq.rq.cv, ncross.rq.fitX, ncross.rq.fitXB, 

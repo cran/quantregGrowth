@@ -10,7 +10,7 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 \usage{
 \method{plot}{gcrq}(x, term, add = FALSE, res = FALSE, conf.level=0, legend = FALSE, 
     select.tau, deriv = FALSE, cv = FALSE, transf=NULL, lambda0=FALSE, 
-    shade=FALSE, overlap=FALSE, ...)
+    shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -60,13 +60,23 @@ logical. If \code{TRUE} and \code{conf.level}>0, the pointwise confidence interv
 logical. If \code{TRUE}, and \code{legend=TRUE}, the legend crosses the fitted curve on the right side. Otherwise the leged is placed outside the 
 fitted lines.
 }
+  \item{rug}{
+logical. If \code{TRUE}, the covariate distribution is displayed as a rug plot at the foot of the plot. Default to \code{FALSE}.
+}
+  \item{n.points}{
+numeric. Number of values used to plot the fitted curves. Large values provide smoother curves.
+}
+  \item{grid}{
+if provided, a grid of horizontal and vertical lines is drawn. \code{grid} has to be a list with the following components \code{x,y,col,lty,lwd}. 
+If \code{x} (\code{y}) is a vector, the vertical (horizontal) lines are drawn at these locations. If \code{x} (\code{y}) is a scalar, the vertical (horizontal) lines are drawn at \code{x} (\code{y}) equspaced values. \code{col, lty,lwd} refer to the lines to be drawn.
+}
 
   \item{\dots}{
 Additional graphical parameters:\cr 
-`xlab', `ylab', `ylim' 'and `xlim' (effective when \code{add=FALSE});\cr
-'lwd', 'col' and 'lty' for the fitted quantile lines; \cr
-`cex' for the legend (if \code{legend=TRUE}); \cr
-'cex.p', 'col.p', and 'pch.p' for the points (if \code{res=TRUE}).
+\code{xlab}, \code{ylab}, \code{ylim}, and \code{xlim} (effective when \code{add=FALSE});\cr
+\code{lwd}, \code{lty}, and \code{col} for the fitted quantile lines; \code{col} means color palette for the different curves \cr
+\code{cex} for the legend (if \code{legend=TRUE}); \cr
+\code{cex.p}, \code{col.p}, and \code{pch.p} for the points (if \code{res=TRUE}).
 }
 }
 \details{
@@ -96,6 +106,7 @@ Vito M. R. Muggeo with contribution by Gianluca Sottile (gianluca.sottile@unipa.
 ## see ?gcrq
 ##plot(m5, conf.level=.8, lty=1)
 ##plot(m5, lty=1:3, select.tau=c(.1,.5,.9))
+##plot(m5, grid=list(x=8,y=5)) #a 8 times 5 grid.. 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -36,6 +36,14 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
     B
     }
+#=================================
+#check if the formula includes 'invalid' interactions with ps()
+    s1<-strsplit(as.character(formula)[3],"\\+")[[1]] #separa i termini "additivi"..
+    idC<-sapply(sapply(lapply(s1, function(x) grep("ps\\(",x)), function(x) (x>=1)), isTRUE)
+    stringa<-s1[idC]
+    if(length(strsplit(stringa,"\\*")[[1]])>1) stop("invalid usage of symbol '*' in conjunction with ps()")
+    if(length(strsplit(stringa,"\\:")[[1]])>1) stop("invalid usage of symbol ':' in conjunction with ps()")
+#=================================
     call <- match.call()
     if (missing(data)) data <- environment(formula)
     mf <- match.call(expand.dots = FALSE)
@@ -123,10 +131,12 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           #per i disegni..
           xdisegno<-seq(min(mVariabili[,j]),max(mVariabili[,j]), l=100)
           BB1<-bspline(xdisegno,ndx=vNdx[j], deg=vDeg[j])
-          Bderiv[[j]]<-bspline(xdisegno,ndx=vNdx[j], deg=vDeg[j], deriv=1)
-          attr(BB1,"covariate.n")<- mVariabili[,j] #NB mVariabili[,j] (che viene assegnato a attr(,"covariate.n")) contiene altri attributi "ndx", "deg", "pdiff", "monot", "lambda","nomeX"
+          attr(BB1,"covariate.n")<- mVariabili[,j] # mVariabili[,j] (assegnato a attr(,"covariate.n")) contiene altri attributi "ndx", "deg", ...
           attr(BB1,"covariate.35")<- xdisegno
+          attr(BB1,"ndx")<- vNdx[j]
+          attr(BB1,"deg")<- vDeg[j]
           BB[[j]]<-BB1 
+          Bderiv[[j]]<-bspline(xdisegno,ndx=vNdx[j], deg=vDeg[j], deriv=1)
           nomiCoefPEN[[j]]<-paste(nomiPS[j],"ps",1:ncol(B[[j]]),sep=".")
               }
         nomiVariabPEN<-nomiPS
@@ -203,6 +213,20 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         colnames(fit$cv)<-c("lambdas",paste("fold",1:ncol(r.cv[[2]]), sep=""))
         #fit$foldid<-attr(r.cv[[2]], "foldid")
         attr(fit$cv, "foldid")<-attr(r.cv[[2]], "foldid")
+        #warning se lambda selezionato e' al limite..
+        valoriL<-fit$cv[,1]
+        valoriCV<-apply(fit$cv[,-1],1,mean)
+        lambda.ott<- valoriL[which.min(valoriCV)]
+        boundary<-FALSE
+        if(lambda.ott<=min(valoriL)) {
+             boundary<-TRUE
+             etic<- "left"
+             }
+        if(lambda.ott>=max(valoriL)) {
+             boundary<-TRUE
+             etic<- "right"
+             }
+        if(boundary) warning("The lambda selected by CV is on the", paste(" (",etic,") ",sep=""),"boundary of the range set in ps(..,lambda=..)", call. = FALSE)
         }
     class(fit)<-c("gcrq")
     fit

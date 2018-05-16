@@ -12,8 +12,8 @@ Fits non-crossing regression quantiles as a function of linear covariates
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 0.4-0\cr
-Date: \tab 2018-03-06\cr
+Version: \tab 0.4-1\cr
+Date: \tab 2018-05-16\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles, \code{gcrq}
@@ -33,7 +33,7 @@ Estimating growth charts via nonparametric quantile
 regression: a practical framework with application
 in ecology, \emph{Environ Ecol Stat}, \bold{20}, 519-531.
 
-Muggeo VMR. (2018). Using the R package quantregGrowth: some examples. 
+Muggeo VMR (2018). Using the R package quantregGrowth: some examples. \cr
 https://www.researchgate.net/publication/323573492
 
 Some references on growth charts (the first two papers employ the so-called LMS method)

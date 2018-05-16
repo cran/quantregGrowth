@@ -112,7 +112,7 @@ Estimating growth charts via nonparametric quantile
 regression: a practical framework with application
 in ecology, Environ Ecol Stat, 20, 519-531.
 
-V. M. R. Muggeo (2018). Using the R package quantregGrowth: some examples. 
+V. M. R. Muggeo (2018). Using the R package quantregGrowth: some examples. \cr
 https://www.researchgate.net/publication/323573492
 
 }

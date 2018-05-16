@@ -1,6 +1,6 @@
 plot.gcrq <-
 function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
-  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=FALSE, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
+  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
 #x: un oggetto restituito da gcrq()
 #add: se TRUE aggiunge le linee.....
 #y: se TRUE e se l'oggetto x contiene y (i dati) allora li disegna. Se add=TRUE, y viene posto a FALSE
@@ -10,6 +10,36 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
 #select.tau: which quantile curves should be drawn? default (missing) is all
 #f.deriv: if TRUE, the first derivatives ofthe growth curves  are plotted
 #cv: se TRUE disegna la cross validation versus lambdas
+#===============================================================================
+bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
+    # x: vettore di dati
+    # xlr: il vettore di c(xl,xr)
+    # ndx: n.intervalli in cui dividere il range
+    # deg: il grado della spline
+    # Restituisce ndx+deg basis functions per ndx-1 inner nodi
+    #ci sono "ndx+1" nodi interni + "2*deg" nodi esterni
+#    require(splines)
+  if(is.null(knots)) {
+    if (is.null(xlr)) {
+        xl <- min(x) - 0.01 * diff(range(x))
+        xr <- max(x) + 0.01 * diff(range(x))
+    }
+    else {
+        if (length(xlr) != 2)
+            stop("quando fornito, xlr deve avere due componenti")
+        xl <- xlr[1]
+        xr <- xlr[2]
+    }
+    dx <- (xr - xl)/ndx
+    knots <- seq(xl - deg * dx, xr + deg * dx, by = dx)
+      }
+      #else {
+      #if(length(knots)!=(ndx+1+2*deg)) stop("errore nel numero di nodi fornito")
+      #}
+    B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
+    B
+    }
+#===============================================================================
           y<-res
           if(is.null(x$info.smooth)) stop("plot for simple linear fits is not allowed")
           if(is.null(x$BB)) stop(" plot.gcrq() only works with smooth terms")          
@@ -44,6 +74,13 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
           BB<-x$BB[[term]]
           xvar.n<-attr(BB,"covariate.n")
           xvar.35<-attr(BB,"covariate.35")
+          browser()
+          ###########=================================================
+          if(n.points!=100){
+                 xvar.35<- seq(min(xvar.35),max(xvar.35), length=n.points)
+                 BB<-bspline(xvar.35, ndx=attr(BB,"ndx"), deg= attr(BB,"deg"))
+                 }
+          ###########=================================================
           nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
           b<-if(length(x$tau)<=1) x$coefficients[nomi.ok] else x$coefficients[nomi.ok,select.tau]
           fit.35<-if(deriv) x$Bderiv%*%b else BB%*%b #matrici
@@ -58,6 +95,15 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
           xvar.35<-xvar.35[select.35]
           fit.35<-fit.35[select.35, , drop=FALSE]
 
+          l<-c(list(x=xvar.35, y=fit.35),list(...))
+          cexL<-if(is.null(l$cex)) .6 else l$cex #sara' usato solo se legend=TRUE
+          if(!is.null(transf)) l$y <- eval(parse(text=transf), list(y=l$y))
+          #se col<0
+          if(!is.null(l$col) && !is.character(l$col) && l$col < 0){ 
+              Lab.palette <- colorRampPalette(c("blue", "green", "red"), space = "Lab")      #c("blue", "orange", "red")
+              l$col<-Lab.palette(length(select.tau))
+              }
+
           ####per disegnare IC
           if(conf.level>0){
               alpha <- 1 - conf.level
@@ -71,7 +117,10 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
               if (shade) {
                      yy <- sapply(seq.int(ncol(fit.35)), function(.i) c(low.q[, .i], tail(up.q[, .i], 1), rev(up.q[, .i]), low.q[, .i][1]))
                      xx <- c(xvar.35, tail(xvar.35, 1), rev(xvar.35), xvar.35[1])
-                     l2 <- c(list(x=xx, y=yy), list(...))
+                     l2<-l
+                     l2$x<-xx
+                     l2$y<-yy
+                     #l2 <- c(list(x=xx, y=yy), list(...))
                      l2$col <- if(is.null(l2$col)) adjustcolor(grey(.3), alpha.f = 0.25) else adjustcolor(l2$col, alpha.f = 0.25)
                      if(is.null(l2$border)) l2$border <- NA
                      } else {
@@ -82,16 +131,6 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
                        }
               }          
           #######
-          l<-c(list(x=xvar.35, y=fit.35),list(...))
-          cexL<-if(is.null(l$cex)) .6 else l$cex #sara' usato solo se legend=TRUE
-          if(!is.null(transf)) l$y <- eval(parse(text=transf), list(y=l$y))
-
-
-          #if(y && is.null(x$y)) warning("'y=TRUE' ignored.. the fit does not include the data", call.=FALSE)
-
-
-
-          #if(y && !is.null(x$y)) {
           if(y) {
               id.res.ok<-which.min(abs(x$taus[select.tau]-.5))
               ff<-splinefun(xvar.35, fit.35[,id.res.ok])
@@ -114,15 +153,27 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
               if(conf.level>0 & is.null(l1$ylim)) {
                       l1$ylim <- if(shade) range(c(l2$y, l1$y)) else c(min(c(l2$y,l1$y)), max(c(l3$y,l1$y)))
                               }
+#browser()
               do.call(plot, l1)              
+              if(!is.null(grid)){
+                    xval<- if(length(grid$x)==1) seq(par()$usr[1], par()$usr[2] , l= grid$x+2)[-c(1,grid$x)] else grid$x
+                    yval<- if(length(grid$y)==1) seq(par()$usr[3], par()$usr[4] , l= grid$y+2)[-c(1,grid$y)] else grid$y
+                    if(is.null(grid$col)) grid$col<-grey(.7)
+                    if(is.null(grid$lty)) grid$lty<- 3
+                    if(is.null(grid$lwd)) grid$lwd<- .7
+                    abline(h=yval, v=xval, col=grid$col, lty=grid$lty, lwd=grid$lwd)
+                    }
               add<-TRUE
+#smoothScatter(x, nrpoints = 0)
+#smoothScatter(x)
+#smoothScatter(x, colramp= colorRampPalette(c("white", "black")))
               } #end if(res)
               
               if(legend) {
                          if(overlap) { #se xlim e' fornito come modificare??
-                            xleg<-l$x[92]  #xleg<-rev(l$x[l$x<max(l$xlim)])[8]
-                            yleg<-l$y[92,]
-                            l$x[89:95]<-NA
+                            xleg<-l$x[floor(.92*n.points)]  #xleg<-rev(l$x[l$x<max(l$xlim)])[8]
+                            yleg<-l$y[floor(.92*n.points),]
+                            l$x[floor(.89*n.points):floor(.95*n.points)]<-NA
                             } else {
                               #l$xlim <- if(is.null(l$xlim)) c(min(xvar.n),1.1*max(xvar.n)) else c(min(l$xlim),1.1*max(l$xlim))
                               #xleg<-1.05*max(xvar.n)
@@ -131,10 +182,11 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
                               xleg<-.985*max(l$xlim)
                               #yleg<- l$y[100,] #yleg<-tail(l$y,1)
                               yleg<-tail(l$y[l$x<max(l$xlim), ],1)
-                              }
+                            }
                          }
           M.x<- if(is.null(l$xlim)) max(xvar.35) else max(l$xlim) 
           l$x[l$x>M.x]<-NA
+#browser()          
           if(add){
                 do.call(matlines, l)
               } else {
@@ -148,9 +200,22 @@ function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, 
                      if(shade) l$ylim <- range(l2$y) else l$ylim <- c(min(l2$y), max(l3$y))
                      }
                 do.call(matplot, l)
+                   if(!is.null(grid)){
+                    xval<- if(length(grid$x)==1) seq(par()$usr[1], par()$usr[2] , l= grid$x+2)[-c(1,grid$x)] else grid$x
+                    yval<- if(length(grid$y)==1) seq(par()$usr[3], par()$usr[4] , l= grid$y+2)[-c(1,grid$y)] else grid$y
+                    if(is.null(grid$col)) grid$col<-grey(.7)
+                    if(is.null(grid$lty)) grid$lty<- 3
+                    if(is.null(grid$lwd)) grid$lwd<- .7
+                    abline(h=yval, v=xval, col=grid$col, lty=grid$lty, lwd=grid$lwd)
+                    }
                 #if(y && !is.null(x$y)) points(xvar.n, x$y)
                 #matplot(xvar.35, fit.35, type="l", xlab=term, ylab="", ...)
               }
+        if(rug) {
+            segments(xvar.n, rep(par()$usr[3],length(xvar.n)), xvar.n,
+              rep(par()$usr[3],length(xvar.n))+ abs(diff(par()$usr[3:4]))/40)
+              }
+
           if(conf.level>0){
                if(shade){
                  l2$cex.p<- l2$col.p<-l2$pch.p<-NULL
