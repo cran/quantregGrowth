@@ -164,10 +164,10 @@ plot(m4, pch=20, res=TRUE)
 plot(m5, pch=20, res=TRUE, legend=TRUE)
 
 #select lambda via 'K-fold' CV
-m6<-gcrq(y~ps(x, lambda=seq(0,100,l=20)), tau=tauss, data=growthData) 
+m6<-gcrq(y~ps(x, lambda=seq(0.02,100,l=20)), tau=tauss, data=growthData) 
 par(mfrow=c(1,2))
 plot(m6, cv=TRUE) #display CV score versus lambda values
-plot(m6, res=TRUE) #fitting at the best lambda value
+plot(m6, res=TRUE, grid=list(x=5, y=8)) #fitted curves at the best lambda value
 
 }
 }

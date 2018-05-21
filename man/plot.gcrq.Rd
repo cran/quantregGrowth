@@ -10,7 +10,7 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 \usage{
 \method{plot}{gcrq}(x, term, add = FALSE, res = FALSE, conf.level=0, legend = FALSE, 
     select.tau, deriv = FALSE, cv = FALSE, transf=NULL, lambda0=FALSE, 
-    shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, ...)
+    shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, smoos=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -68,13 +68,15 @@ numeric. Number of values used to plot the fitted curves. Large values provide s
 }
   \item{grid}{
 if provided, a grid of horizontal and vertical lines is drawn. \code{grid} has to be a list with the following components \code{x,y,col,lty,lwd}. 
-If \code{x} (\code{y}) is a vector, the vertical (horizontal) lines are drawn at these locations. If \code{x} (\code{y}) is a scalar, the vertical (horizontal) lines are drawn at \code{x} (\code{y}) equspaced values. \code{col, lty,lwd} refer to the lines to be drawn.
+If \code{x} (\code{y}) is a vector, the vertical (horizontal) lines are drawn at these locations. If \code{x} (\code{y}) is a scalar, the vertical (horizontal) lines are drawn at \code{x} (\code{y}) equispaced values. \code{col, lty,lwd} refer to the lines to be drawn.
 }
-
+  \item{smoos}{
+logical, indicating if the residuals (provided that \code{res=TRUE}) will be drawn using a \emph{smoothed} scatterplot. If \code{NULL} (default) the smoothed scatterplot will be employed when the number of observation is larger than 10000.
+}
   \item{\dots}{
 Additional graphical parameters:\cr 
 \code{xlab}, \code{ylab}, \code{ylim}, and \code{xlim} (effective when \code{add=FALSE});\cr
-\code{lwd}, \code{lty}, and \code{col} for the fitted quantile lines; \code{col} means color palette for the different curves \cr
+\code{lwd}, \code{lty}, and \code{col} for the fitted quantile lines; \code{col<0} means color palette for the different curves; \cr
 \code{cex} for the legend (if \code{legend=TRUE}); \cr
 \code{cex.p}, \code{col.p}, and \code{pch.p} for the points (if \code{res=TRUE}).
 }

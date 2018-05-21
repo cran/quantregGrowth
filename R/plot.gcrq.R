@@ -1,6 +1,6 @@
 plot.gcrq <-
 function(x, term, add=FALSE, res=FALSE, conf.level=0, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
-  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
+  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, smoos=NULL,...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
 #x: un oggetto restituito da gcrq()
 #add: se TRUE aggiunge le linee.....
 #y: se TRUE e se l'oggetto x contiene y (i dati) allora li disegna. Se add=TRUE, y viene posto a FALSE
@@ -74,7 +74,6 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           BB<-x$BB[[term]]
           xvar.n<-attr(BB,"covariate.n")
           xvar.35<-attr(BB,"covariate.35")
-          browser()
           ###########=================================================
           if(n.points!=100){
                  xvar.35<- seq(min(xvar.35),max(xvar.35), length=n.points)
@@ -154,10 +153,17 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
                       l1$ylim <- if(shade) range(c(l2$y, l1$y)) else c(min(c(l2$y,l1$y)), max(c(l3$y,l1$y)))
                               }
 #browser()
-              do.call(plot, l1)              
+              if(is.null(smoos)) { smoos <- if(length(l1$x)>10000) TRUE else FALSE }
+              if(smoos){
+                  l1$type<-"n"
+                  do.call(plot, l1)
+                  smoothScatter(l1$x, l1$y, add=TRUE, nrpoints = 0, colramp= colorRampPalette(c("white", grey(.4))))
+                  } else {
+                do.call(plot, l1)              
+                }
               if(!is.null(grid)){
-                    xval<- if(length(grid$x)==1) seq(par()$usr[1], par()$usr[2] , l= grid$x+2)[-c(1,grid$x)] else grid$x
-                    yval<- if(length(grid$y)==1) seq(par()$usr[3], par()$usr[4] , l= grid$y+2)[-c(1,grid$y)] else grid$y
+                    xval<- if(length(grid$x)==1) seq(par()$usr[1], par()$usr[2] , l= grid$x+2)[-c(1,grid$x+2)] else grid$x
+                    yval<- if(length(grid$y)==1) seq(par()$usr[3], par()$usr[4] , l= grid$y+2)[-c(1,grid$y+2)] else grid$y
                     if(is.null(grid$col)) grid$col<-grey(.7)
                     if(is.null(grid$lty)) grid$lty<- 3
                     if(is.null(grid$lwd)) grid$lwd<- .7
@@ -201,8 +207,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
                      }
                 do.call(matplot, l)
                    if(!is.null(grid)){
-                    xval<- if(length(grid$x)==1) seq(par()$usr[1], par()$usr[2] , l= grid$x+2)[-c(1,grid$x)] else grid$x
-                    yval<- if(length(grid$y)==1) seq(par()$usr[3], par()$usr[4] , l= grid$y+2)[-c(1,grid$y)] else grid$y
+                    xval<- if(length(grid$x)==1) seq(par()$usr[1], par()$usr[2] , l= grid$x+2)[-c(1,grid$x+2)] else grid$x
+                    yval<- if(length(grid$y)==1) seq(par()$usr[3], par()$usr[4] , l= grid$y+2)[-c(1,grid$y+2)] else grid$y
                     if(is.null(grid$col)) grid$col<-grey(.7)
                     if(is.null(grid$lty)) grid$lty<- 3
                     if(is.null(grid$lwd)) grid$lwd<- .7

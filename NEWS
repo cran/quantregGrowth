@@ -5,6 +5,12 @@
 *****************************************
 
 
+=============
+version 0.4-2  
+=============
+* plot.gcrq() gains arguments 'smoos' to plot data using a smoothed scatterplot (usefl for large dataset)
+
+
 
 =============
 version 0.4-1  

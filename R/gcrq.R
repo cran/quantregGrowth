@@ -40,9 +40,17 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 #check if the formula includes 'invalid' interactions with ps()
     s1<-strsplit(as.character(formula)[3],"\\+")[[1]] #separa i termini "additivi"..
     idC<-sapply(sapply(lapply(s1, function(x) grep("ps\\(",x)), function(x) (x>=1)), isTRUE)
-    stringa<-s1[idC]
-    if(length(strsplit(stringa,"\\*")[[1]])>1) stop("invalid usage of symbol '*' in conjunction with ps()")
-    if(length(strsplit(stringa,"\\:")[[1]])>1) stop("invalid usage of symbol ':' in conjunction with ps()")
+    stringa<-s1[idC]  #solo i termini con ps
+    
+    if(any(sapply(stringa, function(.x) grepl("\\* ps\\(", .x)))) stop("invalid usage of symbol '*' in conjunction with ps()")
+    if(any(sapply(stringa, function(.x) grepl("\\:ps\\(", .x)))) stop("invalid usage of symbol ':' in conjunction with ps()")
+    
+    if(any(sapply(stringa, function(.x) grepl("\\):", .x)))) stop("invalid usage of symbol ':' in conjunction with ps()")
+    if(any(sapply(stringa, function(.x) grepl("\\) \\*", .x)))) stop("invalid usage of symbol '*' in conjunction with ps()")
+
+    
+#    if(length(strsplit(stringa,"\\*")[[1]])>1) stop("invalid usage of symbol '*' in conjunction with ps()")
+#    if(length(strsplit(stringa,"\\:")[[1]])>1) stop("invalid usage of symbol ':' in conjunction with ps()")
 #=================================
     call <- match.call()
     if (missing(data)) data <- environment(formula)

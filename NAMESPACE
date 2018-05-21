@@ -2,7 +2,7 @@ import(splines)
 import(quantreg)
 
 importFrom("graphics", "axis", "matlines", "matplot", "matpoints",
-             "plot", "text","points", "abline", "par", "segments")
+             "plot", "text","points", "abline", "par", "segments", "smoothScatter")
 importFrom("stats", ".getXlevels", "contrasts", "is.empty.model",
              "model.matrix", "model.response", "model.weights", "terms",
              "var","formula","qnorm","splinefun","update","printCoefmat")
