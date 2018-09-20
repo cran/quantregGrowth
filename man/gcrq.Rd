@@ -6,7 +6,7 @@ Growth charts regression quantiles
 }
 \description{
 Estimation of nonparametric growth charts via quantile regression. Quantile curves are estimated via B-splines with 
-a L1 penalty on the spline coefficient differences, while non-crossing and monotonicity restrictions are set to obtain estimates
+a \eqn{L_1}{L1} penalty on the spline coefficient differences, while non-crossing and monotonicity restrictions are set to obtain estimates
 more biologically plausible. Linear terms are allowed in the model specification.
 }
 \usage{
@@ -37,7 +37,8 @@ a function which indicates how the possible `NA's are handled.
 }
   \item{transf}{
 an optional character string (with \code{"y"} as argument) meaning a function to apply to the response variable 
-  before fitting. E.g. \code{"log(y+0.1)"}.
+  before fitting. E.g. \code{"log(y+0.1)"}. It can be useful to guarantee fitted values within a specified range. If provided,
+  the resulting oject fit will include the corresponding inverse (numerically computed) to be used to back transform predictions (see argument \code{transform} in \code{predict.gcrq} and \code{plot.gcrq}).
 }
   \item{y}{
 logical. If \code{TRUE} (default) the returned object includes also the responses vector.
@@ -121,6 +122,13 @@ https://www.researchgate.net/publication/323573492
 \note{
 This function is based upon the package quantreg by R. Koenker.
 Currently methods specific to the class \code{"gcrq"} are \code{print.gcrq}, \code{summary.gcrq}, \code{vcov.gcrq}, and \code{plot.gcrq}.
+
+If the sample is not large, and/or the basis rank is large (i.e. a large number of columns) and/or there are relatively few distinct values in the covariate distribution, the fitting algorithm may fail returning error messages like the following 
+
+\code{> Error info =  20 in stepy2: singular design}
+
+To remedy it, it suffices to change some arguments in \code{ps()}: to decrease \code{ndx} or \code{deg} (even by a small amount) or 
+to increase (even by a small amount) the lambda value.
 }
 
 \section{Warning}{
@@ -138,7 +146,7 @@ where a single quantile curve has been fitted.
 }
 
 \seealso{
- \code{\link{ps}}, \code{\link{plot.gcrq}}
+ \code{\link{ps}}, \code{\link{plot.gcrq}}, \code{\link{predict.gcrq}}
 }
 \examples{
 \dontrun{

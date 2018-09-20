@@ -35,8 +35,7 @@ value.
 The difference order of the penalty. Default to 3.
 }
   \item{ndx}{
-The number of intervals of the covariate range used to build the B-spline basis. If \code{NULL}, default, 
-the empirical rule of Ruppert is used, namely \eqn{min(n/4,40)}{min(n/4,40)}.
+The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, the empirical rule of Ruppert is used, namely \eqn{min(n/4,40)}{min(n/4,40)}. It could be reduced (but no less than 10, say) if the sample size is not large, and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}.
 }
   \item{deg}{
 The degree of the spline polynomial. Default to 3. 

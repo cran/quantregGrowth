@@ -1,8 +1,8 @@
 Package: quantregGrowth
 Type: Package
 Title: Growth Charts via Regression Quantiles
-Version: 0.4-2
-Date: 2018-05-21
+Version: 0.4-3
+Date: 2018-09-18
 Authors@R: c(person(given = c("Vito","M.","R."), family = "Muggeo", role =
         c("aut", "cre"), email = "vito.muggeo@unipa.it", comment=c(ORCID="0000-0002-3386-4054")))
 Maintainer: Vito M. R. Muggeo <vito.muggeo@unipa.it>
@@ -10,7 +10,7 @@ Description: Fits non-crossing regression quantiles as a function of linear cova
 Depends: quantreg, splines
 License: GPL
 NeedsCompilation: no
-Packaged: 2018-05-21 12:26:55 UTC; enea
-Author: Vito M. R. Muggeo [aut, cre] (<https://orcid.org/0000-0002-3386-4054>>)
+Packaged: 2018-09-20 16:11:11 UTC; enea
+Author: Vito M. R. Muggeo [aut, cre] (<https://orcid.org/0000-0002-3386-4054>)
 Repository: CRAN
-Date/Publication: 2018-05-21 15:55:04 UTC
+Date/Publication: 2018-09-20 16:30:03 UTC

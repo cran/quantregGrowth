@@ -45,8 +45,8 @@ logical. If \code{TRUE} and the \code{"gcrq"} object contains the matrix \code{c
 the cross-validation scores against the lambda values are plotted.
 }
   \item{transf}{
-An optional character string (with "y" as argument) meaning a function to apply to the response variable 
-  before plotting. E.g. \code{"(exp(y)-0.1)"}. See argument \code{"transf"} in \code{gcrq()}.
+An optional character string (with \code{"y"} as argument) meaning a function to apply to the predicted values (and possibly residuals) 
+  before plotting. E.g. \code{"(exp(y)-0.1)"}. If \code{NULL} (default) it is taken as the inverse of function \code{transf} (*if*) supplied in \code{gcrq}. See argument \code{"transf"} in \code{gcrq()}. If \code{transf} has been specified in \code{gcrq()}, use \code{transf="y"} to force plotting on the transformed scale, i.e. without back transforming.
 }
   \item{lambda0}{
 logical. If \code{cv=TRUE}, should the CV plot include also the first CV value? Usually the first CV value is at lambda=0, 
@@ -102,7 +102,7 @@ Vito M. R. Muggeo with contribution by Gianluca Sottile (gianluca.sottile@unipa.
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{gcrq}}
+\code{\link{gcrq}}, \code{\link{predict.gcrq}}
 }
 \examples{
 ## see ?gcrq

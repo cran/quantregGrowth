@@ -47,16 +47,21 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
                if(is.null(x$cv)) stop("the object does not include the 'cv' component")
                valoriL<-x$cv[,1]
                valoriCV<-apply(x$cv[,-1],1,mean)
+               #aa <- apply(x$cv[, -1], 1, quantile, probs=c(.25,.75))  #se vuoi riportare anche i quantili .25, .75
+               
                if(!lambda0) {
                   valoriL<-valoriL[-1]
                   valoriCV<-valoriCV[-1]
+                  #aa<-aa[,-1]
                   }
                plot(valoriL, valoriCV ,type="o",ylab="Cross Validation score",
                 xlab="lambda values",xaxt="n",...)
                axis(1, at=x$cv[,1], labels=round(x$cv[,1],2), las=2, cex.axis=.7)
                points(valoriL[which.min(valoriCV)], min(valoriCV), pch=19)
-               #matlines(valoriL, x$cv[-1, -1], type="l", col=grey(.5))
-               #boxplot(unlist(apply(m$cv[,-1],1,function(x)list(x)), recursive=FALSE))
+               #segments(valoriL, aa[1,], valoriL, aa[2,], lty=3) #comunque devi aggiustare ylim..
+               #------------
+               #matlines(valoriL, x$cv[-1, -1], type="l", col=grey(.5)) #non saprei..
+               #boxplot(unlist(apply(x$cv[,-1],1,function(.x)list(.x)), recursive=FALSE)) #ma non si vede NULLA!!!
                return(invisible(NULL))
               }
           if(length(x$BB)>1) {if(missing(term)) stop("please provide 'term'")} else {term=names(x$BB)}
@@ -96,7 +101,21 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 
           l<-c(list(x=xvar.35, y=fit.35),list(...))
           cexL<-if(is.null(l$cex)) .6 else l$cex #sara' usato solo se legend=TRUE
-          if(!is.null(transf)) l$y <- eval(parse(text=transf), list(y=l$y))
+          
+          
+          Ylab.ok<-all.vars(formula(x))[1]
+          
+          if(is.null(transf)){
+              f.transf.inv<-attr(x$fitted.values, "transf.inv")
+              #if(!is.null(f.transf.inv)) Ylab.ok <- paste(Ylab.ok, " (", x$call$transf,")", sep="")
+              } else {
+              if(!is.character(transf)) stop(" 'transf' should be NULL or character")
+              Ylab.ok <- paste(Ylab.ok, " (", transf,")", sep="")
+              f.transf.inv<- eval(parse(text=paste("function(y){", transf, "}"))) #assegna la funzione a partire dal carattere..
+              } 
+         if(!is.null(f.transf.inv)) l$y<- apply(as.matrix(l$y), 2, f.transf.inv) #l$y <- eval(parse(text=transf), list(y=l$y))               
+            
+          
           #se col<0
           if(!is.null(l$col) && !is.character(l$col) && l$col < 0){ 
               Lab.palette <- colorRampPalette(c("blue", "green", "red"), space = "Lab")      #c("blue", "orange", "red")
@@ -137,9 +156,10 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
               x$y<- (as.matrix(x$residuals)[select.n,select.tau,drop=FALSE])[,id.res.ok] + ff(xvar.n)
               l1<-c(list(x=xvar.n, y=x$y),list(...))
               l1$cex<-NULL
-              if(!is.null(transf)) l1$y <- eval(parse(text=transf), list(y=l1$y))              
+              #if(!is.null(transf)) l1$y <- eval(parse(text=transf), list(y=l1$y))              
+              if(!is.null(f.transf.inv)) l1$y<- apply(as.matrix(l1$y), 2, f.transf.inv) #l1$y <- f.transf.inv(l1$y)
               if(is.null(l1$xlab)) l1$xlab<-term
-              if(is.null(l1$ylab)) l1$ylab<- all.vars(formula(x))[1]
+              if(is.null(l1$ylab)) l1$ylab<- Ylab.ok
               if(!is.null(l1$lwd)) l1$lwd<-NULL                            
               if(!is.null(l1$col)) l1$col<-NULL                            
               if(!is.null(l1$col.p)) l1$col<-l1$col.p;l1$col.p<-NULL
@@ -197,7 +217,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
                 do.call(matlines, l)
               } else {
                 if(is.null(l$xlab)) l$xlab<-term
-                if(is.null(l$ylab)) {l$ylab<-if(deriv) paste(all.vars(formula(x))[1]," (first derivative)") else all.vars(formula(x))[1]}
+                if(is.null(l$ylab)) {l$ylab<-if(deriv) paste(Ylab.ok," (first derivative)") else Ylab.ok}
                 l$type<-"l"
                 l$col.p<-NULL
                 l$cex.p<-NULL

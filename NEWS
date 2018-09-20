@@ -5,11 +5,20 @@
 *****************************************
 
 
+
+=============
+version 0.4-3  
+=============
+* gcrq() now computes and saves the inverse of transformation function (argument 'transf') to be used when plotting fitted quantiles on the original scale (thanks to Sophie Carles for her input)
+* predict.gcrq() did not work for objects including multiple smooth terms (thanks to Sean Fleming for reporting)
+* 'newdata' in predic.gcrq may be missing (fitted values are returned)
+
+
 =============
 version 0.4-2  
 =============
-* plot.gcrq() gains arguments 'smoos' to plot data using a smoothed scatterplot (usefl for large dataset)
-
+* plot.gcrq() gains arguments 'smoos' to plot data using a smoothed scatterplot (useful for large datasets)
+* bugs fixed in plot.gcrq
 
 
 =============
@@ -32,7 +41,7 @@ version 0.4-0
 version 0.3-2  
 =============
 * cv defaults to TRUE when multiple tuning parameter values are provided in ps() 
-* bugs fixed (plot.gcrq() erroneusly was affected by 'lwd' when plotting points)
+* bugs fixed (in plot.gcrq() 'lwd' was erroneusly affecting the data points)
 
 
 =============

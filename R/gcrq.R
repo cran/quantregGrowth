@@ -48,6 +48,13 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     if(any(sapply(stringa, function(.x) grepl("\\):", .x)))) stop("invalid usage of symbol ':' in conjunction with ps()")
     if(any(sapply(stringa, function(.x) grepl("\\) \\*", .x)))) stop("invalid usage of symbol '*' in conjunction with ps()")
 
+    #fun <- function(s) sub("(\\().*(\\))", "\\1\\2", s) 
+    #ss1 <- "z:f(5, a=3, b=4, c='1:4', d=2)"
+    #ss2 <- "f(5, a=3, b=4, c=\"1:4\", d=2)*z"
+    
+    #fun(ss1) --> "z:f()"
+    #fun(ss2) --> "f()*z" 
+
     
 #    if(length(strsplit(stringa,"\\*")[[1]])>1) stop("invalid usage of symbol '*' in conjunction with ps()")
 #    if(length(strsplit(stringa,"\\:")[[1]])>1) stop("invalid usage of symbol ':' in conjunction with ps()")
@@ -68,7 +75,11 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         dim(Y) <- NULL
         if (!is.null(nm)) names(Y) <- nm
         }
-    if(!is.null(transf)) Y <- eval(parse(text=transf), list(y=Y)) 
+    if(!is.null(transf)) {
+                         Y.orig<-Y
+                         Y <- eval(parse(text=transf), list(y=Y))
+                         transf.inv<-splinefun(Y, Y.orig)
+                         } 
     X <- if (!is.empty.model(mt))
         model.matrix(mt, mf, contrasts)
     else stop("error in the design matrix")#matrix(, NROW(Y), 0L)
@@ -112,7 +123,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     if(length(testo.ps)>0){
 #        z<-with(mf,eval(parse(text=testo.ps))) #questo va bene se ce ne solo uno di testo.ps
         l<-lapply(testo.ps,function(xx)with(mf,eval(parse(text=xx),envir=data)))
-        vNdx<-sapply(l,function(xx){if(is.null(attr(xx,"ndx"))) round(min(40,n/4)) else attr(xx,"ndx")})
+        vNdx<-sapply(l,function(xx){if(is.null(attr(xx,"ndx"))) round(min(40,n/4)) else round(attr(xx,"ndx"))})
         #vNdx<-sapply(l,function(xx)attr(xx,"ndx"))
         #  f.Ndx<-if(is.null(vNdx[[1]])) vNdx<- round(min(40,n/4))
         vDeg<-sapply(l,function(xx)attr(xx,"deg"))
@@ -199,7 +210,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     #if(ncol(X)>0) nn<-c("(Intercept)",nn)
     if(length(tau)>1) rownames(fit$coefficients)<-nn else names(fit$coefficients)<-nn
     names(BB)<-nomiVariabPEN
-    fit$info.smooth<-list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff)
+    fit$info.smooth <- list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff)
     #names(BB)<-names(fit$lambda)<-names(fit$edf.smooth)<-nomiVariabPEN
     #fit$B<-B  #n righe..
     fit$BB<-BB #35 righe e attr "covariate.n" "covariate.35". #NB attr(,"covariate.n") contiene altri attributi "ndx", "deg", "pdiff", "monot", "lambda","nomeX"
@@ -207,6 +218,10 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     } #fine del "se ci sono termini smooth"
     #--------------------------------------
     if(y) fit$y<-Y
+    if(!is.null(transf)) {
+        attr(fit$fitted.values, "transf.inv") <- transf.inv
+        attr(fit$fitted.values, "transf") <- eval(parse(text=paste("function(y){", transf, "}"))) 
+        }
     fit$contrasts <- attrContr  
     colnames(mf)[id.ps]<-testo.ps #devi sostituire i nome altrimenti .getXlevels() non funziona
     #non capisco (o non ricordo) perche' lo avevo messo..
