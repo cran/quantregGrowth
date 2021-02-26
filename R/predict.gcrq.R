@@ -40,20 +40,36 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
          fit<- object$fitted.values
             } else {
       nomiCoef<-rownames(b)
+      
+      nomiCoefPen <- as.vector(sapply(object$BB, function(.x) attr(.x,"coef.names")))
+      nomiCoefUnpen <- setdiff(nomiCoef, nomiCoefPen )
+      id.coef.smooth<-match(nomiCoefPen, nomiCoef)
+      
       info.smooth<-object$info.smooth #estrai 
-      p<- info.smooth$deg + info.smooth$ndx
+      #p<- info.smooth$deg + info.smooth$ndx #non tiene conto se una colonna e stata rimossa
+      
       nome.smooth<-names(object$BB) #nomi variabili smooth
       n.smooth<-length(nome.smooth)
-      #se p NON e' scalare:
-      #if(length(nome.smooth)>1){
-      nomiCoefPen.List<-mapply(function(.x, .y) paste(.x, ".ps." ,1:.y,sep=""), nome.smooth, p, SIMPLIFY=FALSE)
-      #}      
-      nomiCoefPen <- unlist(nomiCoefPen.List)      
-      #se p e' scalare: nomiCoefPen<-paste(nome.smooth, ".ps." ,1:p,sep="")
-      id.coef.smooth<-match(nomiCoefPen, nomiCoef)
+      ##se p NON e' scalare:
+      ##if(length(nome.smooth)>1){
+      #nomiCoefPen.List<-mapply(function(.x, .y) paste(.x, ".ps." ,1:.y,sep=""), nome.smooth, p, SIMPLIFY=FALSE)
+      ##}      
+      #nomiCoefPen <- unlist(nomiCoefPen.List)      
+      ##se p e' scalare: nomiCoefPen<-paste(nome.smooth, ".ps." ,1:p,sep="")
+      #id.coef.smooth<-match(nomiCoefPen, nomiCoef)
+      #nomiCoefUnpen<-nomiCoef[-id.coef.smooth]
+      #nomiVarModello<-all.vars(object$call$formula)[-1]
+      
       b.smooth<-b[id.coef.smooth, ]
-      nomiCoefUnpen<-nomiCoef[-id.coef.smooth]
-      nomiVarModello<-all.vars(object$call$formula)[-1]
+      nomiVarModelloRispo<-all.vars(object$call$formula) #include la risposta che puo' includere piu nome se e scritta come y[g==1]
+      nRispo<-length(all.vars(update.formula(object$call$formula,.~1)))
+      nomiVarModello<-nomiVarModelloRispo[-(1:length(nRispo))]
+      
+      #"nomiVarModello" puo includere anche altri nomi che non sono variabili, cioe argomenti di ps(). Ad es., se la call e ps(x,center=T)
+      #ci sara il nome T.. Quindi si deve eliminare..
+      nomiID<-sapply(nomiVarModello, function(.x) grep(.x, nomiCoef),simplify =FALSE)
+      nomiVarModello<-names(nomiID)[sapply(nomiID,length) !=0]
+     
       id.var<-match(nomiVarModello, names(newdata))
       if(any(is.na(id.var))) stop("`newdata' does not include all the covariates in the model")
       newdata<-newdata[,id.var,drop=FALSE] 
@@ -66,13 +82,24 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           m<-min(attr(object$BB[[i]], "covariate.35"))       #as.numeric(attr(object$BB[[1]], "covariate.n"))
           M<-max(attr(object$BB[[i]], "covariate.35"))
           B.new<-bspline(c(m, x.new[,i], M), ndx=info.smooth$ndx[i], deg=info.smooth$deg[i])
+          #modifica la base in funzione di drop, center, vc
+          if(isTRUE(attr(object$BB[[i]],"drop"))) B.new<-B.new[,-1,drop=FALSE]
+          if(isTRUE(attr(object$BB[[i]],"center"))){
+            colmeansB<-attr(object$BB[[i]],"colmeansB")
+            B.new0 <- B.new
+            B.new <- sweep(B.new, 2, colmeansB)
+          }
+          if(isTRUE(attr(object$BB[[i]],"vc"))) stop("predict.gcrq() does not (yet) work with VC terms")
+
           B.new<-B.new[-c(1,nrow(B.new)),,drop=FALSE] #rimuovi le righe relative al min e max aggiunte sopra!
           B.new.list[[i]]<- B.new           
             }
       B.new<- do.call(cbind, B.new.list)
       xreg <-as.matrix(cbind(newdata,B.new))
-      colnames(xreg)<-c(nomiCoefUnpen, nomiCoefPen)
       if("(Intercept)" %in% nomiCoef ) xreg<-cbind("(Intercept)"=1, xreg)
+      
+      colnames(xreg)<-c(nomiCoefUnpen, nomiCoefPen)
+      
       fit<-drop(xreg[,nomiCoef]%*%b)
           }
       } else {

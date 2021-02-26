@@ -1,23 +1,19 @@
-print.gcrq <-
-function(x, digits = max(3, getOption("digits") - 3), ...){
+print.gcrq <-function(x, digits = max(3, getOption("digits") - 4), ...){
+#cat("\nNo. of obs:", n, "  No. of estimated parameters:", p, " (",x$pLin+sum(x$info.smooth$dropvcList) ,"unpenalized )" ,"\n")
       n<-nrow(as.matrix(x$fitted.values))
-#      cat("\n***Noncrossing regression quantiles via P-splines***\n")
-#      cat("\nCall:\n")
-      cat("Call:\n")
-      print(x$call)
+      p<-nrow(as.matrix(x$coefficients))
       n.tau<-length(x$taus)
-      if(n.tau>1) {
-          p<-nrow(as.matrix(x$coefficients))
-          cat("\nNo. of obs:", n, "  No. of estimated parameters:", p,"(for each curve);", p*n.tau,"(total)\n")
-          cat("Quantile curves (",length(x$taus),") at percentiles: ", x$taus, "\n")
-          cat("Check functions:", round(x$rho,2), "\n")
-          sic<- sum(log(x$rho/n)) +log(n)*sum(x$df)/(2*n)
-          cat("Overall Check function =", round(sum(x$rho),digits), "  SIC =", round(sic,digits),"\n")
-          } else {
-          p<-length(x$coefficients)
-          cat("\nNo. of obs:", n, "  No. of estimated parameters:", p,"\n")
-          cat("Quantile curves at percentile: ", x$taus, "\n")
-          sic<- sum(log(x$rho/n)) +log(n)*sum(x$df)/(2*n)
-          cat("Check function =", round(sum(x$rho),digits), "  SIC =", round(sic,digits),"\n")
-          }
-      }
+      cat("Formula: ")
+      print(x$call$formula)
+      cat("\nQuantile curve at: ", paste(x$taus, collapse="  "), "\n")
+      cat("No. of obs:", n, "  No. of param.:", p,"(for each tau);", p*n.tau,"(total)\n")
+      cat("\nEquivalent Degrees of Freedom:\n")
+      if(rownames(x$edf.j)[1]=="Xlin") rownames(x$edf.j)[1]<-"unpenalized"
+      rownames(x$edf.j)[-1] <-x$info.smooth$testo.ps
+      print(round(x$edf.j, digits))
+      all.sic <- log(x$rho/n) + log(n) *colSums(x$edf.j)/(2*n)
+      sic<- sum(all.sic) #sum(log(x$rho/n)) +log(n)*sum(x$edf.j)/(2*n)
+      cat("\nOverall check fn =", round(sum(x$rho),digits), "  SIC =", round(sic,digits), " (on edf =",paste(round(sum(x$edf.j),digits),")",sep="") ,"\n")
+}
+
+

@@ -14,21 +14,17 @@ called by the user.
 }
 
 \usage{
-ncross.rq.fitXB(y, x, B = NULL, X = NULL, taus, interc=FALSE, 
-  monotone = FALSE, adj.middle = FALSE, ndx = 10, lambda = 0, 
-  deg = 3, dif = 3, eps = 1e-04, plott = 0, var.pen = NULL, ...)
+ncross.rq.fitXB(y, x, B=NULL, X=NULL, taus, monotone=FALSE, concave=FALSE, 
+    nomiBy=NULL, byVariabili=NULL, ndx=10, deg=3, dif=3, lambda=0, eps=.0001, 
+    var.pen=NULL, penMatrix=NULL, lambda.ridge=0,  
+    dropcList=FALSE, decomList=FALSE, dropvcList=FALSE, ...)
 
-ncross.rq.fitX(y, X = NULL, taus, lambda = 0, adj.middle = FALSE, 
-  eps = 1e-04, ...)
+ncross.rq.fitX(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04, ...)
 
-%ncross.rq.fitB(y, x, B = NULL, taus, monotone = FALSE, adj.middle = 
-%  FALSE, ndx = 10, lambda = 0, deg = 3, dif = 3, plott = 0, 
-%  var.pen = NULL, eps = 1e-04, ...)
-
-gcrq.rq.cv(y, B, X, taus, interc=FALSE, monotone, ndx, lambda, deg, dif, 
-  var.pen = NULL, cv = TRUE, nfolds = 10, foldid = NULL,eps = 1e-04)
+gcrq.rq.cv(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL, 
+    penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, 
+    dropvcList=FALSE, nfolds=10, foldid=NULL, eps=.0001, ...)
 }
-
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{y}{the responses vector. see \code{\link{gcrq}}
@@ -45,20 +41,23 @@ the design matrix for the linear parameters.
   \item{taus}{
 the percentiles of interest.
 }
-  \item{interc}{
-should the model intercept be estimated? see the same argument in \code{\link{gcrq}}
-}
+%  \item{interc}{
+%should the model intercept be estimated? see the same argument in \code{\link{gcrq}}
+%}
   \item{monotone}{
 numerical value (-1/0/+1) to define a non-increasing, unconstrained, and non-decreasing flexible fit, respectively. 
 }
-  \item{adj.middle}{
-ignore it!
+  \item{concave}{
+numerical value (-1/0/+1) to possibly define concave or convex fits. 
+}
+  \item{nomiBy}{
+useful for VC models (when \code{B} is not provided).
+}
+  \item{byVariabili}{
+useful for VC models (when \code{B} is not provided).
 }
   \item{ndx}{
-number of internal intervals within the covariate range, see \code{\link{ps}}.
-}
-  \item{lambda}{
-smoothing parameter, see \code{\link{ps}}.
+number of internal intervals within the covariate range, see \code{ndx} in \code{\link{ps}}.
 }
   \item{deg}{
 spline degree, see \code{\link{ps}}.
@@ -66,16 +65,37 @@ spline degree, see \code{\link{ps}}.
   \item{dif}{
 difference order of the spline coefficients in the penalty term.
 }
+  \item{lambda}{
+smoothing parameter value(s), see \code{lambda} in \code{\link{ps}}.
+}
   \item{eps}{
 tolerance value.
-}
-  \item{plott}{
-Plotting results, unuseful. See \code{\link{plot.gcrq}}.
 }
   \item{var.pen}{
 Varying penalty, see \code{\link{ps}}.
 }
-  \item{foldid}{
+  \item{penMatrix}{
+Specified penalty matrix, see \code{pen.matrix} in \code{\link{ps}}.
+}
+%  \item{err.rho}{
+% The smoothing parameter is estimated via the ratio \code{err.rho}/\code{u.rho} see \code{\link{gcrq}}.
+%}
+%  \item{u.rho}{
+% The smoothing parameter is estimated via the ratio \code{err.rho}/\code{u.rho} see \code{\link{gcrq}}.
+%}
+  \item{lambda.ridge}{
+a (typically very small) value, see \code{lambda.ridge} \code{\link{gcrq}}.
+}
+  \item{dropcList}{
+see \code{dropc} in \code{\link{ps}}.
+}
+  \item{decomList}{
+see \code{decompose} in \code{\link{ps}}.
+}
+  \item{dropvcList}{
+see \code{\link{ps}}.
+}
+ \item{foldid}{
 vector (optional) to perform cross validation, see the same arguments in \code{\link{gcrq}}.
 }
   \item{nfolds}{

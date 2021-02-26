@@ -1,6 +1,20 @@
 citHeader("To cite quantregGrowth in publications use:")
 
 citEntry(entry="Article",
+         title = "Multiple smoothing parameters selection in additive regression quantiles",
+         author = personList(as.person("V.M.R. Muggeo"),as.person("F. Torretta"),as.person("P. Eilers"),as.person("M. Sciandra"), as.person("M. Attanasio")),
+         journal      = "Statistical Modelling",
+         year         = "2020",
+	       volume       = "xx",
+	       pages        = "xx--xx",
+	       url          = "https://journals.sagepub.com/doi/full/10.1177/1471082X20929802",
+         textVersion = 
+         paste("Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2020).", 
+               "Multiple smoothing parameters selection in additive regression quantiles.",
+               "Statistical Modelling, doi: 10.1177/1471082X20929802. To appear.")
+)
+
+citEntry(entry="Article",
          title = "Estimating growth charts via nonparametric quantile regression: a practical framework with application in ecology",
          author = personList(as.person("V.M.R. Muggeo"),as.person("M. Sciandra"), as.person("A. Tomasello"), as.person("S. Calvo")),
          journal      = "Environmental and Ecological Statistics",

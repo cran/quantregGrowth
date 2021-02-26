@@ -47,10 +47,10 @@ and number of columns depending on the number of fitted quantile curves (i.e len
 \author{
 Vito M.R. Muggeo
 }
-\note{
-This function is at a preliminary stage and it should be replaced by the method \code{predict.gcrq}. 
-Please use it with care. This function is not expect to work if the fitted model includes factors or terms like \code{poly()}.
-}
+%\note{
+%This function is at a preliminary stage and it should be replaced by the method \code{predict.gcrq}. 
+%Please use it with care. This function is not expect to work if the fitted model includes factors or terms like \code{poly()}.
+%}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -59,6 +59,9 @@ Please use it with care. This function is not expect to work if the fitted model
 }
 \examples{
 ##see ?gcrq
+## predict(m1, newdata=data.frame(x=c(.3,.7)))
+
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

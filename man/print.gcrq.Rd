@@ -6,7 +6,7 @@
   Printing the most important feautures of a gcrq model.
 }
 \usage{
-\method{print}{gcrq}(x, digits = max(3, getOption("digits") - 3), ...)
+\method{print}{gcrq}(x, digits = max(3, getOption("digits") - 4), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

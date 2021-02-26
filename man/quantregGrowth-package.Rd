@@ -3,23 +3,24 @@
 \alias{quantregGrowth}
 \docType{package}
 \title{
-Growth Charts via Regression Quantiles
+Growth Charts via Smooth Regression Quantiles with Automatic Smoothness Estimation and Additive Terms 
 }
 \description{
 Fits non-crossing regression quantiles as a function of linear covariates 
-  and smooth terms via B-splines with difference penalties.}
+  and smooth terms via B-splines with difference penalties. Automatic smoothness estimation for several spline terms is allowed. }
 \details{
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 0.4-3\cr
-Date: \tab 2018-09-18\cr
+Version: \tab 1.0-0\cr
+Date: \tab 2021-02-26\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles, \code{gcrq}
 estimates non-crossing quantile curves as a flexible function of quantitative covariates (typically age), and possibly 
 additional linear terms. To ensure flexibility, B-splines with a difference \eqn{L_1}{L1} penalty are employed to estimate nonparametrically 
-the curves;  additionally monotonicity constraints may be also set. \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 
+the curves;  additionally monotonicity and concavity constraints may be also set. Multiple smooth terms are allowed and the amount of smoothness for each term is 
+efficiently included in the model fitting algorithm, see Muggeo et al. (2020). \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 
 }
 \author{
 Vito M.R. Muggeo
@@ -27,6 +28,9 @@ Vito M.R. Muggeo
 Maintainer: Vito M.R. Muggeo <vito.muggeo@unipa.it>
 }
 \references{
+Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2020).
+Multiple smoothing parameters selection in additive regression quantiles,
+\emph{Statistical Modelling}, to appear.
 
 Muggeo VMR, Sciandra M, Tomasello A, Calvo S (2013).
 Estimating growth charts via nonparametric quantile

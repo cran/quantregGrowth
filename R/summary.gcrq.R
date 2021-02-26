@@ -1,5 +1,9 @@
 summary.gcrq <-
-function(object, digits = max(3, getOption("digits") - 3), ...){
+function(object, digits = max(3, getOption("digits") - 3), signif.stars =getOption("show.signif.stars"), ...){
+      edfS<-object$edf.j
+      if(rownames(edfS)[1]=="Xlin") edfS<-edfS[-1,,drop=FALSE]
+      rownames(edfS)<-paste("ps(", names(object$BB), ")",sep="")
+      colnames(edfS)<-rep("edf", ncol(edfS))
       cat("\n***Noncrossing regression quantiles via P-splines***\n")
       cat("\nCall:\n")
       print(object$call)
@@ -7,7 +11,7 @@ function(object, digits = max(3, getOption("digits") - 3), ...){
       n<-nrow(as.matrix(object$fitted.values))
       p<-nrow(as.matrix(object$coefficients ))
       n.tau<-ncol(as.matrix(object$coefficients))
-      sic<- sum(log(object$rho/n)) +log(n)*sum(object$df)/(2*n)
+      sic<- sum(log(object$rho/n)) +log(n)*sum(object$edf.j)/(2*n)
       
 
       if(!is.null(object$boot.coef)) list.vcov<-vcov.gcrq(object)
@@ -15,17 +19,27 @@ function(object, digits = max(3, getOption("digits") - 3), ...){
           est<-as.matrix(object$coefficients)[,j]
           if(!is.null(object$boot.coef)) {
               se<-sqrt(diag(list.vcov[[j]])) 
-              ris<-cbind(Est=est, StErr=se, ratio=round(est/se,2))
+              ris<-cbind(Est=est, StErr=se, "|z|"=round(abs(est)/se,2), 
+                     "p-value"=pchisq((est/se)^2,df=1,lower.tail = FALSE) )
               } else {
               ris<-cbind(Est=est)
               }
           rownames(ris)<-rownames(as.matrix(object$coefficients))
+          nomi.p.spline<-as.vector(sapply(object$BB, function(.x) attr(.x,"coef.names")))
+          nomi.param<-setdiff(rownames(ris), nomi.p.spline )
+          ris<-ris[nomi.param,,drop=FALSE]
           cat("\nPercentile:", object$taus[j], "  Check function: ", round(object$rho[j], digits-1) , "\n")
-#          cat("Coefficients:\n")
-          #print(ris)
-          printCoefmat(ris, digits = digits)
-          }          
-          cat("\nNo. of obs:", n, "  Check function =", round(sum(object$rho),digits-1), "  SIC =", round(sic,digits-1),"\n")
-          cat("No. of est. params:", p,"(for each curve);", p*n.tau,"(total)\n")       
-          }
+          if(object$pLin>0){
+             cat("\nparametric terms :\n")
+             printCoefmat(ris, digits = digits, signif.stars = signif.stars)
+         }
+          cat("\nsmooth terms:\n")
+          printCoefmat(edfS[,j,drop=FALSE], digits = digits)
+          cat("====================\n")
+      }          
+      #cat("\nNo. of obs:", n, "  Check function =", round(sum(object$rho),digits-1), "  SIC =", round(sic,digits-1),"\n")
+      cat("\nNo. of obs:", n, "  Check function =", round(sum(object$rho),digits-1), 
+              " SIC =", round(sic,digits), " ( on edf =",round(sum(object$edf.j),3),")" ,"\n")
+      cat("No. of params:", p,"(for each curve);", p*n.tau,"(total)\n")       
+   }
        

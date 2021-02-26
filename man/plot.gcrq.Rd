@@ -8,9 +8,10 @@ Plot method for gcrq objects
 Displaying the estimated growth charts from a \code{gcrq} fit.
 }
 \usage{
-\method{plot}{gcrq}(x, term, add = FALSE, res = FALSE, conf.level=0, legend = FALSE, 
-    select.tau, deriv = FALSE, cv = FALSE, transf=NULL, lambda0=FALSE, 
-    shade=FALSE, overlap=FALSE, rug=FALSE, n.points=100, grid=NULL, smoos=NULL, ...)
+\method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, interc=TRUE, 
+    legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, transf=NULL, 
+    lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, n.points=100, 
+    edf.ylab=NULL, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,18 +19,23 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 a fitted \code{"gcrq"} object.
 }
   \item{term}{
-the smooth variable name entering the model via \code{ps}. Relevant fitted quantile curves will be plotted.
-It may be missing if the model includes a single smooth term.}
+the smooth variable name entering the model via \code{ps}. Relevant fitted quantile curves (as specified by \code{select.tau}) will be plotted.
+If \code{NULL}, all smooth terms are plotted according to the \code{split} argument.
+}
+  \item{interc}{
+Should the smooth term be plotted along with the intercept (provided it is included in the model)? If the smooth term is a varying coefficient, 
+  \code{interc} refers to its intercept, and not the overall model intercept. Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'.  
+}
 
   \item{add}{
 logical. If \code{TRUE} the fitted quantile curves are added on the current plot.
 }
   \item{res}{
-logical. If \code{TRUE} `partial' residuals' are also displayed on the plot. Borrowing terminology from GLM, partial residuals for covariate 
-\eqn{X_j}{Xj} are defined as \cr fitted values corresponding to \eqn{X_j}{Xj} + residuals. \cr If there is a single covariate, the partial residuals correspond to observed data. If multiple quantile curves have been estimated, the fitted values coming from the `middle' quantile curve are employed to compute the partial residuals. `Middle' means `corresponding to the \eqn{\tau_k}{tau} closest to 0.50'. I don't know if that is the best choice.
+logical. If \code{TRUE} `partial residuals' are also displayed on the plot. Borrowing terminology from GLM, partial residuals for covariate 
+\eqn{X_j}{Xj} are defined as \cr fitted values corresponding to \eqn{X_j}{Xj} + residuals (from the actual fit). \cr If there is a single covariate, the partial residuals correspond to observed data. If multiple quantile curves have been estimated, the fitted values coming from the `middle' quantile curve are employed to compute the partial residuals. `Middle' means `corresponding to the \eqn{\tau_k}{tau} closest to 0.50'. I don't know if that is the best choice.
 }
   \item{conf.level}{
-logical. If larger than zero, pointwise confidence intervals for the fitted quantile curve are also shown (at the confidence level specified by \code{conf.level}).
+logical. If larger than zero, pointwise confidence intervals for the fitted quantile curve are also shown (at the confidence level specified by \code{conf.level}). Such confidence intervals are independent of the possible intercept accounted for via the \code{intercept} argument.
 }
   \item{legend}{
 logical. If \code{TRUE} a legend is drawn on on the right side of the plot.
@@ -41,7 +47,7 @@ an optional numeric vector to draw only some of the fitted quantiles. Percentile
 logical. If \code{TRUE} the first derivative of the curve is displayed.
 }
   \item{cv}{
-logical. If \code{TRUE} and the \code{"gcrq"} object contains the matrix \code{cv}, then 
+logical. If \code{TRUE} and the \code{"gcrq"} object contains a single smooth term wherein lambda has been selected via CV, then %the matrix \code{cv}, then 
 the cross-validation scores against the lambda values are plotted.
 }
   \item{transf}{
@@ -57,14 +63,19 @@ first CV value in the plot.
 logical. If \code{TRUE} and \code{conf.level}>0, the pointwise confidence intervals are portrayed via shaded areas.
 }
   \item{overlap}{
-logical. If \code{TRUE}, and \code{legend=TRUE}, the legend crosses the fitted curve on the right side. Otherwise the leged is placed outside the 
-fitted lines.
+If provided and different from \code{NULL}, it represents the abscissa value (on the covariate scale) where the legend (i.e. the probability values) of each curve is set.  If unspecified (i.e. \code{overlap=NULL}), the legend  is placed outside the fitted lines on the right side. Ignored if \code{legend=FALSE}.
 }
   \item{rug}{
 logical. If \code{TRUE}, the covariate distribution is displayed as a rug plot at the foot of the plot. Default to \code{FALSE}.
 }
   \item{n.points}{
 numeric. Number of values used to plot the fitted curves. Large values provide smoother curves.
+}
+  \item{edf.ylab}{
+Should the edf value to be reported as y label? If \code{NULL}, \code{edf.ylab} is set to TRUE only if there is a single quantile curve to be plotted.
+}
+  \item{overall.eff}{
+logical. If the smooth term has been called via \code{ps(.., decompose=TRUE)}, by specifying \code{overall.eff=TRUE} the overall smooth effect is drawn. 
 }
   \item{grid}{
 if provided, a grid of horizontal and vertical lines is drawn. \code{grid} has to be a list with the following components \code{x,y,col,lty,lwd}. 
@@ -73,6 +84,10 @@ If \code{x} (\code{y}) is a vector, the vertical (horizontal) lines are drawn at
   \item{smoos}{
 logical, indicating if the residuals (provided that \code{res=TRUE}) will be drawn using a \emph{smoothed} scatterplot. If \code{NULL} (default) the smoothed scatterplot will be employed when the number of observation is larger than 10000.
 }
+  \item{split}{
+logical. If there are multiple smooth terms and \code{split=TRUE}, \code{plot.gcrq()} tries to split the plotting area in 2 columns and number of rows depending on the number of smooths. If \code{split=FALSE}, the plots are produced on the current device according to the current graphics settings. Ignored if there is single smooth term. 
+}
+
   \item{\dots}{
 Additional graphical parameters:\cr 
 \code{xlab}, \code{ylab}, \code{ylim}, and \code{xlim} (effective when \code{add=FALSE});\cr
@@ -93,7 +108,7 @@ The function simply generates a new plot or adds fitted curves to an existing on
 %% ~put references to the literature/web site here ~
 %}
 \author{
-Vito M. R. Muggeo with contribution by Gianluca Sottile (gianluca.sottile@unipa.it)
+Vito M. R. Muggeo %%with contribution by Gianluca Sottile (gianluca.sottile@unipa.it)
 }
 %\note{
 %%  ~~further notes~~
@@ -105,10 +120,21 @@ Vito M. R. Muggeo with contribution by Gianluca Sottile (gianluca.sottile@unipa.
 \code{\link{gcrq}}, \code{\link{predict.gcrq}}
 }
 \examples{
-## see ?gcrq
-##plot(m5, conf.level=.8, lty=1)
-##plot(m5, lty=1:3, select.tau=c(.1,.5,.9))
-##plot(m5, grid=list(x=8,y=5)) #a 8 times 5 grid.. 
+
+\dontrun{
+## use the fits from ?gcrq
+#The additive model
+plot(o, res=TRUE, col=2, conf.level=.9, shade=TRUE, split=TRUE)
+
+
+par(mfrow=c(2,2))
+plot(m5, select.tau=c(.1,.5,.9), overlap=0.6, legend=TRUE)
+plot(m5, grid=list(x=8,y=5), lty=1) #a 8 times 5 grid.. 
+plot(m7, cv=TRUE) #display CV score versus lambda values
+plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fitted curves at the best lambda value
+
+}
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

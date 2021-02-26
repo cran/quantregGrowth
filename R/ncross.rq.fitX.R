@@ -1,13 +1,15 @@
 ncross.rq.fitX <-
-function(y, X=NULL, taus, lambda=0, adj.middle=FALSE, eps=.0001, ...){
+function(y, X=NULL, taus, lambda.ridge=0, eps=.0001, ...){
 #Stima dei non-crossing rq con X lineari (la X dovrebbe avere una colonna di 1, se richiesta..)
-#Se lambda>0 viene considerata una penalita' ridge (bhu?? non so se funziona..)
+#Se lambda>0 viene considerata una penalit? ridge (bhu?? non so se funziona..)
 #--------------------------------------------------------
+  adj.middle=FALSE
 Rho <- function(u, tau) u * (tau - (u < 0))
 #-------------------------------------
 #      require(quantreg)
       if(length(taus)<=1){
         o<-rq.fit(x=X, y=y, tau=taus, ...)
+        o$rho<-sum(Rho(o$residuals[1:length(y)], taus))
         return(o)
         }
       n<-length(y)
@@ -25,9 +27,9 @@ Rho <- function(u, tau) u * (tau - (u < 0))
       n.pos.taus<-length(pos.taus)
       n.neg.taus<-length(neg.taus)
 
-      if(lambda>0){
+      if(lambda.ridge>0){
         DD<- diag(p)
-        B<-rbind(B, lambda*DD)
+        B<-rbind(B, lambda.ridge*DD)
         y<-c(y, rep(0,nrow(DD)))
         }
       o.start<-rq.fit(x=B,y=y,tau=start.tau)
@@ -55,7 +57,7 @@ Rho <- function(u, tau) u * (tau - (u < 0))
             FIT.POS[,i]<-o$fitted.values[1:n]
             RES.POS[,i]<-o$residuals[1:n]
             #estrai la f. obiettivo
-            df.pos.tau[i] <- sum(abs(o$residuals[1:n])<=.000001) #length(o$coef) 
+            df.pos.tau[i] <- sum(abs(o$residuals[1:n])<=.000001) #length(o$coef)
             rho.pos.tau[i] <- sum(Rho(o$residuals[1:n], pos.taus[i]))
             b.start<-o$coef
             COEF.POS[,i]<-b.start
@@ -105,7 +107,10 @@ Rho <- function(u, tau) u * (tau - (u < 0))
       colnames(all.RES)<-paste(taus)
       all.df<- c(df.neg.tau[n.neg.taus:1], sum(abs(o.start$residuals[1:n])<=.000001), df.pos.tau)
       all.rho<-c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals[1:n], start.tau)) , rho.pos.tau)
-      r<-list(coefficients=all.COEF,B=B, df=all.df, rho=all.rho, fitted.values=all.FIT, residuals=all.RES)
+      r<-list(coefficients=all.COEF,x=B, df=all.df, rho=all.rho, fitted.values=all.FIT, residuals=all.RES)
       }
+      id.coef<-1:ncol(X)
+      attr(id.coef,"nomi")<-colnames(X)
+      r$id.coef <- id.coef
       return(r)
       }

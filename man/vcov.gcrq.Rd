@@ -11,7 +11,7 @@ Returns the (currently only bootstrap-based) variance-covariance matrix of the p
 }
 
 \usage{
-\method{vcov}{gcrq}(object, term, ...)
+\method{vcov}{gcrq}(object, term, type=c("boot","sandw"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 
@@ -20,7 +20,10 @@ Returns the (currently only bootstrap-based) variance-covariance matrix of the p
 a fitted model object of class \code{"gcrq"} returned by \code{gcrq()}.
   }
   \item{term}{
-if specified the returned covariance matrix includes entries relevant to parameter estimates for that 'term' only. If missing, teh returned matrices refer to all model parameter estimates.
+if specified the returned covariance matrix includes entries relevant to parameter estimates for that 'term' only. If missing, the returned matrices refer to all model parameter estimates.
+  }
+  \item{type}{
+Which cov matrix should be returned? Currentl,y only \code{'boot'} is allowed.
   }
   \item{...}{
 additional arguments.  
@@ -31,7 +34,7 @@ If the \code{"gcrq"} object includes results from bootstrap runs (namely the com
 \code{vcov.gcrq()} computes the covariance matrix for the parameter estimates of each quantile curve. If not, 100 bootstrap replicates are run.
 }
 \value{
-A list including the covariance matrices of the parameter estimates for each regression quantile curve.
+A list (with length equal to the length of \code{tau} specified in \code{gcrq}) of square matrices. Namely the list includes the covariance matrices of the parameter estimates for each regression quantile curve.
 }
 %\references{
 %% ~put references to the literature/web site here ~

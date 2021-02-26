@@ -9,8 +9,8 @@ Summarizing model fits for growth charts regression quantiles
 summary and print methods for class \code{gcrq}
 }
 \usage{
-\method{summary}{gcrq}(object, digits = max(3, getOption("digits") - 3), ...)
-
+\method{summary}{gcrq}(object, digits = max(3, getOption("digits") - 3), 
+    signif.stars =getOption("show.signif.stars"), ...)
 %\method{print}{summary.gcrq}(x,
 
 }
@@ -21,6 +21,9 @@ An object of class \code{"gcrq"}.
 }
   \item{digits}{
 controls number of digits printed in output.
+}
+  \item{signif.stars}{
+Should significance stars be printed? 
 }
   \item{\dots}{
 further arguments.
@@ -54,6 +57,8 @@ Vito M.R. Muggeo
 }
 \examples{
 ## see ?gcrq
+##summary(o)
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

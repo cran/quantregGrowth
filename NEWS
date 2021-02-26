@@ -1,9 +1,27 @@
-*****************************************
-*				  	*
-*	Changes in quantregGrowth	*
-*				  	*
-*****************************************
+*******************************
+*                             *
+*  Changes in quantregGrowth  *
+*                             *
+*******************************
 
+
+
+=============
+version 1.0-0  
+=============
+* gcrq() now allows automatic (and efficient) selection of the smoothing parameters in additive models (i.e. when several spline terms are included). 
+* cv in gcrq() has been removed (cv is always TRUE when there is a single smooth term and the spar has been selected by CV).
+* new arguments in gcrq() referring to estimation of the spar; new argument 'interc' in plot.gcrq() affecting the fitted lines being drawn. Thus 'interc=TRUE' is necessary to superimpose lines to observations.
+
+
+=============
+version 0.4-4 (no pubblic release)  
+=============
+
+* gcrq() with n.boot>0 sometimes stopped due to some 'unusual' boot samples and to a very large or small lambda value 
+(thanks to Fabian Otto-Sobotka for reporting) 
+* ps() now accepts variable names including functions, such as `log(x)' 
+* the overlap argument in plot.gcrq() now accepts exact x-values to print the probability values on the plot
 
 
 =============
@@ -11,7 +29,7 @@ version 0.4-3
 =============
 * gcrq() now computes and saves the inverse of transformation function (argument 'transf') to be used when plotting fitted quantiles on the original scale (thanks to Sophie Carles for her input)
 * predict.gcrq() did not work for objects including multiple smooth terms (thanks to Sean Fleming for reporting)
-* 'newdata' in predic.gcrq may be missing (fitted values are returned)
+* 'newdata' in predic.gcrq can be missing (fitted values are returned)
 
 
 =============
