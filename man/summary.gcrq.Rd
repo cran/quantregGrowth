@@ -9,7 +9,7 @@ Summarizing model fits for growth charts regression quantiles
 summary and print methods for class \code{gcrq}
 }
 \usage{
-\method{summary}{gcrq}(object, digits = max(3, getOption("digits") - 3), 
+\method{summary}{gcrq}(object, type=c("sandw","boot"), digits = max(3, getOption("digits") - 3), 
     signif.stars =getOption("show.signif.stars"), ...)
 %\method{print}{summary.gcrq}(x,
 
@@ -19,6 +19,10 @@ summary and print methods for class \code{gcrq}
   \item{object}{
 An object of class \code{"gcrq"}.
 }
+  \item{type}{
+Which covariance matrix should be used to compute the estimate standard errors? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}), \code{'sandw'} mean via the sandwich formula.
+}
+
   \item{digits}{
 controls number of digits printed in output.
 }

@@ -5,6 +5,15 @@
 *******************************
 
 
+=============
+version 1.1-0  
+=============
+* predict.gcrq() now also works for VC models, including interaction with factors.
+* vcov(.., type="sandwich") allowed. Thus the methods summary.gcrq, plot.gcrq and predict.gcrq gain the argument 'type'.
+* gcrq() now accepts 'single.lambda'=TRUE/FALSE to select single or different smoothing parameters for the quantile curves.
+* plot.gcrq() gains argument shift to vertically the fitted quantile curve.
+* bugs fixed: gcrq.gcrq() did not work correctly with VC terms (i.e. ps(x,by=z)) when called with n.boot>0.
+
 
 =============
 version 1.0-0  
@@ -17,7 +26,6 @@ version 1.0-0
 =============
 version 0.4-4 (no pubblic release)  
 =============
-
 * gcrq() with n.boot>0 sometimes stopped due to some 'unusual' boot samples and to a very large or small lambda value 
 (thanks to Fabian Otto-Sobotka for reporting) 
 * ps() now accepts variable names including functions, such as `log(x)' 

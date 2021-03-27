@@ -129,16 +129,17 @@ Rho <- function(u, tau) u * (tau - (u < 0))
             #vDiff[j] <-0 #serve per ottenere una penalit? ridge quando si passa a build.R().
             }
           #per costruire una base per i vcm
-          if(!is.null(nomiBy[j])) B[[j]]<- byVariabili[,j]*B[[j]]
+          if(!is.null(nomiBy[j])) B[[j]]<- cbind(byVariabili[,j], byVariabili[,j]*B[[j]]) #modificato il 10/3/21. Se sopra togli una colonna della base devi metter l'interc
         }
     }
 #===========================
       if(missing(x)) plott<-0
+      
       #deve diventare una matrice..
       all.p<-sapply(B, ncol)
       pSmooth<- sum(all.p)
       H<-length(B) #no. of smooth terms
-      B<-matrix(unlist(B), n, pSmooth)
+      B<-matrix(unlist(B), n, pSmooth) #matrix(unlist(B), nrow=3,byrow = FALSE)
       XB<-cbind(X,B)
       p<-ncol(XB) #all coeffs, lineari + smooth
       pLin<-p-pSmooth #pSmooth=p1 #n. termini lineari
@@ -260,7 +261,7 @@ Rho <- function(u, tau) u * (tau - (u < 0))
         sigma2e.pos.tau<-vector(length=n.pos.taus)
         for(i in 1:n.pos.taus){
             #AGGIORNA XB PER INCLUDERE i tau-specific lambda
-            if(lambda.tau.spec){
+          if(lambda.tau.spec){
               lambda<-lambda.matrix[,paste(pos.taus[i])] #lambda.matrix[,i]
               for(j in 1:H) D.list.lambda[[j]]<- D.list[[j]]*lambda[j]
               D.matrix.lambda<-if(length(D.list.lambda)<=1) D.list.lambda[[1]] else do.call("blockdiag",D.list.lambda) 
@@ -268,8 +269,8 @@ Rho <- function(u, tau) u * (tau - (u < 0))
               if(any(lambda>0)) XB<-rbind(XB.orig, D.matrix.lambda)
               if(lambda.ridge>0) XB<-rbind(XB, lambda.ridge*diag(ncol(XB))) #a small ridge penalty
             }
-            o<-rq.fit(x=XB,y=y,tau=pos.taus[i],method="fnc",R=RR,r=rr)
-            o$rho<-sum(Rho(o$residuals[1:n], pos.taus[i]))
+          o<-rq.fit(x=XB,y=y,tau=pos.taus[i],method="fnc",R=RR,r=rr)
+          o$rho<-sum(Rho(o$residuals[1:n], pos.taus[i]))
             #estrai fitted e residuals
             FIT.POS[,i]<-o$fitted.values[1:n]
             RES.POS[,i]<-o$residuals[1:n]

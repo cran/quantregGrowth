@@ -9,7 +9,8 @@ print.gcrq <-function(x, digits = max(3, getOption("digits") - 4), ...){
       cat("No. of obs:", n, "  No. of param.:", p,"(for each tau);", p*n.tau,"(total)\n")
       cat("\nEquivalent Degrees of Freedom:\n")
       if(rownames(x$edf.j)[1]=="Xlin") rownames(x$edf.j)[1]<-"unpenalized"
-      rownames(x$edf.j)[-1] <-x$info.smooth$testo.ps
+      #browser()
+      #rownames(x$edf.j)[-1] <-x$info.smooth$testo.ps
       print(round(x$edf.j, digits))
       all.sic <- log(x$rho/n) + log(n) *colSums(x$edf.j)/(2*n)
       sic<- sum(all.sic) #sum(log(x$rho/n)) +log(n)*sum(x$edf.j)/(2*n)

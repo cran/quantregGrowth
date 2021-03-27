@@ -9,7 +9,7 @@ citEntry(entry="Article",
 	       pages        = "xx--xx",
 	       url          = "https://journals.sagepub.com/doi/full/10.1177/1471082X20929802",
          textVersion = 
-         paste("Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2020).", 
+         paste("V. M. R. Muggeo, F. Torretta, P. H. C. Eilers, M. Sciandra, M. Attanasio(2020).", 
                "Multiple smoothing parameters selection in additive regression quantiles.",
                "Statistical Modelling, doi: 10.1177/1471082X20929802. To appear.")
 )

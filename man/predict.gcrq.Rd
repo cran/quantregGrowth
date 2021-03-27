@@ -7,8 +7,10 @@ Prediction for "gcrq" objects
 \description{
 Takes a "gcrq" objects and computes fitted values
 }
+
 \usage{
-\method{predict}{gcrq}(object, newdata, se.fit=FALSE, transf=NULL, xreg, ...)
+\method{predict}{gcrq}(object, newdata, se.fit=FALSE, transf=NULL, xreg, 
+                      type=c("sandw","boot"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,6 +32,9 @@ If \code{NULL} (default) it is taken as the inverse of function \code{transf} (*
 the design matrix for which predictions are requested. Note \code{xreg} has to include the basis functions of the 
 B-spline.
 }
+  \item{type}{
+If \code{se.fit=TRUE}, which cov matrix should be used? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}), \code{'sandw'} mean via the sandwich formula.
+}
 \item{\dots}{ arguments passed to other functions }
 }
 \details{
@@ -39,7 +44,7 @@ Either \code{newdata} or \code{xreg} have to be supplied, but \code{newdata} is 
 }
 \value{
 If \code{se.fit=FALSE}, a matrix of fitted values with number of rows equal to number of rows of input data 
-and number of columns depending on the number of fitted quantile curves (i.e length of \code{taus}). If \code{se=TRUE}, a list of matrices (fitted values and standard errors).
+and number of columns depending on the number of fitted quantile curves (i.e length of \code{taus}). If \code{se.fit=TRUE}, a list of matrices (fitted values and standard errors).
 }
 %\references{
 %% ~put references to the literature/web site here ~

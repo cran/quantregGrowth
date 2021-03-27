@@ -49,10 +49,10 @@ function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, tra
 #eps in control??
 #foldid, nfold usati se lambda in ps() e' un vettore
 #--------------------
-  if(!single.lambda) {
-    single.lambda=TRUE
-    warning(" 'single.lambda=TRUE' is used")
-  }
+#  if(!single.lambda) {
+#    single.lambda=TRUE
+#    warning(" 'single.lambda=TRUE' is used")
+#  }
 dal<-function (x, mu = 0, sigma = 1, tau = 0.5, log = FALSE) {
 #preso da  package lqmm 1.5
     ind <- ifelse(x < mu, 1, 0)
@@ -386,6 +386,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       K<-unlist(sapply(l,function(xx)attr(xx,"K")))
       ridgeList<-unlist(sapply(l,function(xx)attr(xx,"ridge")))
       nomiBy<-unlist(sapply(l,function(xx)attr(xx,"nomeBy")))
+      levelsBy<-lapply(l,function(xx)attr(xx,"levelsBy"))
       dimSmooth<-unlist(sapply(l,function(xx)attr(xx,"dimSmooth")))
       decomList<-unlist(sapply(l,function(xx)attr(xx,"decom")))
       knotsList<- lapply(l,function(xx)attr(xx,"nodi"))
@@ -394,6 +395,22 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 		  centerList<- unlist(lapply(l,function(xx)attr(xx,"center")))
 		  dropvcList<-rep(FALSE, length(dropcList))
 		  mVariabili<-NULL
+		  
+		  #se ci sono termini ps()+ps(..,by) il nome delle variabili smooth vengono cambiati per aggiungere la variabile by
+		  nomiPS.orig <- nomiPS
+		  #browser()
+		  nomiPS.By <-paste(nomiPS, nomiBy, sep=":")
+		  nomiPS <- unlist(lapply(nomiPS.By, function(.x) sub(":NULL", "", .x)))
+		  #nomiPS.By <-paste(nomiBy, nomiPS, sep=":")
+		  #nomiPS <- unlist(lapply(nomiPS.By, function(.x) sub("NULL:", "", .x)))
+		  
+		  #ATTENZIONE.. se vuoi subito costruire i nomi ps(x), ps(x):z, ecc...usa i:
+		  nomiPS.ps<-sapply(nomiPS.orig, function(x)paste("ps(",x,")",sep=""))
+		  nomiPS.ps<-unlist(lapply(paste(nomiPS.ps, nomiBy, sep=":"), function(.x) sub(":NULL", "", .x)))
+		  nomiPS.ps.ok<-as.list(nomiPS.ps) #serve lista
+		  if(!is.null(unlist(penMatrixList))) stop(" 'pen.matrix' in ps() not yet allowed.")
+		  if(any(decomList) || any(ridgeList)) stop(" 'ridge' or 'decompose' in ps() not (yet) implemented.")
+		  
 		  for(j in id.ps) mVariabili[length(mVariabili)+1]<-mf[j]
       #       origName<-names(mf)
       #       nomiPS<-all.vars(formula)[c(1,match(nomeX,all.vars(formula)))] #estrae i nomi delle variabili nella formula in comune con nomeX
@@ -409,6 +426,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       #       #byVariabili<-if(nomeBy!="NA") mf[,colnames(mf)%in%nomeBy,drop=FALSE] else matrix(1,nrow(mVariabili),ncol(mVariabili))
       BFixed<-nomiCoefPEN<-B<-BB<-Bderiv<- vector(length=length(mVariabili) , "list")
       smoothVariabili<-byVariabili<-matrix(NA,n,length(mVariabili))
+      #byVariabili non devono essere uguali a smoothVariabili
       for(j in 1:length(mVariabili)) {
         variabileSmooth<-mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
         if(is.matrix(variabileSmooth)) stop("only univariate smoothing implemented so far")
@@ -445,7 +463,6 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
             }
           }
           if(dropcList[j]) B[[j]]<-B[[j]][,-1] #C=contr.treatment(ncol(B))); Bnew<-B%*%C; Pnew<- t(C)%*%Penalty%*%C
-  #browser()
           if(is.na(centerList[j])){ 
             centerList[j]<-if(length(tau)>1) FALSE else TRUE
           }
@@ -454,12 +471,31 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           #-------se VC terms..
           if(!is.null(nomiBy.j)) {
             if(dropcList[j]) dropvcList[j]<-TRUE
-            B[[j]]<- byVariabili[,j]*B[[j]]
-            if(dropcList[j]) B[[j]]<-cbind(byVariabili[,j], B[[j]])
-            nomiCoefPEN[[j]]<-paste(paste(nomiBy[j],nomiPS[j],sep=":"),"ps",1:ncol(B[[j]]),sep=".")
+            #B[[j]]<- byVariabili[,j]*B[[j]]
+            #if(dropcList[j]) B[[j]]<-cbind(byVariabili[,j], B[[j]]) #come se la base avesse l'intercetta..
+            if(is.null(levelsBy[[j]])){
+              #M<-model.matrix(~byVariabili[,j])[,-1]
+              B[[j]]<- cbind(byVariabili[,j], byVariabili[,j]*B[[j]])
+              nomiCoefPEN[[j]]<- sapply(1:ncol(B[[j]]), function(x) gsub(":", paste(".",x, ":", sep="") , nomiPS.ps[j]))
+              } else {
+              M<-model.matrix(~0+factor(byVariabili[,j]))
+              #B[[j]]<-lapply(1:ncol(M), function(.x) M[,.x]*B[[j]])
+              B[[j]]<-lapply(1:ncol(M), function(.x) cbind(M[,.x],M[,.x]*B[[j]]))
+              nomiCoefPEN[[j]] <- lapply(1:length(B[[j]]), 
+                     function(.y)
+                     {paste(sapply(1:ncol(B[[j]][[.y]]), 
+                                   function(x){gsub(":",  paste(".",x,":",sep=""), nomiPS.ps[j])}), levelsBy[[j]][.y], sep=".")}
+              )
+              #nomiCoefPEN<-unlist(nomiCoefPEN, recursive=FALSE)
+              #"ps(x).1:g.0" "ps(x).2:g.0"
+              # 1) togliere il "." tra il fattore e un suo livello?
+              # 2) mettere g.1:ps(x).1?
+              nomiPS.ps.ok[[j]]<-paste(nomiPS.ps[j], levelsBy[[j]], sep=".")
+            }
           } else {
-            nomiCoefPEN[[j]]<-paste(nomiPS[j],"ps",1:ncol(B[[j]]),sep=".")    
-          }
+            nomiCoefPEN[[j]]<-paste(nomiPS.ps[j],1:ncol(B[[j]]),sep=".")
+          } 
+          
           ########################################################################
           ### per i disegni..
           ########################################################################
@@ -479,42 +515,92 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           attr(BB1,"knots")<- knotsList[[j]]
           attr(BB1,"center")<- centerList[j]
           attr(BB1,"drop")<- dropcList[j]
-          attr(BB1,"coef.names")<- nomiCoefPEN[[j]]
+          #da provare se hai piu VC terms..
+          #attr(BB1,"coef.names")<- if(is.list(nomiCoefPEN[[1]])) nomiCoefPEN[[1]][[j]] else nomiCoefPEN[[j]]
+          #tolto.. lo fa sotto...
           attr(BB1,"vc")<- if(!is.null(nomiBy.j)) TRUE else FALSE #e' un vc terms?
+          attr(BB1,"vcName")<- nomiBy.j
+          attr(BB1,"vcLevels")<-levelsBy[[j]]
+          attr(BB1,"smoothName")<-as.character(nomiPS.orig[[j]]) #sempre "x", anche nel caso di VC..
+          attr(BB1,"smoothName1")<-as.character(nomiPS.ps[[j]]) # "ps(x)", "ps(x):z"
           BB[[j]]<-BB1
           Bderiv[[j]]<-bspline(xdisegno, ndx=vNdx[j], deg=vDeg[j], knots=knotsList[[j]], deriv=1)
           if(dropcList[j]) Bderiv[[j]]<-Bderiv[[j]][,-1]
-        }
-      } #end for(j in 1:length(mVariabili))
-      nomiVariabPEN<-nomiPS
-       #end length(testo.ps)>0
-      #    if(length(testo.ridge)>0){.......[SNIP].......}
-      if(any(decomList)){
+        } #end else 
+  } #end for(j in 1:length(mVariabili))
+  #se B include liste (se ci sono vc terms con by factor), bisogna eliminarle e riportarle nella lista principale B..
+           
+      
+      
+      
+      repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
+      vMonot <- rep(vMonot, repl)
+      vDeg <- rep(vDeg, repl)
+      vNdx <- rep(vNdx, repl)
+      vConc <- rep(vConc, repl)
+      vDiff <- rep(vDiff, repl)
+      lambda <- rep(lambda, repl)
+      dropcList <- rep(dropcList, repl)
+      decomList <- rep(decomList, repl)
+      dropvcList <- rep(dropvcList, repl)
+      centerList <- rep(centerList, repl)
+      K<-rep(K, repl)
+      id.ps <- rep(id.ps, repl) #il valore restituito non e' indicativo..
+      #browser()
+       
+      while(any(sapply(B,is.list))){
+        id.vc<-which((sapply(B, is.list)))[1]
+        nc<-length(B[[id.vc]])
+        B<-append(B, B[[id.vc]], after = id.vc-1)
+        for(i in 1:length(B[[id.vc+nc]])) BB<-append(BB, BB[id.vc], id.vc-1)
+        B[[id.vc+nc]]<-NULL
+        BB[[id.vc+nc]]<-NULL
+        nomiCoefPEN <- append(nomiCoefPEN, nomiCoefPEN[[id.vc]], after = id.vc-1)
+        nomiCoefPEN[[id.vc+nc]]<-NULL
+        #se la lista contiene solo NULL, non funziona...
+        penMatrixList <- append(penMatrixList, penMatrixList[[id.vc]], after = id.vc-1)
+        penMatrixList[[id.vc+nc]]<-NULL
+      }
+      #Attenzione se penMatrixList e' NULL, non puo' aumentare di dimensione... quindi aggiungi sotto questo artificio.. 
+      if(length(nomiCoefPEN)!=length(penMatrixList)) penMatrixList<- vector(mode = "list", length =length(nomiCoefPEN))
+      
+     
+      #while(length(nomiCoefPEN)==1){
+      #  nomiCoefPEN<-unlist(nomiCoefPEN, recursive=FALSE)
+      #}
+      
+    if(length(BB)!=length(nomiCoefPEN)) { #oppure length(B)? dovrebbe essere lo stesso..
+      stop("error in dimensions of BB and nomiCoefPEN") 
+    } else {
+      for(j in 1:length(BB)) attr(BB[[j]], "coef.names") <- nomiCoefPEN[[j]]
+    }
+    #salvare il singolo livello a cui la base si riferisce ?(in caso di VC)  
+    nomiVariabPEN <- unlist(nomiPS.ps.ok)
+    #end length(testo.ps)>0
+    #    if(length(testo.ridge)>0){.......[SNIP].......}
+    if(any(decomList)){
         XfixedB<-do.call(cbind, BFixed)
         X<-cbind(X, XfixedB)
         #interc<-TRUE
-      }
-      X<- X[,-grep( "ps[(]" , colnames(X)), drop=FALSE]
-      #if(!interc && ("(Intercept)"%in%colnames(X))) X<- X[,-match("(Intercept)",colnames(X)), drop=FALSE]
-      #if(interc && !("(Intercept)"%in%colnames(X))) X<-cbind("(Intercept)"=1,X)
-      if(length(id.ps)>1 && (length(lambda)!=length(id.ps))) stop("with several ps() terms, a single 'lambda' is allowed in each ps()")
-  #browser()
-      
-      if(length(lambda)>1 && length(id.ps)==1){
-        cv<-TRUE
-        lambdas<-lambda
-        #r.cv<-gcrq.rq.cv(Y, B[[1]], X, tau, vMonot, vConc, vNdx, lambda, vDeg, vDiff, var.pen, cv, nfolds, foldid, eps=eps, 
-        #                 penMatrix=penMatrixList, lambda.ridge=lambda.ridge,dropcList=dropcList,
-        #                 decomList=decomList, dropvcList=dropvcList)
-        r.cv<- gcrq.rq.cv(Y, B[[1]], X, tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, 
+    }
+    X<- X[,-grep( "ps[(]" , colnames(X)), drop=FALSE]
+    #if(!interc && ("(Intercept)"%in%colnames(X))) X<- X[,-match("(Intercept)",colnames(X)), drop=FALSE]
+    #if(interc && !("(Intercept)"%in%colnames(X))) X<-cbind("(Intercept)"=1,X)
+    if(length(id.ps)>1 && (length(lambda)!=length(id.ps))) stop("with several ps() terms, a single 'lambda' is allowed in each ps()")
+    if(length(lambda)>1 && length(id.ps)==1){
+      cv<-TRUE
+      lambdas<-lambda
+      r.cv<- gcrq.rq.cv(Y, B[[1]], X, tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, 
                    var.pen=var.pen, penMatrix=penMatrixList, lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, 
                    dropvcList=dropvcList, nfolds=nfolds, foldid=foldid, eps=eps, ...)
-        lambda<-r.cv[[1]]
-      } else {
+      lambda<-r.cv[[1]]
+    } else {
         cv<-FALSE
-      }
-
-      names(lambda)<-names(vMonot)<-names(vConc)<-nomiVariabPEN
+    }
+    ##ATTENZIONE Ai NOMI.. AGGIUNGER IN FUNZIONE DEI LIVELLI
+    #nomiPS.ps
+    #[1] "ps(x)"    "ps(x):z1"
+    names(lambda)<-names(vMonot)<-names(vConc)<- unlist(nomiPS.ps.ok) #nomiVariabPEN #meglio nomiPS.ps
       #-----------------------------------------------
       #se qualche lambda deve essere stimato..
       #-----------------------------------------------
@@ -527,12 +613,14 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         colnames(K.matrix)<-paste(tau)
         h.ok<-h
         for(j in 1:it.max){
+          #browser()
           fit<-suppressWarnings(ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
                   lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
                   lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, dropvcList=dropvcList))
           ##inizio calcolo edf
           if(df.option<=2){
-              edf.j<-matrix(sapply(tau, function(xx){edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, output=df.option)}), ncol=length(tau)) #matrice
+              edf.j<-matrix(sapply(tau, function(xx){edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, output=df.option)}), 
+                            ncol=length(tau)) #matrice
           } else {
               #if(penL1.df){
               D.matrix<-fit$D.matrix
@@ -609,7 +697,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
             flush.console()
             cat("iteration:", if(j<10) paste("",j) else j,
                 " lambda:", formatC(ifelse(lambda==lambda.max,Inf,lambda), digits=3, width=7, format="f"), "\n") #prima era format="f"/"g"
-          }
+            #writeLines(strwrap(paste("iteration", j, " lambda", formatC(ifelse(lambda==lambda.max,Inf,lambda), digits=3, width=7, format="f")),"\n"))
+            }
           #---------------------------------------------
           #if(all(abs((old.rho-new.rho)/(old.rho+1e-8))< tol)) break
           #if(all(abs((lambda.old-lambda)/(lambda.old+1e-8))< tol)) break
@@ -628,7 +717,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         fit<-ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx, 
           lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList, 
           lambda.ridge=lambda.ridge,dropcList=dropcList,decomList=decomList,dropvcList=dropvcList)
-
+        
         #colnames(edf.j)<-paste(tau)
         #rownames(edf.j)<- if(nrow(edf.j)==length(nomiVariabPEN)) nomiVariabPEN else c("Xlin",nomiVariabPEN)
         #edf.jM<-edf.j
@@ -647,13 +736,16 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
               edf.j<-edf.jM<-matrix(sapply(tau, function(xx){
                   edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, g = g, 
                         pesiL1=as.matrix(pesiL1)[,paste(xx)], output=df.option)}), ncol=length(tau)) #matrice
-              }
+        }
+        #browser()
+        #nomiPS.ps.ok oppure nomiVariabPEN?
         colnames(edf.j)<-colnames(edf.jM)<-paste(tau)
         rownames(edf.j)<- if(nrow(edf.j)==length(nomiVariabPEN)) nomiVariabPEN else c("Xlin",nomiVariabPEN)
         #==fine calcolo edf
         edf.jM<-edf.j
       } #end di stima il modello *assegnati* lambda
       ########################################################
+    
       edf.all<- matrix(sapply(tau, function(xx){
           edf.rq(fit, xx, return.all=TRUE, output=df.option, vMonot=vMonot, vConc=vConc, g=g, 
                   pesiL1=as.matrix(pesiL1)[,paste(xx)])}), ncol=length(tau))
@@ -664,16 +756,28 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       #con lambda fissati, tutto ok.. non ci vuole questo pezzo di codice..
       #---------------------------
       if(n.boot>0){
+        B.orig<-B
         coef.boot<-array(NA, dim=c(nrow(as.matrix(fit$coef)), length(tau), n.boot))
         id.NA<-NULL
         for(i in 1:n.boot) {
           id<-sample(1:n, size=n, replace=TRUE)
-          .o.b<- try(ncross.rq.fitXB(y=Y[id], B=NULL, x=smoothVariabili[id,,drop=FALSE], nomiBy=nomiBy, 
-                          byVariabili=byVariabili[id,,drop=FALSE], X=X[id,, drop=FALSE], 
-                          taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, 
-                          var.pen=var.pen, eps=eps, penMatrix=penMatrixList,lambda.ridge=lambda.ridge,
-                          dropcList=dropcList,decomList=decomList,dropvcList=dropvcList)
-                          , silent=TRUE)
+          #la linea di sotto non va bene perche' quando si passano a ncross.rq.fitXB() gli argomenti  x, nomiBy e byVariabili (invece che B)
+          #poi nella costruzione della base con vc elimina una colonna e quindi un parametro non viene stimato..
+          #
+          #.o.b<- try(ncross.rq.fitXB(y=Y[id], B=NULL, x=smoothVariabili[id,,drop=FALSE], nomiBy=nomiBy, 
+          #                byVariabili=byVariabili[id,,drop=FALSE], X=X[id,, drop=FALSE], 
+          #                taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, 
+          #                var.pen=var.pen, eps=eps, penMatrix=penMatrixList,lambda.ridge=lambda.ridge,
+          #                dropcList=dropcList,decomList=decomList,dropvcList=dropvcList)
+          #                , silent=TRUE)
+          
+          #suppressWarnings?
+          for(j in 1:length(B.orig)) B[[j]]<-B.orig[[j]][id,,drop=FALSE]
+          .o.b<- try(ncross.rq.fitXB(y=Y[id], B=B, X=X[id,, drop=FALSE], taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
+                            lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
+                            lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, dropvcList=dropvcList),
+                                silent=TRUE)
+
           if(class(.o.b)!="try-error") coef.boot[,,i]<-.o.b$coef else id.NA[length(id.NA)+1]<-i
         } #end i=1,..,n.boot
         if(!is.null(id.NA)) {
@@ -686,11 +790,13 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       #if(ncol(X)>0) nn<-c("(Intercept)",nn)
       if(is.matrix(fit$coefficients)) rownames(fit$coefficients)<-nn else names(fit$coefficients)<-nn
       #if(length(tau)>1) rownames(fit$coefficients)<-nn else names(fit$coefficients)<-nn
+      
       names(BB)<-nomiVariabPEN
       names(dropvcList)<-names(centerList)<-names(decomList)<-names(dropcList)<- names(vNdx)<- names(vDeg)<- names(vDiff)<- nomiVariabPEN
 	    fit$info.smooth<-list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, concave=vConc, 
-                    dropcList=dropcList, decomList=decomList, centerList=centerList, dropvcList=dropvcList, testo.ps=testo.ps)
-      ###########################
+                    dropcList=dropcList, decomList=decomList, centerList=centerList, dropvcList=dropvcList, testo.ps=nomiVariabPEN) #che e' nomiPS.ps.ok. Prima era testo.ps
+
+	    ###########################
       ######### SERVE??????????????
       #if(is.matrix(edf.j)) rownames(edf.j)<-attr(fit$id.coef, "nomi") else names(edf.j)<-attr(fit$id.coef, "nomi")
       if(is.matrix(lambda)) {

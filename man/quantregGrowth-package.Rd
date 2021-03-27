@@ -12,8 +12,8 @@ Fits non-crossing regression quantiles as a function of linear covariates
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 1.0-0\cr
-Date: \tab 2021-02-26\cr
+Version: \tab 1.1-0\cr
+Date: \tab 2021-03-24\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles, \code{gcrq}

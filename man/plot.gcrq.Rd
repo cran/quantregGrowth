@@ -11,7 +11,8 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 \method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, interc=TRUE, 
     legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, transf=NULL, 
     lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, n.points=100, 
-    edf.ylab=NULL, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, ...)
+    edf.ylab=NULL, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, shift=NULL, 
+    type=c("sandw","boot"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,7 +25,7 @@ If \code{NULL}, all smooth terms are plotted according to the \code{split} argum
 }
   \item{interc}{
 Should the smooth term be plotted along with the intercept (provided it is included in the model)? If the smooth term is a varying coefficient, 
-  \code{interc} refers to its intercept, and not the overall model intercept. Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'.  
+  \code{interc} refers to its intercept, and not the overall model intercept (see argument \code{shift} to plot a VC smooth curve with model intercept). Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'.  
 }
 
   \item{add}{
@@ -35,7 +36,8 @@ logical. If \code{TRUE} `partial residuals' are also displayed on the plot. Borr
 \eqn{X_j}{Xj} are defined as \cr fitted values corresponding to \eqn{X_j}{Xj} + residuals (from the actual fit). \cr If there is a single covariate, the partial residuals correspond to observed data. If multiple quantile curves have been estimated, the fitted values coming from the `middle' quantile curve are employed to compute the partial residuals. `Middle' means `corresponding to the \eqn{\tau_k}{tau} closest to 0.50'. I don't know if that is the best choice.
 }
   \item{conf.level}{
-logical. If larger than zero, pointwise confidence intervals for the fitted quantile curve are also shown (at the confidence level specified by \code{conf.level}). Such confidence intervals are independent of the possible intercept accounted for via the \code{intercept} argument.
+logical. If larger than zero, pointwise confidence intervals for the fitted quantile curve are also shown (at the confidence level specified by \code{conf.level}). Such confidence intervals are independent of the possible intercept accounted for via the \code{intercept} argument. See \code{type}
+to select different methods (bootstrap or sandwich) to compute the standard errors. 
 }
   \item{legend}{
 logical. If \code{TRUE} a legend is drawn on on the right side of the plot.
@@ -86,6 +88,13 @@ logical, indicating if the residuals (provided that \code{res=TRUE}) will be dra
 }
   \item{split}{
 logical. If there are multiple smooth terms and \code{split=TRUE}, \code{plot.gcrq()} tries to split the plotting area in 2 columns and number of rows depending on the number of smooths. If \code{split=FALSE}, the plots are produced on the current device according to the current graphics settings. Ignored if there is single smooth term. 
+}
+  \item{shift}{
+Numerical value to be added to the curve(s) to be plotted. Default is \code{NULL} which means the 'model intercept' for VC smooth term and 0 otherwise.
+It can be useful to plot the VC term accounting for the model intercept. 
+}
+  \item{type}{
+If \code{conf.level>0}, which covariance matrix should be used to compute and to portray the pointwise confidence intervals? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}, \code{'sandw'} mean via the sandwich formula.
 }
 
   \item{\dots}{

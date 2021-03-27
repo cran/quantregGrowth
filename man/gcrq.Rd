@@ -7,7 +7,7 @@ Growth charts regression quantiles with automatic smoothness estimation
 \description{
 Modelling unspecified nonlinear relationships between covariates and quantiles of the response conditional distribution. Typical example is estimation nonparametric growth charts (via quantile regression). Quantile curves are estimated via B-splines with 
 a \eqn{L_1}{L1} penalty on the spline coefficient differences, while non-crossing and possible monotonicity and concavity restrictions are set to obtain estimates
-more biologically plausible. Linear terms can be specified in the model formula. Multiple smooth terms with automatic selection of corresponding smoothing parameters are allowed.  
+more biologically plausible. Linear terms can be specified in the model formula. Multiple smooth terms, including varying coefficients, with automatic selection of corresponding smoothing parameters are allowed.  
 }
 \usage{
 gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, 
@@ -85,8 +85,7 @@ The tolerance value to declare convergence. Ignored if all the smoothing paramet
 The maximum number of iterations in lambdas estimation. Ignored if all the smoothing parameters specified in \code{ps} terms are fixed.
 }
   \item{single.lambda}{
-Logical. Should the smoothing parameter to be the same across the quantile curves being estimated? Ignored when just a single quantile curve is being estimated.  
-Currently only \code{single.lambda=TRUE} is allowed.
+Logical. Should the smoothing parameter (for each smooth term) to be the same across the quantile curves being estimated? Ignored when just a single quantile curve is being estimated.  
 %Ignored if all the smoothing parameters specified in \code{ps} terms are fixed.
 }
   \item{foldid}{
@@ -98,8 +97,7 @@ optional. If \code{foldid} is not provided, it is scalar specifying the number o
 the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} argument in \code{ps()} is not a vector.
 }
   \item{lambda.ridge}{
-logical. If \code{TRUE} (default) and there is a single smooth term wherein \code{lambda} is a vector, the returned object includes also the matrix \code{cv} having number of rows equal %to length of \code{lambda} and number of columns equal to \code{nfolds}.
-Ignored if the \code{lambda} argument in \code{ps()} is \emph{not} a vector. 
+Numerical value (typically very small) to stabilize model estimation.
 }
   \item{contrasts}{an optional list. See argument \code{contrasts.arg} in \code{model.matrix.default}.}
   \item{\dots}{further arguments.}
@@ -109,7 +107,7 @@ The function fits regression quantiles at specified percentiles given in \code{t
 covariates specified in the \code{formula} argument. The \code{formula} may include linear terms and  one or several \code{\link{ps}} 
 terms to model nonlinear relationships with quantitative covariates, usually age in growth charts. When the \code{lambda} argument 
 in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). 
-If a positive scalar, it represents the actual smoothing parameter value. When it is a vector, 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique ps() term in the formula.
+If a positive scalar, it represents the actual smoothing parameter value. When it is a vector (and the model includes a single \code{ps} term), 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique ps() term in the formula.
 }
 \value{
 This function returns an object of class \code{gcrq}, that is a list with the following components
@@ -137,7 +135,9 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
 }
 
 \section{Warning}{
-Currently, standard errors are obtained via the nonparametric bootstrap (case resampling) which ignores uncertainty in the smoothing parameter selection. 
+Currently, standard errors are obtained via the nonparametric bootstrap (case resampling) or the sandwich formula. Both methods ignore uncertainty in the smoothing parameter selection.
+
+Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve, but noncrossing is no longer guaranteed. 
 }
 %The function (and underlying method) works pretty well in obtaining point estimates and displaying quantile curves accordingly.
 %Typically this is the main (and unique) goal when dealing with growth charts. However from a statistical viewpoint 
@@ -206,10 +206,11 @@ m3<-gcrq(y~ps(x, lambda=1000, d=2), tau=tauss, data=growthData) #linear
 m4<-gcrq(y~ps(x, lambda=1000, d=3), tau=tauss, data=growthData) #quadratic  
 
 #penalized model with monotonicity restrictions
-m5<-gcrq(y~ps(x, mon=1, lambda=10), tau=tauss, data=growthData)
+m5<-gcrq(y~ps(x, monotone=1, lambda=10), tau=tauss, data=growthData)
 
 #monotonicity constraints,lambda estimated, and varying penalty
-m6<-gcrq(y~ps(x, mon=1, lambda=10, var.pen="(1:k)"), tau=tauss, data=growthData) 
+m6<-gcrq(y~ps(x, monotone=1, lambda=10, var.pen="(1:k)"), tau=tauss, data=growthData) 
+m6a<-gcrq(y~ps(x, monotone=1, lambda=10, var.pen="(1:k)^2"), tau=tauss, data=growthData) 
 
 par(mfrow=c(2,3))
 plot(m1, pch=20, res=TRUE)
@@ -217,13 +218,35 @@ plot(m2, pch=20, res=TRUE)
 plot(m3, add=TRUE, lwd=2)
 plot(m4, pch=20, res=TRUE)
 plot(m5, pch=20, res=TRUE, legend=TRUE, col=2)
-plot(m6, add=TRUE, lwd=2, col=3)
+plot(m6, lwd=2, col=3)
+plot(m6a, lwd=2, col=4)
 
 #select lambda via 'K-fold' CV (only with a single smooth term)
 m7<-gcrq(y~ps(x, lambda=seq(0.02,100,l=20)), tau=tauss, data=growthData) 
 par(mfrow=c(1,2))
 plot(m7, cv=TRUE) #display CV score versus lambda values
 plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fitted curves at the best lambda value
+
+
+#===VC example
+
+n=50
+x<-1:n/n
+y0<-10+sin(2*pi*x)
+y1<-seq(7,11,l=n)
+y<-c(y0,y1)+rnorm(2*n)*.1
+x<-c(x,x)
+z<-rep(0:1, each=n)
+
+#include as a continuous covariate..
+o<-gcrq(y~ ps(x, ndx=5) + ps(x,by=z,ndx=5), n.boot=0, tau=.5)
+predict(o, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
+
+#.. as a factor
+g<-factor(z)
+o1<-gcrq(y~ 0+ps(x,by=g,ndx=5), tau=.5) #you have to remove the model intercept!
+predict(o1, newdata=data.frame(x=c(.3,.7), g=factor(c(0,1))))
+
 
 }
 }

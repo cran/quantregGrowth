@@ -56,6 +56,7 @@ function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL,
     attr(r,"K")<-K
     attr(r,"ridge") <-ridge
     attr(r,"nomeBy")<-deparse(substitute(by), backtick = TRUE, width.cutoff = 500)
+    attr(r,"levelsBy")<-levels(by)
     attr(r,"dimSmooth")<-p
     attr(r,"decom")<-decompose
     if(monotone!=0 && decompose) stop("'decom=TRUE' is incompatible with monotonicity restrictions")

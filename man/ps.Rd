@@ -21,7 +21,7 @@ The quantitative covariate supposed to have a nonlinear relationships with the q
 In growth charts this variable is typically the age.
 }
   \item{lambda}{
-A supplied smoothing parameter for the smooth term. If it is negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). If a positive scalar, it represents the actual smoothing parameter. If it is a vector, cross validation is performed to select the `best' value. See Details in ?gcrq. 
+A supplied smoothing parameter for the smooth term. If it is negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). If a positive scalar, it represents the actual smoothing parameter. If it is a vector, cross validation is performed to select the `best' value. See Details in \code{\link{gcrq}}. 
 }
   \item{d}{
 The difference order of the penalty. Default to 3.
@@ -31,10 +31,11 @@ if different from \code{NULL}, a numeric or factor variable of the same dimensio
 %Uo' ESSERE un fattore?...........
 }
   \item{ndx}{
-The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, the empirical rule of Ruppert is used, namely \eqn{min(n/4,40)}{min(n/4,40)}. It could be reduced (but no less than 10, say) if the sample size is not large, and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}.
+The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, the empirical rule of Ruppert is used, namely \eqn{min(n/4,40)}{min(n/4,40)}. It could be reduced (but no less than 10, say) if the sample size is not large and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}.
 }
   \item{deg}{
-The degree of the spline polynomial. Default to 3. 
+The degree of the spline polynomial. Default to 3. The B-spline basis is composed by \code{ndx}+\code{deg} basis functions and if \code{dropc=TRUE} the first column is removed for identifiability (and the model intercept is estimated without any penalty). 
+%However if a varying coefficient term is specified via \code{by}, removing a column is not requested for the identifiability issue. 
 }
   \item{knots}{
 The knots locations. If \code{NULL}, equispaced knots are set.

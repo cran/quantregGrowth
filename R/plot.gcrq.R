@@ -1,7 +1,7 @@
 plot.gcrq <-
 function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
   transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, n.points=100, edf.ylab=NULL, overall.eff=TRUE, 
-  grid=NULL, smoos=NULL, split=FALSE, ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
+  grid=NULL, smoos=NULL, split=FALSE, shift=NULL, type=c("sandw","boot"), ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
 #se.fit <- sqrt(pmax(0, rowSums(as(X1 %*% x$Vp, "matrix") * X1)))
   #interc: should the fitted values account for the model intercept (provided that is in the model)
   #
@@ -44,6 +44,7 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
       B
     }
   #===============================================================================
+          type<-match.arg(type)
           y<-res
           if(is.null(x$info.smooth)) stop("plot for simple linear fits is not allowed")
           if(is.null(x$BB)) stop(" plot.gcrq() only works with smooth terms")          
@@ -73,13 +74,18 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
           #======================================================
           #n.smooths<-length(x$BB)
           
+#browser()
+          #se vuoi provare a fare un matching con un nome..:
+          #if(is.character(term)) {startsWith(names(x$BB), paste("ps(",term,sep=""))}
           if(is.null(term)) {
               term=names(x$BB) 
           } else {
             if(is.numeric(term)) term<- names(x$BB)[term]
           }
           if(!is.character(term)) stop("problems in 'term' ")
-          if(!all(term %in% names(x$BB))) stop("problems in 'terms'. 'term' is not a smooth variable")
+          #if(!all(term %in% names(x$BB))) stop("problems in 'terms'. 'term' is not a smooth variable")
+          
+          if(!all(term %in% names(x$BB))) stop(paste("Unknown term. It should be numeric or one of: ",paste(names(x$BB),collapse=" ")))
           
           n.smooths<-length(term)  
             
@@ -134,24 +140,32 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
           #if(x$info.smooth$decomList[[term]] && overall.eff) .df.term <- .df.term + x$info.smooth$dif[[term]]-1 #1 e' per Interc
           ################################
           #e poi i df del termine smooth devono cambiare se si disegna con o senza intercetta?
+    
         all.term.names<-term
         for(term in all.term.names){
           BB<-x$BB[[term]]
           nomi.ok<- attr(BB, "coef.names") ##nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
           xvar.n<-attr(BB,"covariate.n")
           xvar.35<-attr(BB,"covariate.35")
-          if(isTRUE(attr(BB,"vc"))) {
+          vc.term<-attr(BB,"vc")
+          smoothName<-attr(BB,"smoothName") #attr(BB,"smoothName1") ps(x) o ps(x):z
+          
+          if(isTRUE(vc.term)) {
             if(isTRUE(attr(BB,"drop"))){
               if(interc) {BB<-cbind(1,BB)} else {nomi.ok<-nomi.ok[-1]}
             } else {
             if(!interc) warning(" 'interc=FALSE' ignored with vc terms called with 'dropc=FALSE' ", call.=FALSE)
             }
             interc<-FALSE  
+          } else {
+            if(is.null(shift)) shift<-0 #se NON e' un VC e shift=NULL (default), poni shift<-0
           }
-          #          if(isFALSE(attr(BB, "drop")) && !interc) {
-          #            warning(" interc=FALSE ignored ")
-          #            interc=FALSE
-          #            }
+          ###################################
+          ### ATTENZIONE: con vc models interc e' posto FALSE il che preclude di disegnare l'effetto con la model intercept
+          #  comunque da una prova fatta se metti interc=TRUE, poi i codici seguenti funzionano...
+          #################################
+#browser()
+          
           b<-if(length(x$tau)<=1) drop(x$coefficients)[nomi.ok] else x$coefficients[nomi.ok,select.tau]
           fit.35<-if(deriv) x$Bderiv%*%b else BB%*%b #matrici
           ###########=================================================
@@ -183,9 +197,21 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
                  if(center) BB<- sweep(BB,2,colmeansB)
           }
           ###########=================================================
-          if(interc && "(Intercept)"%in%rownames(as.matrix(x$coefficients))) {
+          #aggiungere la model intercept? Se e' un VC term, l'argomento interc fa rriferimento alla "sua" base, non alla model intercept..
+          #Quindi dalla versione (11/08/21) ho aggiunto "shift"
+          ##NB qui interc e' sempre FALSE per termini VC
+          
+          #
+          if(is.null(shift) && isTRUE(vc.term)){ 
+            if("(Intercept)"%in%rownames(as.matrix(x$coefficients))){
+            fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
+            }
+            shift<-0
+          }
+          if(interc && "(Intercept)"%in%rownames(as.matrix(x$coefficients))) {#NB qui interc e' sempre FALSE per termini VC 
                 fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
           }
+          fit.35<-fit.35+shift
           m.x<- if(is.null(list(...)$xlim)) min(xvar.35) else min(list(...)$xlim)
           M.x<- if(is.null(list(...)$xlim)) max(xvar.35) else max(list(...)$xlim)
           select.n<-xvar.n>=m.x & xvar.n<= M.x
@@ -205,7 +231,10 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
               f.transf.inv<- eval(parse(text=paste("function(y){", transf, "}"))) #assegna la funzione a partire dal carattere..
           } 
           if(!is.null(f.transf.inv)) l$y<- apply(as.matrix(l$y), 2, f.transf.inv) #l$y <- eval(parse(text=transf), list(y=l$y))               
-          if(edf.ylab) Ylab.ok<- paste("ps(",term,", df=", round( .df.term[term, ] ,2), ")",sep="")
+          #if(edf.ylab) Ylab.ok<- paste("ps(",term,", df=", round( .df.term[term, ] ,2), ")",sep="")
+          #if(edf.ylab) Ylab.ok <- gsub(")", paste(",df=", round(.df.term[i,],2),")",sep=""), rownames(.df.term)[i])
+          if(edf.ylab) Ylab.ok <- gsub(")", paste(", df=", round(.df.term[term,],2),")",sep=""), term)
+          
           #se col<0
           if(!is.null(l$col) && !is.character(l$col) && l$col < 0){ 
               Lab.palette <- colorRampPalette(c("blue", "green", "red"), space = "Lab")      #c("blue", "orange", "red")
@@ -218,8 +247,13 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
               a <- alpha/2
               a <- c(a, 1 - a)
               fac <- qnorm(a)
-              V<-vcov.gcrq(x,term)
-              se<-sapply(V, function(x)sqrt(rowSums((BB %*% x * BB))))
+#browser()              
+              V<-vcov.gcrq(x, type=type)
+              #V<-vcov.gcrq(x,term)
+              #se vc e interc=FALSE la BB ha una colonna in meno!! (certo perche' interc=FALSE ha portato alla rimozione ...)
+              V<- lapply(V, function(x) x[nomi.ok, nomi.ok])
+              ##########
+              se<-sapply(V, function(x)sqrt(rowSums((BB %*% x * BB)))) 
               low.q <- fit.35 + fac[1]*se[select.35, select.tau, drop=FALSE]
               up.q <-  fit.35 + fac[2]*se[select.35, select.tau, drop=FALSE]
               if(shade){
@@ -248,7 +282,10 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
               l1$cex<-NULL
               #if(!is.null(transf)) l1$y <- eval(parse(text=transf), list(y=l1$y))              
               if(!is.null(f.transf.inv)) l1$y<- apply(as.matrix(l1$y), 2, f.transf.inv) #l1$y <- f.transf.inv(l1$y)
-              if(is.null(l1$xlab)) l1$xlab<-term
+              
+              #browser()
+              
+              if(is.null(l1$xlab)) l1$xlab<- smoothName #term
               if(is.null(l1$ylab)) l1$ylab<- Ylab.ok
               if(!is.null(l1$lwd)) l1$lwd<-NULL                            
               if(!is.null(l1$cex.p)) l1$cex<-l1$cex.p else l1$cex<-.5
@@ -313,7 +350,7 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
                 if(!is.null(l$col)) l$col<-adjustcolor(l$col,.65)
                 do.call(matlines, l)
           } else {
-                if(is.null(l$xlab)) l$xlab<-term
+                if(is.null(l$xlab)) l$xlab<- smoothName # term
                 if(is.null(l$ylab)) {l$ylab<-if(deriv) paste(Ylab.ok," (first derivative)") else Ylab.ok}
                 l$type<-"l"
                 if(conf.level>0 & is.null(l$ylim)) {
