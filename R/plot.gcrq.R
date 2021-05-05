@@ -1,6 +1,6 @@
 plot.gcrq <-
 function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
-  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, n.points=100, edf.ylab=NULL, overall.eff=TRUE, 
+  transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, #n.points=100,  
   grid=NULL, smoos=NULL, split=FALSE, shift=NULL, type=c("sandw","boot"), ...){ #, se=FALSE, intercept=FALSE, resid=TRUE, alpha=0.01, legend=TRUE, ...){
 #se.fit <- sqrt(pmax(0, rowSums(as(X1 %*% x$Vp, "matrix") * X1)))
   #interc: should the fitted values account for the model intercept (provided that is in the model)
@@ -14,8 +14,9 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
 #select.tau: which quantile curves should be drawn? default (missing) is all
 #f.deriv: if TRUE, the first derivatives ofthe growth curves  are plotted
 #cv: se TRUE disegna la cross validation versus lambdas
+#ATTENZIONE:
 #===============================================================================
-    bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
+  bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
         # x: vettore di dati
         # xlr: il vettore di c(xl,xr)
         # ndx: n.intervalli in cui dividere il range
@@ -43,61 +44,60 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
       B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
       B
     }
-  #===============================================================================
-          type<-match.arg(type)
-          y<-res
-          if(is.null(x$info.smooth)) stop("plot for simple linear fits is not allowed")
-          if(is.null(x$BB)) stop(" plot.gcrq() only works with smooth terms")          
-          if(cv){
-               if(is.null(x$cv)) stop("the object does not include the 'cv' component")
-               valoriL<-x$cv[,1]
-               valoriCV<-apply(x$cv[,-1],1,mean)
-               #aa <- apply(x$cv[, -1], 1, quantile, probs=c(.25,.75))  #se vuoi riportare anche i quantili .25, .75
-               if(!lambda0) {
-                  valoriL<-valoriL[-1]
-                  valoriCV<-valoriCV[-1]
-                  #aa<-aa[,-1]
-               }
-               plot(valoriL, valoriCV ,type="o",ylab="Cross Validation score",
-                xlab="lambda values",xaxt="n",...)
-               axis(1, at=x$cv[,1], labels=round(x$cv[,1],2), las=2, cex.axis=.7)
-               points(valoriL[which.min(valoriCV)], min(valoriCV, na.rm=TRUE), pch=19)
-               #segments(valoriL, aa[1,], valoriL, aa[2,], lty=3) #comunque devi aggiustare ylim..
-               #------------
-               #matlines(valoriL, x$cv[-1, -1], type="l", col=grey(.5)) #non saprei..
-               #boxplot(unlist(apply(x$cv[,-1],1,function(.x)list(.x)), recursive=FALSE)) #ma non si vede NULLA!!!
-               return(invisible(NULL))
-          }
-          
-          #======================================================
-          #INSERIRE QUALCOSA QUI PER disegnare tutti i termini...
-          #======================================================
-          #n.smooths<-length(x$BB)
-          
-#browser()
-          #se vuoi provare a fare un matching con un nome..:
-          #if(is.character(term)) {startsWith(names(x$BB), paste("ps(",term,sep=""))}
-          if(is.null(term)) {
-              term=names(x$BB) 
-          } else {
-            if(is.numeric(term)) term<- names(x$BB)[term]
-          }
-          if(!is.character(term)) stop("problems in 'term' ")
-          #if(!all(term %in% names(x$BB))) stop("problems in 'terms'. 'term' is not a smooth variable")
-          
-          if(!all(term %in% names(x$BB))) stop(paste("Unknown term. It should be numeric or one of: ",paste(names(x$BB),collapse=" ")))
-          
-          n.smooths<-length(term)  
+#===============================================================================
+      if(cv){
+        if(is.null(x$cv)) stop("the object does not include the 'cv' component")
+        valoriL<-x$cv[,1]
+        valoriCV<-apply(x$cv[,-1],1,mean)
+        #aa <- apply(x$cv[, -1], 1, quantile, probs=c(.25,.75))  #se vuoi riportare anche i quantili .25, .75
+        if(!lambda0) {
+          valoriL<-valoriL[-1]
+          valoriCV<-valoriCV[-1]
+          #aa<-aa[,-1]
+        }
+        plot(valoriL, valoriCV ,type="o",ylab="Cross Validation score",
+             xlab="lambda values",xaxt="n",...)
+        axis(1, at=x$cv[,1], labels=round(x$cv[,1],2), las=2, cex.axis=.7)
+        points(valoriL[which.min(valoriCV)], min(valoriCV, na.rm=TRUE), pch=19)
+        #segments(valoriL, aa[1,], valoriL, aa[2,], lty=3) #comunque devi aggiustare ylim..
+        #------------
+        #matlines(valoriL, x$cv[-1, -1], type="l", col=grey(.5)) #non saprei..
+        #boxplot(unlist(apply(x$cv[,-1],1,function(.x)list(.x)), recursive=FALSE)) #ma non si vede NULLA!!!
+        return(invisible(NULL))
+      }
+      type<-match.arg(type)
+      y<-res
+      if(is.null(x$info.smooth)){ #stop("plot for simple linear fits is not allowed")
+        if(is.null(term)){
+            term<-colnames(x$x)
+            term <- setdiff(term, "(Intercept)")
+        } else {
+          if(is.numeric(term)) term<- colnames(x$x[, term+match("(Intercept)", colnames(x$x),0), drop=FALSE])
+        }
+        term <- setdiff(term, "(Intercept)")
+        if(!is.character(term)) stop("problems in 'term' ")
+      } else {
+        #per termini smooth        
+        if(is.null(term)) {
+          term=names(x$BB) 
+        } else {
+          if(is.numeric(term)) term <- names(x$BB)[term]
+        }
+        if(!is.character(term)) stop("problems in 'term' ")
+        if(!all(term %in% names(x$BB))) stop(paste("Unknown term. It should be numeric or one of: ",paste(names(x$BB),collapse=" ")))
+      } 
+
+      n.smooths<-length(term)  
             
-          if(n.smooths>1 && split) {
+      if(n.smooths>1 && split) {
               n.plot<-c(ceiling(n.smooths/2),2)
               oldpar<-par(mfrow=n.plot)
-          }
+      }
             #in realta' oldpar sotto non serve perche' alla fine viene richiamato solo se split=TRUE
           #} else { 
             #oldpar<-par()
             #}
-          oldAsk<-options("device.ask.default")[[1]]
+      oldAsk<-options("device.ask.default")[[1]]
           #ATTENZIONE per resettare i parametri grafici, mi sa che alla fine del for devi mettere:
           #devAskNewPage(ask =old1)
           #if(split) par(mfrow=old2)
@@ -106,50 +106,36 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
           #   old2<-par()$mfrow
           #  if(n.smooths>1) {if(missing(term)) stop("please provide 'term'")} else {term=names(n.smooths)}
           #  if(!term%in%names(x$BB)) stop("'term' is not a smooth variable")
-          if(length(x$taus)<=1) select.tau<-1
-          if(missing(select.tau)) {
+      if(length(x$taus)<=1) select.tau<-1
+      if(missing(select.tau)) {
               select.tau<-1:ncol(x$coefficients)
-          } else {
+      } else {
               if(length(select.tau)>length(x$taus)) stop("`length(select.tau)<=length(taus)' is requested")
               if(all(select.tau<1 & select.tau>0)) select.tau<- match(select.tau,x$taus)
               if(!all(select.tau<=length(x$taus) & select.tau>=1)) stop("'select.tau' is not correctly specified")
-          }
-          if(deriv) y<-FALSE
-          if(add) y<-FALSE
-          if(is.null(edf.ylab)){
-            edf.ylab <- if(length(select.tau)==1) TRUE else FALSE 
-          }
-          .df.term<- as.matrix(x$edf.j)[term, select.tau, drop=FALSE]
-          
-          #browser()
-          
-          if(length(select.tau)>1 && edf.ylab){
-            warning(" 'edf.ylab' set to FALSE when plotting multiple quantile curves", call.=FALSE)
-            edf.ylab<-FALSE
-          }
+      }
       
-      #if(length(.df.term)>1){
-      #      if(edf.ylab) {
-      #        warning(" 'edf.ylab' set to FALSE when plotting multiple quantile curves", call.=FALSE)
-      #        edf.ylab<-FALSE
-      #      }
-      #    }
-          
-          ###DOVE METTERE IL SEGUENTE?????
-          ################################
-          #if(x$info.smooth$decomList[[term]] && overall.eff) .df.term <- .df.term + x$info.smooth$dif[[term]]-1 #1 e' per Interc
-          ################################
-          #e poi i df del termine smooth devono cambiare se si disegna con o senza intercetta?
-    
-        all.term.names<-term
-        for(term in all.term.names){
-          BB<-x$BB[[term]]
+      if(deriv) y<-FALSE
+      if(add) y<-FALSE
+
+      shift00<-shift  
+      interc00<- interc
+      all.term.names<-term
+
+        
+      #################################################################################################
+      for(term in all.term.names){
+        #browser()
+          interc <- interc00
+          shift<-shift00
+          BB<-x$BB[[term]] 
+          if(!is.null(x$constX)) BB<- BB - x$constX[[term]] 
           nomi.ok<- attr(BB, "coef.names") ##nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
-          xvar.n<-attr(BB,"covariate.n")
-          xvar.35<-attr(BB,"covariate.35")
+          xvar.n <-attr(BB,"covariate.n") 
+          xvar.35 <-attr(BB,"covariate.35") 
           vc.term<-attr(BB,"vc")
           smoothName<-attr(BB,"smoothName") #attr(BB,"smoothName1") ps(x) o ps(x):z
-          
+            
           if(isTRUE(vc.term)) {
             if(isTRUE(attr(BB,"drop"))){
               if(interc) {BB<-cbind(1,BB)} else {nomi.ok<-nomi.ok[-1]}
@@ -164,8 +150,7 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
           ### ATTENZIONE: con vc models interc e' posto FALSE il che preclude di disegnare l'effetto con la model intercept
           #  comunque da una prova fatta se metti interc=TRUE, poi i codici seguenti funzionano...
           #################################
-#browser()
-          
+
           b<-if(length(x$tau)<=1) drop(x$coefficients)[nomi.ok] else x$coefficients[nomi.ok,select.tau]
           fit.35<-if(deriv) x$Bderiv%*%b else BB%*%b #matrici
           ###########=================================================
@@ -180,24 +165,24 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
               return(invisible(NULL))
           }
           if(!is.null(attr(BB,"name.fixed.params"))){ #se c'e' stata una decomp di spline 
-              if(!missing(n.points)) warning("argument 'n.points' ignored", call. = FALSE)
+              #if(!missing(n.points)) warning("argument 'n.points' ignored", call. = FALSE)
               if(overall.eff){ #e vuoi disegnare tutto l'effetto  
                   nomi.okF<-attr(BB,"name.fixed.params")
                   b.fix<-if(is.matrix(x$coefficients)) x$coefficients[nomi.okF,select.tau] else x$coefficients[nomi.okF]
                   fit.35<- fit.35 +  drop(poly(xvar.35, degree=length(b.fix), raw=TRUE)%*%b.fix)  
               }
           }
-          if(!missing(n.points) && is.null(attr(BB,"name.fixed.params"))){
-                 dropc<-attr(BB,"drop")
-                 center<-attr(BB,"center")
-                 colmeansB<-attr(BB,"colmeansB")
-                 xvar.35<- seq(min(xvar.35),max(xvar.35), length=n.points)
-                 BB<-bspline(xvar.35, ndx=attr(BB,"ndx"), deg= attr(BB,"deg"), knots=attr(BB,"knots"))
-                 if(dropc) BB<-BB[,-1]
-                 if(center) BB<- sweep(BB,2,colmeansB)
-          }
+          # if(!missing(n.points) && is.null(attr(BB,"name.fixed.params"))){
+          #        dropc<-attr(BB,"drop")
+          #        center<-attr(BB,"center")
+          #        colmeansB<-attr(BB,"colmeansB")
+          #        xvar.35<- seq(min(xvar.35),max(xvar.35), length=n.points)
+          #        BB<-bspline(xvar.35, ndx=attr(BB,"ndx"), deg= attr(BB,"deg"), knots=attr(BB,"knots"))
+          #        if(dropc) BB<-BB[,-1]
+          #        if(center) BB<- sweep(BB, 2, colmeansB)
+          # }
           ###########=================================================
-          #aggiungere la model intercept? Se e' un VC term, l'argomento interc fa rriferimento alla "sua" base, non alla model intercept..
+          #aggiungere la model intercept? Se e' un VC term, l'argomento interc fa riferimento alla "sua" base, non alla model intercept..
           #Quindi dalla versione (11/08/21) ho aggiunto "shift"
           ##NB qui interc e' sempre FALSE per termini VC
           
@@ -233,7 +218,19 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
           if(!is.null(f.transf.inv)) l$y<- apply(as.matrix(l$y), 2, f.transf.inv) #l$y <- eval(parse(text=transf), list(y=l$y))               
           #if(edf.ylab) Ylab.ok<- paste("ps(",term,", df=", round( .df.term[term, ] ,2), ")",sep="")
           #if(edf.ylab) Ylab.ok <- gsub(")", paste(",df=", round(.df.term[i,],2),")",sep=""), rownames(.df.term)[i])
-          if(edf.ylab) Ylab.ok <- gsub(")", paste(", df=", round(.df.term[term,],2),")",sep=""), term)
+          
+          
+          
+          if(length(select.tau)==1 && ncol(BB)!=1 ){ #ncol(BB)==1 se il termine e' lineare, altrimenti se e' una base ha molte piu' colonne..
+            .df.term <- as.matrix(x$edf.j)[term, select.tau, drop=FALSE]
+            if(isTRUE(vc.term)) .df.term <- .df.term-1  #se e' un VC term, dal conteggio df togli l'intercetta (cosi come avviene per i termini smooth non-VC)
+            Ylab.ok<- gsub(")", paste(", df=", round(.df.term[term,],2),")",sep=""), term)
+          } else {
+            Ylab.ok <- term
+          }
+          
+           
+          
           
           #se col<0
           if(!is.null(l$col) && !is.character(l$col) && l$col < 0){ 
@@ -247,7 +244,6 @@ function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, legend=F
               a <- alpha/2
               a <- c(a, 1 - a)
               fac <- qnorm(a)
-#browser()              
               V<-vcov.gcrq(x, type=type)
               #V<-vcov.gcrq(x,term)
               #se vc e interc=FALSE la BB ha una colonna in meno!! (certo perche' interc=FALSE ha portato alla rimozione ...)

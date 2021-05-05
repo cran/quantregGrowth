@@ -6,17 +6,19 @@ importFrom("graphics", "axis", "matlines", "matplot", "matpoints",
 importFrom("stats", "as.formula", ".getXlevels", "contrasts", "is.empty.model",
              "model.matrix", "model.response", "model.weights", "terms",
              "var","formula","qnorm","splinefun","update","printCoefmat",
-             "dnorm", "poly", "quantile", "update.formula", "pchisq")
+             "dnorm", "poly", "quantile", "update.formula", "pchisq", "lm.fit")
 importFrom("grDevices", "adjustcolor", "grey", "colorRampPalette","devAskNewPage")
 importFrom("utils", "tail","flush.console")
 
 export(gcrq, gcrq.rq.cv, ncross.rq.fitX, ncross.rq.fitXB, 
-      ps, summary.gcrq, print.gcrq, plot.gcrq, vcov.gcrq, predict.gcrq)
+      ps, summary.gcrq, print.gcrq, plot.gcrq, vcov.gcrq, predict.gcrq, logLik.gcrq, AIC.gcrq)
 
 S3method(plot,gcrq)
 S3method(print,gcrq)
 S3method(summary,gcrq)
 S3method(vcov,gcrq)
 S3method(predict,gcrq)
+S3method(logLik,gcrq)
+S3method(AIC,gcrq)
 
 

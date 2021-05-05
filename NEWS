@@ -5,6 +5,18 @@
 *******************************
 
 
+
+
+=============
+version 1.2-0  
+=============
+* some improvements in fitting and displaying (noncrossing) linear models. 
+* methods logLik.gcrq and AIC.gcrq introduced.
+* ndx argument in ps() now defaults to min(n/4,9) (it was min(n/4,40)). 
+* some minor changes in plot.gcrq(): arguments 'edf.ylab' and 'n.points' removed; for VC terms and a single tau, the edf value on the y-axis does not include the basis intercept, coherently with non-VC terms.
+* bugs fixed in handling noncrossing constraints with centred Bsplines (thanks to Gianluca Sottile for the fruitful discussion and suggestion) and in handling monotonicity/concavity constraints.
+
+
 =============
 version 1.1-0  
 =============

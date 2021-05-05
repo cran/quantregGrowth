@@ -22,15 +22,14 @@ a dataframe including \emph{all} the covariates of the model. The smooth term is
 and proper basis functions will be build accordingly. If omitted, the fitted values are used. Ignored if \code{xreg} is provided. 
 }
 \item{se.fit}{
-logical. If \code{TRUE}, standard errors of the fitted quantiles are computed using the bootstrap covariance matrix.
+logical. If \code{TRUE}, standard errors of the fitted quantiles are computed using the bootstrap or the sandwich covariance matrix, according to the argument \code{type}.
 }
 \item{transf}{
 An optional character string (with \code{"y"} as argument) meaning a function to apply to the predicted values. E.g. \code{"(exp(y)-0.1)"}. 
 If \code{NULL} (default) it is taken as the inverse of function \code{transf} (*if*) supplied in \code{gcrq}. The standard errors (provided \code{se.fit=TRUE} has been set) are adjusted accordingly via the Delta method. See argument \code{"transf"} in \code{gcrq()}. If \code{transf} has been specified in \code{gcrq()}, use \code{transf="y"} to force predictions on the transformed scale, i.e. without back transforming.
 }
 \item{xreg}{
-the design matrix for which predictions are requested. Note \code{xreg} has to include the basis functions of the 
-B-spline.
+the design matrix for which predictions are requested. If provided, \code{xreg} has to include the basis functions of the B-spline.
 }
   \item{type}{
 If \code{se.fit=TRUE}, which cov matrix should be used? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}), \code{'sandw'} mean via the sandwich formula.

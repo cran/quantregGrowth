@@ -10,9 +10,8 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 \usage{
 \method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, interc=TRUE, 
     legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, transf=NULL, 
-    lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, n.points=100, 
-    edf.ylab=NULL, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, shift=NULL, 
-    type=c("sandw","boot"), ...)
+    lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, %%n.points=100,
+    grid=NULL, smoos=NULL, split=FALSE, shift=NULL, type=c("sandw","boot"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,12 +19,11 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 a fitted \code{"gcrq"} object.
 }
   \item{term}{
-the smooth variable name entering the model via \code{ps}. Relevant fitted quantile curves (as specified by \code{select.tau}) will be plotted.
-If \code{NULL}, all smooth terms are plotted according to the \code{split} argument.
+the smooth variable name (or its index in the formula) entering the model via \code{ps}. Relevant fitted quantile curves (as specified by \code{select.tau}) will be plotted. If \code{NULL}, all smooth terms are plotted according to the \code{split} argument.
 }
   \item{interc}{
-Should the smooth term be plotted along with the intercept (provided it is included in the model)? If the smooth term is a varying coefficient, 
-  \code{interc} refers to its intercept, and not the overall model intercept (see argument \code{shift} to plot a VC smooth curve with model intercept). Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'.  
+Should the smooth term be plotted along with the model intercept (provided it is included in the model)? If the smooth term is a varying coefficient, 
+  \code{interc} refers to the intercept of its basis, and not the overall model intercept (see argument \code{shift} to plot a VC smooth curve with the model intercept). Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'. Note that \code{interc=TRUE} is requested to display the noncrossing curves (if multiple quantile curves are being plotted).  
 }
 
   \item{add}{
@@ -70,14 +68,14 @@ If provided and different from \code{NULL}, it represents the abscissa value (on
   \item{rug}{
 logical. If \code{TRUE}, the covariate distribution is displayed as a rug plot at the foot of the plot. Default to \code{FALSE}.
 }
-  \item{n.points}{
-numeric. Number of values used to plot the fitted curves. Large values provide smoother curves.
-}
-  \item{edf.ylab}{
-Should the edf value to be reported as y label? If \code{NULL}, \code{edf.ylab} is set to TRUE only if there is a single quantile curve to be plotted.
-}
+%  \item{n.points}{
+%numeric. Number of values used to plot the fitted curves. Large values provide smoother curves.
+%}
+%  \item{edf.ylab}{
+%Should the edf value to be reported as y label? If \code{NULL}, \code{edf.ylab} is set to TRUE only if there is a single quantile curve to be plotted.
+%}
   \item{overall.eff}{
-logical. If the smooth term has been called via \code{ps(.., decompose=TRUE)}, by specifying \code{overall.eff=TRUE} the overall smooth effect is drawn. 
+logical. If the smooth term has been called via \code{ps(.., decompose=TRUE)}, by specifying \code{overall.eff=TRUE} the overall smooth effect is drawn. Currently unimplemented.
 }
   \item{grid}{
 if provided, a grid of horizontal and vertical lines is drawn. \code{grid} has to be a list with the following components \code{x,y,col,lty,lwd}. 
@@ -106,7 +104,7 @@ Additional graphical parameters:\cr
 }
 }
 \details{
-Takes a "gcrq" object and diplays the fitted quantile curves. If \code{conf.level}>0 pointwise confidence intervals are also displayed. When the object contains the component \code{cv}, \code{plot.gcrq} can display cross-validation scores against the lambda values, see argument \code{cv}.
+Takes a "gcrq" object and diplays the fitted quantile curves. If \code{conf.level}>0 pointwise confidence intervals are also displayed. When the object contains the component \code{cv}, \code{plot.gcrq} can display cross-validation scores against the lambda values, see argument \code{cv}. If a single quantile curve is being displayed, the default 'ylab' includes the relevant edf value (leaving out the basis intercept).
 % per gli IC, col e' quello dei quantili, lwd = lwd(quantili)*.5, e lty=lty(quantili)+1 (se un solo valore e' specificato) oppure e' proprio quello  
 %dei quantili se questo e' un vettore.
 }

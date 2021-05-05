@@ -34,7 +34,7 @@ further arguments.
 }
 }
 \details{
-This method is at a preliminary stage. \code{summary.gcrq} returns some information on the fitted quantile curve at different probability values, such as the estimates, standard errors, values of check (objective) function values at solution. Currently there is no \code{print.summary.gcrq} method, so 
+\code{summary.gcrq} returns some information on the fitted quantile curve at different probability values, such as the estimates, standard errors, values of check (objective) function values at solution. Currently there is no \code{print.summary.gcrq} method, so 
 \code{summary.gcrq} itself prints results.
 }
 %\value{

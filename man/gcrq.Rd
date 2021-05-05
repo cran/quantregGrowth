@@ -11,10 +11,10 @@ more biologically plausible. Linear terms can be specified in the model formula.
 }
 \usage{
 gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, 
-    transf=NULL, y=TRUE, n.boot=0, eps=0.0001, display=FALSE, 
+    transf=NULL, y=TRUE, n.boot=0, eps=0.001, display=FALSE, 
     method=c("REML","ML"), df.opt=2, lambda0=.1, h=0.8, lambda.max=2000, 
     tol=0.01, it.max=20, single.lambda=TRUE, foldid=NULL, nfolds=10, 
-    lambda.ridge=0, contrasts=NULL, ...)
+    lambda.ridge=0, sgn.constr=NULL, adjX.constr=TRUE, contrasts=NULL, ...)
 }
 \arguments{
   \item{formula}{
@@ -39,7 +39,7 @@ a function which indicates how the possible `NA's are handled.
   \item{transf}{
 an optional character string (with \code{"y"} as argument) meaning a function to apply to the response variable 
   before fitting. E.g. \code{"log(y+0.1)"}. It can be useful to guarantee fitted values within a specified range. If provided,
-  the resulting oject fit will include the corresponding inverse (numerically computed) to be used to back transform predictions (see argument \code{transform} in \code{predict.gcrq} and \code{plot.gcrq}).
+  the resulting oject fit will include the corresponding inversefunction (numerically computed) to be used to back transform predictions (see argument \code{transform} in \code{predict.gcrq} and \code{plot.gcrq}).
 }
   \item{y}{
 logical. If \code{TRUE} (default) the returned object includes also the responses vector.
@@ -52,14 +52,13 @@ logical. If \code{TRUE} (default) the returned object includes also the response
 %}
   \item{n.boot}{
 Number of nonparametric (cases resampling) bootstrap samples to be used. The covariance matrix estimates is obtained as empirical covariance matrix of the bootstrap dostributions. Notice that the smoothing parameter (if relevant) is assumed fixed. Namely it does change 
-throughout the bootstrap replicates.  Set \code{n.boot>0} if you plan to plot the fitted quantiles along with pointwise confidence intervals.
+throughout the bootstrap replicates.  
 }
   \item{eps}{
-A small positive constant to ensure noncrossing curves (i.e. the minimum distance between two consecutive curves). Use it at your risk! If \code{eps} is large, the resulting fitted quantile 
-curves could appear unreasonable.
+A small positive constant to ensure noncrossing curves (i.e. the minimum distance between two consecutive curves). Use it at your risk! If \code{eps} is large, the resulting fitted quantile curves could appear unreasonable.
 }
   \item{display}{
-Logical. Should the iterative process be printed? Ignored if all the smoothing parameters specified in \code{ps} terms are fixed.
+Logical. Should the iterative process be printed? Ignored if no smooth is specified in the formula or if all the smoothing parameters specified in \code{ps} terms are fixed.
 }
   \item{method}{
 character, \code{"ML"} or \code{"REML"} affecting the smoothing parameter estimation. Default is \code{"REML"} which appears to provide better performance in simulation studies. 
@@ -99,6 +98,12 @@ the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} a
   \item{lambda.ridge}{
 Numerical value (typically very small) to stabilize model estimation.
 }
+  \item{sgn.constr}{optional. Vector of signs for the noncrossing constraints affecting the slopes of linear covariates. If provided, its lenght should be ugual to the model matrix columns otherwise it will be recycled. If \code{NULL}, its value is determined by 
+  a preliminary heteroscedastic model. Appropriate only with linear models (i.e. no \code{ps} term in the formula).
+}
+  \item{adjX.constr}{logical. If \code{TRUE}, each linear covariate is shifted (by adding or substracting its min or max) in order make the constraints on the intercept more effective to prevent crossing of quantile curves. 
+  Appropriate only with linear models.
+}
   \item{contrasts}{an optional list. See argument \code{contrasts.arg} in \code{model.matrix.default}.}
   \item{\dots}{further arguments.}
 }
@@ -107,13 +112,13 @@ The function fits regression quantiles at specified percentiles given in \code{t
 covariates specified in the \code{formula} argument. The \code{formula} may include linear terms and  one or several \code{\link{ps}} 
 terms to model nonlinear relationships with quantitative covariates, usually age in growth charts. When the \code{lambda} argument 
 in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). 
-If a positive scalar, it represents the actual smoothing parameter value. When it is a vector (and the model includes a single \code{ps} term), 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique ps() term in the formula.
+If a positive scalar, it represents the actual smoothing parameter value. When it is a vector (and the model includes a single \code{ps} term), 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique \code{ps} term in the formula.
 }
 \value{
-This function returns an object of class \code{gcrq}, that is a list with the following components
+This function returns an object of class \code{gcrq}, that is a list with the following components (only the most important are listed)
   \item{coefficients}{The matrix of estimated regression parameters; the number of columns equals the number of the fitted quantile curves.}
   \item{x}{the design matrix of the final fit (including the dummy rows used by penalty).}
-  \item{df}{a vector reporting the df values for each quantile curve. See the section 'Warning' below.  }
+  \item{edf.j}{a matrix reporting the df values for each term in the model and each quantile curve. See the section 'Warning' below.  }
   \item{rho}{a vector including the values of the objective functions at the solution for each quantile curve.}
 
   \item{fitted.values}{a matrix of fitted quantiles (a column for each \code{tau} value)}
@@ -135,9 +140,11 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
 }
 
 \section{Warning}{
-Currently, standard errors are obtained via the nonparametric bootstrap (case resampling) or the sandwich formula. Both methods ignore uncertainty in the smoothing parameter selection.
+Currently, standard errors are obtained via the nonparametric bootstrap (case resampling) or the sandwich formula. Both methods ignore uncertainty in the smoothing parameter selection. \cr
 
-Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve, but noncrossing is no longer guaranteed. 
+Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve while guaranteeing noncrossing constraints  \cr
+
+Computation of the approximate edf ignores the noncrossing constraint.
 }
 %The function (and underlying method) works pretty well in obtaining point estimates and displaying quantile curves accordingly.
 %Typically this is the main (and unique) goal when dealing with growth charts. However from a statistical viewpoint 
@@ -171,6 +178,9 @@ to increase (even by a small amount) the lambda value. Sometimes even by changin
 V.M.R. Muggeo, F. Torretta, P.H.C. Eilers, M. Sciandra, M. Attanasio (2020).
 Multiple smoothing parameters selection in additive regression quantiles,
 Statistical Modelling, to appear.
+
+V. M. R. Muggeo (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth.
+https://www.researchgate.net/publication/350844895
 
 V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).
 Estimating growth charts via nonparametric quantile

@@ -1,6 +1,6 @@
 gcrq.rq.cv <-
 function(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL,  #interc=FALSE,  
-    penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, dropvcList=FALSE, 
+    penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, vcList=vcList, dropvcList=FALSE, 
     nfolds=10, foldid=NULL, eps=.0001, ...){
 #perform 'nfolds' cross-validation to select lambda.
 #B e X devono essere (eventualmente) matrici!!!
@@ -24,7 +24,7 @@ function(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL, 
             #   ndx=ndx, lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, ...), silent=TRUE)
             fit<-try(ncross.rq.fitXB(y=y_sub, B=B_sub, X=NULL, taus=taus, monotone=monotone, concave=concave, ndx=ndx,
                         lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, eps=eps,  penMatrix=penMatrix, var.pen, 
-                        lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, dropvcList=dropvcList), 
+                        lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList), 
                      silent=TRUE)
             xreg<-B[which,,drop=FALSE]
           } else {
@@ -33,7 +33,7 @@ function(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL, 
 #              lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, ...), silent=TRUE)
             fit<-try(ncross.rq.fitXB(y=y_sub, B=B_sub, X=X[!which, , drop = FALSE], taus=taus, monotone=monotone, concave=concave, ndx=ndx,
                             lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, eps=eps,  penMatrix=penMatrix, var.pen, 
-                            lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, dropvcList=dropvcList), 
+                            lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList), 
                      silent=TRUE)
             xreg<-cbind(X,B)[which,,drop=FALSE]
           }

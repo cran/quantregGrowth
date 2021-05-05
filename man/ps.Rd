@@ -28,10 +28,9 @@ The difference order of the penalty. Default to 3.
 }
   \item{by}{
 if different from \code{NULL}, a numeric or factor variable of the same dimension as the covariate in \code{...} In the numeric vector case the elements multiply the smooth, evaluated at the corresponding covariate values (i.e. a varying coefficient model).
-%Uo' ESSERE un fattore?...........
 }
   \item{ndx}{
-The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, the empirical rule of Ruppert is used, namely \eqn{min(n/4,40)}{min(n/4,40)}. It could be reduced (but no less than 10, say) if the sample size is not large and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}.
+The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, it is taken \eqn{min(n/4,9)}{min(n/4,9)} (versions <=1.1-0 it was \eqn{min(n/4,40)}{min(n/4,40)}, the empirical rule of Ruppert). It could be reduced (but no less than 5 or 6, say) if the sample size is not large and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}. The returned basis wil have `\code{ndx}+\code{deg}-\code{1}' (if \code{dropc=TRUE}) basis functions.
 }
   \item{deg}{
 The degree of the spline polynomial. Default to 3. The B-spline basis is composed by \code{ndx}+\code{deg} basis functions and if \code{dropc=TRUE} the first column is removed for identifiability (and the model intercept is estimated without any penalty). 
@@ -60,7 +59,7 @@ Numeric value to set up monotonicity restrictions on the second derivative of fi
 A character indicating the varying penalty. See Details.
 }
   \item{pen.matrix}{
-if provided, a penalty matrix \eqn{A}{A}, say, such that \eqn{A^T A}{A'A} is the penalty matrix actually used in the estimation process. It overwrites \code{ridge}.
+if provided, a penalty matrix \eqn{A}{A}, say, such that \eqn{A^T A}{A'A} is the penalty matrix actually used in the estimation process. It overwrites \code{ridge}. Currently unimplemented.
 }
   \item{dropc}{
 logical. Should the first column of the B-spline basis be dropped for the basis identifiability? Default to \code{TRUE}. Note, if \code{dropc=FALSE} is set, 
@@ -73,11 +72,11 @@ logical. If \code{TRUE} the smooth effects are 'centered' over the covariate val
 A factor tuning selection of wiggliness of the smoothed curve. The larger \code{K}, the smoother the curve. Simulations suggest \code{K=2}. See details.
 }
   \item{ridge}{
-logical. If \code{TRUE} a ridge penalty is empoyed.
+logical. If \code{TRUE} a ridge penalty is empoyed. Currently unimplemented.
 }
   \item{decompose}{
 logical. If \code{TRUE}, the B-spline is decomposed into truncated power functions 
-such as [x, ..., x^{d-1}, Z]. See Details.
+such as [x, ..., x^{d-1}, Z]. See Details. Currently unimplemented.
 }
 }
 \details{

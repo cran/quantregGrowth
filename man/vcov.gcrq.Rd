@@ -20,7 +20,7 @@ Returns the variance-covariance matrix of the parameter estimates of a fitted gc
 a fitted model object of class \code{"gcrq"} returned by \code{gcrq()}.
   }
   \item{term}{
-if specified the returned covariance matrix includes entries relevant to parameter estimates for that 'term' only. If missing, the returned matrices refer to all model parameter estimates. Currently \code{term} is not allowed. 
+if specified, the returned covariance matrix includes entries relevant to parameter estimates for that 'term' only. If missing, the returned matrices refer to all model parameter estimates. Currently \code{term} is not allowed. 
   }
   \item{type}{
 Which cov matrix should be returned? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}), \code{'sandw'} mean via the 
@@ -31,11 +31,10 @@ additional arguments.
 }
 }
 \details{
-If the \code{"gcrq"} object includes results from bootstrap runs (namely the component \code{boot.coef} is not \code{NULL}),
-Bootstrap-based covariance matrix is computable only if the object fit has been obtained by specifying \code{n.boot>0} in \code{vcov.gcrq()}.
+Bootstrap-based covariance matrix, i.e. \code{type="boot"}, is computable only if the object fit has been obtained by specifying \code{n.boot>0} in \code{gcrq()}.
 }
 \value{
-A list (with length equal to the length of \code{tau} specified in \code{gcrq}) of square matrices. Namely the list includes the covariance matrices of the parameter estimates for each regression quantile curve.
+A list (its length equal the length of \code{tau} specified in \code{gcrq}) of square matrices. Namely the list includes the covariance matrices of the parameter estimates for each regression quantile curve.
 }
 %\references{
 %% ~put references to the literature/web site here ~
