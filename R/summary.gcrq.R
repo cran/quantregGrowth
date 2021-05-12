@@ -1,5 +1,5 @@
-summary.gcrq <- function(object, type = c("sandw", "boot"), 
-         digits = max(3, getOption("digits") - 3), signif.stars = getOption("show.signif.stars"), ...) {
+summary.gcrq <- function(object, type = c("sandw", "boot"), digits = max(3, getOption("digits") - 3), 
+         signif.stars = getOption("show.signif.stars"), ...) {
    edfS <- object$edf.j
    if (length(object$info.smooth) > 0) {
       if (rownames(edfS)[1] == "Xlin") 
@@ -27,20 +27,33 @@ summary.gcrq <- function(object, type = c("sandw", "boot"),
          nomi.p.spline <- unlist(unname(sapply(object$BB, function(.x) attr(.x, "coef.names"))))
          nomi.param <- setdiff(rownames(ris), nomi.p.spline)
          ris <- ris[nomi.param, , drop = FALSE]
-         cat("\n--------  Percentile:", object$taus[j], "  check function: ", round(object$rho[j], digits - 1), "-----\n")
+         cat("\n--------  Percentile:", sprintf("%.2f",object$taus[j]), "  check function: ", formatC(round(object$rho[j], digits - 1), digits=5), "-----\n")
          if (object$pLin > 0) {
             cat("\nparametric terms:\n")
-            printCoefmat(ris, digits = digits, signif.stars = signif.stars)
+            if(j<n.tau) printCoefmat(ris, digits = digits, signif.stars = signif.stars, signif.legend=FALSE) else 
+               printCoefmat(ris, digits = digits, signif.stars = signif.stars)
          }
       cat("\nsmooth terms:\n")
       printCoefmat(edfS[, j, drop = FALSE], digits = digits)
       } else {
+         #cat("\n") 
+         cat("\n--------  Percentile:", sprintf("%.2f",object$taus[j]), "  check function: ", formatC(round(object$rho[j], digits - 1), digits=5), "-----\n")
          cat("\n")
-      printCoefmat(ris, digits = digits, signif.stars = signif.stars)
+         if(j<n.tau) printCoefmat(ris, digits = digits, signif.stars = signif.stars, signif.legend=FALSE) else 
+            printCoefmat(ris, digits = digits, signif.stars = signif.stars)
       }
    }
-   cat("\n=========================\n\nNo. of obs:", n, "  Check function =", 
-       round(sum(object$rho), digits - 1), " SIC =", round(sic, digits), 
-       " ( on edf =", round(sum(object$edf.j), 3), ")", "\n")
-   cat("No. of params:", p, "(for each curve);", p * n.tau, "(total)\n")
+   #cat("\n=========================\n\nNo. of obs:", n, "  Check function =", 
+   #    round(sum(object$rho), digits - 1), " SIC =", round(sic, digits), 
+   #    " ( on edf =", round(sum(object$edf.j), 3), ")", "\n")
+   #cat("No. of params:", p, "(for each curve);", p * n.tau, "(total)\n")
+   #cat("\n\n")
+   
+   #nc<-if(sum(object$DF.POS, object$DF.NEG)>0) TRUE else FALSE
+   nc <- attr(object$edf.j, "df.nc") & (length(object$tau)>1)
+   cat("\n=========================\n\nNo. of obs =", n, "   No. of params =", 
+       p* n.tau, paste("(", p, sep=""),"for each quantile)", "\n")
+   cat("Overall check =", round(sum(object$rho), digits - 1), " SIC =", round(sic, digits-1), 
+       "on edf =", round(sum(object$edf.j), 2), "(ncross constr:",paste(nc, ")",sep=""), "\n")   
+
 }

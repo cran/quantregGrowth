@@ -8,6 +8,13 @@
 
 
 =============
+version 1.2-1  
+=============
+* gcrq() gains argument 'df.nc' to account (optionally) for the possible noncrossing constraints in the model degrees of freedom 
+* bugs fixed: gcrq() did not work when lambda had to be selected by CV; plot.gcrq() when called with 'term=NULL', 'res=TRUE', and 'conf.level>0' displayed (clearly) wrong pointwise confidence intervals; vcov.gcrq() ignored the correct lambda values (when the fit was obtained by setting 'single.lambda=FALSE')
+
+
+=============
 version 1.2-0  
 =============
 * some improvements in fitting and displaying (noncrossing) linear models. 
@@ -98,11 +105,9 @@ version 0.3-0
 * ncross.rq.fitB() deleted; now ncross.rq.fitXB() makes the necessary job.
 
 
-
 =============
 version 0.2-0 (not on CRAN)
 =============
-
 * Nonparametric bootstrap resampling introduced (argument 'n.boot' in gcrq()).
 * Methods summary.gcrq() and vcov.gcrq() introduced to return var-cov matrices based on bootstrap.
 * Some very minor changes in plot.gcrq() to better control graphical display (when cv=TRUE)
@@ -110,11 +115,9 @@ version 0.2-0 (not on CRAN)
 plot.gcrq() was not working for models including linear terms; the lambda set in ps() is now really lambda (it was actually sqrt(lambda)).
 
 
-
 =============
 version 0.1-3
 =============
-
 * Argument 'transf' added to cgrq() and plot.gcrq(). This argument can be useful when modelling bounded oucomes (whereby monotone transformations could be employed). 
 * The returned "gcrq" object now also includes 'fitted.values' and 'residuals'.
 * gcrq() was not working with values of tau always greater than .5 (or always less then .5); also a single value of tau was not allowed. 
@@ -125,7 +128,6 @@ version 0.1-3
 =============
 version 0.1-2
 =============
-
 * Argument 'interc' added to cgrq() to include B-splines and the model intercept. 
 * Some bugs fixed: gcrq() was not working with formulas such as 'gcrq(y~0+x)';
  the component info.smooth was not correctly named in "gcrq" objects causing troubles
@@ -135,5 +137,4 @@ with predictQR() (thanks to Oscar Camacho for finding the error)
 =============
 version 0.1-1
 =============
-
 * First public release on CRAN

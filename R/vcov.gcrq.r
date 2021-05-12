@@ -42,10 +42,17 @@ vcov.gcrq <- function(object, term, type=c("sandw","boot"),...){
         #.. uses a kernel estimate of the sandwich as proposed by Powell(1990).
         taus<-object$taus
         n.tau<-length(taus) #if(length(tau)>1) stop("multiple taus not yet allowed")
-        x.tilde<-object$x #include le pen
-        #x.tilde<-object$x[1:n,]
-        p <- ncol(x.tilde)
-        n<-length(object$y)
+        n<-nrow(as.matrix(object$fitted.values))
+        ##################
+        x.tildeUp<-object$x[1:n,,drop=FALSE] 
+        if(!is.null(object$lambda)){
+            n.coefs<- sapply(object$BB, function(.x)length(attr(.x,"coef.names"))) #n. di coef per ogni termine smooth
+            lambda<- matrix(as.matrix(object$lambda), ncol=n.tau, nrow=length(object$BB)) 
+            Dt <- t(object$D.matrix)
+            nrowD<- ncol(Dt)
+        }
+        
+        p <- ncol(x.tildeUp)
         VCOV<-NULL
         for(j in 1:n.tau) {
             tau<- taus[j]
@@ -54,7 +61,14 @@ vcov.gcrq <- function(object, term, type=c("sandw","boot"),...){
             h <- (qnorm(tau + h) - qnorm(tau - h)) * min(sqrt(var(uhat)), 
                                                          (quantile(uhat, 0.75) - quantile(uhat, 0.25))/1.34)
             f <- dnorm(uhat/h)/h
-            f<-c(f, rep(1, nrow(x.tilde)-n))
+            if(!is.null(object$lambda)){
+                D.lambda <- t(c(rep(0,object$pLin), rep(lambda[,j], n.coefs))*Dt)
+                x.tilde<-rbind(x.tildeUp, D.lambda)
+                f<-c(f, rep(1, nrowD))
+            } else {
+                x.tilde<-rbind(x.tildeUp)
+            }
+
             A<- solve(crossprod(sqrt(f)* x.tilde)) #aggiungere + 1e-08? #solve(t(x.tilde)%*% diag(f) %*% x.tilde)
 
             # U<-x.tilde[1:n,]*(tau-1*(uhat<0))

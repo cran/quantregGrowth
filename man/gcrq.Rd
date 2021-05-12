@@ -12,13 +12,13 @@ more biologically plausible. Linear terms can be specified in the model formula.
 \usage{
 gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, 
     transf=NULL, y=TRUE, n.boot=0, eps=0.001, display=FALSE, 
-    method=c("REML","ML"), df.opt=2, lambda0=.1, h=0.8, lambda.max=2000, 
+    method=c("REML","ML"), df.opt=2, df.nc=TRUE, lambda0=.1, h=0.8, lambda.max=2000, 
     tol=0.01, it.max=20, single.lambda=TRUE, foldid=NULL, nfolds=10, 
     lambda.ridge=0, sgn.constr=NULL, adjX.constr=TRUE, contrasts=NULL, ...)
 }
 \arguments{
   \item{formula}{
-a standard R formula to specify the response in the left hand side, and the covariates in the right hand side. See Details.
+a standard R formula to specify the response in the left hand side, and the covariates in the right hand side, such as \code{y~ps(x)+z}, see Details for further eamples.
 }
   \item{tau}{
 a numeric vector to specify the quantile curves of interest. Default to probability values \eqn{(.1,.25,.5,.75,.9)}.
@@ -51,8 +51,7 @@ logical. If \code{TRUE} (default) the returned object includes also the response
 %and it is ignored if the model does not include a \code{"ps"} term.
 %}
   \item{n.boot}{
-Number of nonparametric (cases resampling) bootstrap samples to be used. The covariance matrix estimates is obtained as empirical covariance matrix of the bootstrap dostributions. Notice that the smoothing parameter (if relevant) is assumed fixed. Namely it does change 
-throughout the bootstrap replicates.  
+Number of nonparametric (cases resampling) bootstrap samples to be used. If \code{n.boot>0}, the covariance matrix can be obtained as empirical covariance matrix of the bootstrap distributions, see \code{\link{vcov.gcrq}}. Notice that the smoothing parameter (if relevant) is assumed fixed. Namely it does change throughout the bootstrap replicates.  
 }
   \item{eps}{
 A small positive constant to ensure noncrossing curves (i.e. the minimum distance between two consecutive curves). Use it at your risk! If \code{eps} is large, the resulting fitted quantile curves could appear unreasonable.
@@ -65,8 +64,11 @@ character, \code{"ML"} or \code{"REML"} affecting the smoothing parameter estima
 Ignored if no smoothing parameter has to be estimated. 
 }
   \item{df.opt}{
-How the model and term-specific degrees of freedom have to be computed. \code{df.opt=1} means via the null penalized coefficients, and \code{df.opt=2} via the trace of the approximate hat  matrix. 
-Ignored if no smoothing parameter has to be estimated.
+How the model and term-specific degrees of freedom have to be computed. \code{df.opt=1} means via the null penalized coefficients, and \code{df.opt=2} via the trace of the approximate hat  matrix. Ignored if no smoothing parameter has to be estimated.
+}
+  \item{df.nc}{
+logical. If \code{TRUE} and the model refers to multiple quantile curves, the degrees of freedom account for the noncrossing constraints. 
+Ignored for single quantile fits.
 }
   \item{lambda0}{
 the starting value for the lambdas to be estimated. Ignored if all the smoothing parameters specified in \code{ps} terms are fixed.
@@ -140,11 +142,13 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
 }
 
 \section{Warning}{
-Currently, standard errors are obtained via the nonparametric bootstrap (case resampling) or the sandwich formula. Both methods ignore uncertainty in the smoothing parameter selection. \cr
+The words \code{'REML'} or \code{'ML'} to specify the \code{method} argument, refer to how the degrees of freedom are computed to update the lambda estimates.
 
-Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve while guaranteeing noncrossing constraints  \cr
+Currently, standard errors are obtained via the sandwich formula or the nonparametric bootstrap (case resampling). Both methods ignore uncertainty in the smoothing parameter selection. 
 
-Computation of the approximate edf ignores the noncrossing constraint.
+Since version 1.2-1, computation of the approximate edf can account for the noncrossing constraints by specifying \code{df.nc=TRUE}. That could affect model estimation when the smoothing parameter(s) have to be estimated, because the term specific edf are used to update the lambda value(s). When lambda is not being estimated (it is fixed or there is no \code{ps} term in the formula), parameter estimate is independent of the \code{df.nc} value. The \code{summary.gcrq} method reports if the edf account for the noncrossing constraints.     
+
+Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve while guaranteeing noncrossing constraints.  %\cr
 }
 %The function (and underlying method) works pretty well in obtaining point estimates and displaying quantile curves accordingly.
 %Typically this is the main (and unique) goal when dealing with growth charts. However from a statistical viewpoint 
@@ -232,10 +236,10 @@ plot(m6, lwd=2, col=3)
 plot(m6a, lwd=2, col=4)
 
 #select lambda via 'K-fold' CV (only with a single smooth term)
-m7<-gcrq(y~ps(x, lambda=seq(0.02,100,l=20)), tau=tauss, data=growthData) 
+m7<-gcrq(y~ps(x, lambda=seq(0.02,50,l=20)), tau=tauss, data=growthData) 
 par(mfrow=c(1,2))
 plot(m7, cv=TRUE) #display CV score versus lambda values
-plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fitted curves at the best lambda value
+plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fit at the best lambda (by CV) 
 
 
 #===VC example

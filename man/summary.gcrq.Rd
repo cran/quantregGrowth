@@ -36,6 +36,8 @@ further arguments.
 \details{
 \code{summary.gcrq} returns some information on the fitted quantile curve at different probability values, such as the estimates, standard errors, values of check (objective) function values at solution. Currently there is no \code{print.summary.gcrq} method, so 
 \code{summary.gcrq} itself prints results.
+
+The SIC returned by \code{print.gcrq} and \code{summary.gcrq} is computed as \eqn{\sum_i\log(\rho/n)) + \log(n)  edf/(2 n)}{sum(log(rho/n)) + log(n) * edf/(2 * n)}, differently from \code{\link{AIC.gcrq}}. 
 }
 %\value{
 %%  ~Describe the value returned

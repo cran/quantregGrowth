@@ -39,7 +39,8 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
         r <- list(coefficients = all.COEF, B = B, df = all.df, rho = all.rho, 
                   fitted.values = o.start$fitted.values[1:n], residuals = o.start$residuals[1:n])
       } else { # se length(taus)>1
-        
+        DF.NEG <- DF.POS<- NULL
+
         signB <- apply(B, 2, function(.x){prod(sign(range(.x)))} )
         if(any(signB<0)) warning("covariate(s) taking pos AND neg values: noncrossing is not guaranteed.", call. = FALSE)
         
@@ -55,7 +56,7 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
         } else {
           sgn.constr<-rep(sgn.constr, l=ncol(B))
         }
-      #traslare la variabile?
+        #traslare la variabile?
         if(adjX.constr && ("(Intercept)" %in% colnames(B))){
           const<-c(NA, rep(0, ncol(B)-1))
           for(j in 2:ncol(B)){
@@ -81,6 +82,11 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
           rr <- b.start + eps
           diag(RR) <- diag(RR) * sgn.constr
           rr <- rr * sgn.constr
+          
+          # DF per NONcrossing
+          DF.POS <- matrix(,nrow(RR),n.pos.taus)
+          colnames(DF.POS) <- paste(pos.taus)
+
           FIT.POS <- RES.POS <- matrix(, n, n.pos.taus)
           for (i in 1:n.pos.taus) {
             o <- rq.fit(x = B, y = y, tau = pos.taus[i], method = "fnc", R = RR, r = rr)
@@ -91,6 +97,7 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
             rho.pos.tau[i] <- sum(Rho(o$residuals[1:n], pos.taus[i]))
             b.start <- o$coef
             COEF.POS[, i] <- b.start
+            DF.POS[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
             rr <- b.start + eps
             rr <- rr * sgn.constr
           }  #end for
@@ -106,6 +113,10 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
           rr <- -b.start + eps
           diag(RR) <- diag(RR) * sgn.constr
           rr <- rr * sgn.constr
+          #DF per NONcrossing
+          DF.NEG<- matrix(,nrow(RR),n.neg.taus)
+          colnames(DF.NEG)<-paste(neg.taus)
+
           FIT.NEG <- RES.NEG <- matrix(, n, n.neg.taus)
           for (i in 1:n.neg.taus) {
             o <- rq.fit(x = B, y = y, tau = neg.taus[i], method = "fnc", 
@@ -116,6 +127,7 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
             rho.neg.tau[i] <- sum(Rho(o$residuals[1:n], neg.taus[i]))
             b.start <- o$coef
             COEF.NEG[, i] <- b.start
+            DF.NEG[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
             rr <- -b.start + eps
             rr <- rr * sgn.constr
           }  #end for
@@ -147,7 +159,7 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
         all.df <- c(df.neg.tau[n.neg.taus:1], sum(abs(o.start$residuals[1:n]) <= 1e-06), df.pos.tau)
         all.rho <- c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals[1:n], start.tau)), rho.pos.tau)
         r <- list(coefficients = all.COEF, x = B, df = all.df, rho = all.rho, 
-                  fitted.values = all.FIT, residuals = all.RES, constX=const)
+                  fitted.values = all.FIT, residuals = all.RES, constX=const, DF.NEG=DF.NEG, DF.POS=DF.POS)
       }
       id.coef <- 1:ncol(X)
       attr(id.coef, "nomi") <- colnames(X)

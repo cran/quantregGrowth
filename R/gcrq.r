@@ -1,11 +1,12 @@
 gcrq <-
 function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, transf=NULL,
     y=TRUE, n.boot=0, eps=0.001,  #ho rimosso cv=FALSE, interc=TRUE,
-    display=FALSE, method=c("REML","ML"), df.opt=2, 
+    display=FALSE, method=c("REML","ML"), df.opt=2, df.nc=TRUE,
     lambda0=.1, h=0.8, lambda.max=2000, tol=0.01, it.max=20, single.lambda=TRUE, 
     foldid=NULL, nfolds=10, lambda.ridge=0, sgn.constr=NULL, adjX.constr=TRUE,
     contrasts=NULL,
     ...){
+#df.nc: se TRUE, i df calcolati tengono conto dei vincoli noncross (ignorato se la stima e' di una singolo tau)
 #single.lambda: if TRUE (and multiple quantile curves are being estimated) a common spar across the tau values is computed
 #sett 19: aggiunto df.opt=4 (tutto approx quadratica..)
   
@@ -87,7 +88,8 @@ blockdiag <- function(...) {
   ret
 }
 #-------------------------------------
-edf.rq<-function(obj, tau, g=.2, id.coef, return.all=FALSE, vMonot, vConc, pesiL1, output, return.matrix=FALSE){
+edf.rq <-function(obj, tau, g=.2, id.coef, return.all=FALSE, vMonot, vConc, pesiL1, output, return.matrix=FALSE, df.nc=TRUE){
+  #obj$DF.NEG e obj$DF.POS.. per i df accounting for noncross..
   #output: which df should be returned?
   #   4 = come 3, ma tutto (anche pen) attraverso su approx quadratica basata sui valori assoluti
   #   3 = the trace of the pseudo-hat matrix based on the smooth approximation (for REML-like estimate)
@@ -120,6 +122,9 @@ edf.rq<-function(obj, tau, g=.2, id.coef, return.all=FALSE, vMonot, vConc, pesiL
       if(missing(id.coef)) id.coef <- obj$id.coef
       nomiGruppi<-attr(id.coef,"nomi") #"Xlin"(eventuale) + nomi smooth
       b<-if(is.matrix(obj$coef)) obj$coef[,paste(tau)] else obj$coef
+      
+      #browser()
+      
       n.par<-tapply(id.coef, id.coef, length) #num. dei parametri di ciascun "gruppo" lineari, 1?smooth, 2?smooth,..
       if(output<=2){
           df.j<-n.coef.pen<- vNdx +vDeg - vDiff # un vettore - riferito ai termini smooth
@@ -196,7 +201,16 @@ edf.rq<-function(obj, tau, g=.2, id.coef, return.all=FALSE, vMonot, vConc, pesiL
       #----
       #Se ci sono vincoli di monoton e concav
       P<- P +crossprod(wMon) + crossprod(wConc) #? megl
-      
+      #=================================================================================
+      #>=1.2-0
+      #browser()
+      if(df.nc){
+        DF.all<-cbind(obj$DF.NEG, obj$DF.POS) #NB DF.NEG non parte dal tau piu' piccolo, ma non e' un problema perche' si prende un tau alla volta..
+        if(paste(tau)%in%colnames(DF.all)) diag(P) <- diag(P) + 10^6*DF.all[1:length(b),paste(tau)]
+        #if(!is.null(obj$DF.POS[,paste(tau)])) diag(P) <- diag(P) + 10^6*obj$DF.POS[1:length(b),paste(tau)]
+      }
+      #=================================================================================
+
       X<-obj$x[1:n,,drop=FALSE] #design matrix
       e<-if(is.matrix(obj$residuals)) obj$residuals[,paste(tau)] else obj$residuals
       n<-length(e)
@@ -364,9 +378,13 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       } #end if n.boot
       #se NON ci sono termini ps() e' inutile calcolare i gdl con ..
       fit$edf.all<-matrix(1, ncol=length(tau), nrow=ncol(X), dimnames=list(colnames(X),paste(tau)))
+      if(df.nc) {
+        DF.all<-cbind(fit$DF.NEG[,ncol(fit$DF.NEG):1,drop=FALSE], 0, fit$DF.POS)
+        fit$edf.all <- fit$edf.all - DF.all
+      }
       fit$edf.j<- matrix(apply(fit$edf.all, 2,sum), nrow=1)
-      #nuovo maggio 2021.. salva cio' che serve per disegnare i termini lineari
       
+      #nuovo maggio 2021.. salva cio' che serve per disegnare i termini lineari
       X<- X[,-match("(Intercept)", colnames(X),0),drop=FALSE]
       BB<-vector("list", ncol(X))
       names(BB)<-colnames(X)
@@ -621,9 +639,10 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     if(length(lambda)>1 && length(id.ps)==1){
       cv<-TRUE
       lambdas<-lambda
-      r.cv<- gcrq.rq.cv(Y, B[[1]], X, tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, 
+      r.cv<- gcrq.rq.cv(Y, B[[1]], X, tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambdas, deg=vDeg, dif=vDiff, 
                    var.pen=var.pen, penMatrix=penMatrixList, lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, 
-                   vcList=vcList, dropvcList=dropvcList, nfolds=nfolds, foldid=foldid, eps=eps, ...)
+                   vcList=vcList, dropvcList=dropvcList, centerList=centerList, colmeansB=colMeansB.list, 
+                   nfolds=nfolds, foldid=foldid, eps=eps, ...)
       lambda<-r.cv[[1]]
     } else {
         cv<-FALSE
@@ -651,7 +670,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           #NB colMeansBorig.list ha un valore in meno per VC terms!
           ##inizio calcolo edf
           if(df.option<=2){
-              edf.j<-matrix(sapply(tau, function(xx){edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, output=df.option)}), 
+              edf.j<-matrix(sapply(tau, function(xx){edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, output=df.option, df.nc=df.nc)}), 
                             ncol=length(tau)) #matrice
           } else {
               #if(penL1.df){
@@ -665,7 +684,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
               }
               edf.j<-matrix(sapply(tau, function(xx){
                   edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, g = g, 
-                            pesiL1=as.matrix(pesiL1)[,paste(xx)], output=df.option)
+                            pesiL1=as.matrix(pesiL1)[,paste(xx)], output=df.option, df.nc=df.nc)
                             }), ncol=length(tau)) #matrice
             }
           colnames(edf.j)<-paste(tau)
@@ -755,7 +774,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         #rownames(edf.j)<- if(nrow(edf.j)==length(nomiVariabPEN)) nomiVariabPEN else c("Xlin",nomiVariabPEN)
         #edf.jM<-edf.j
         if(df.option<=2){
-              edf.j<-matrix(sapply(tau, function(xx){edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, output=df.option)}), ncol=length(tau)) #matrice
+              edf.j<-matrix(sapply(tau, function(xx){edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, output=df.option, df.nc=df.nc)}), ncol=length(tau)) #matrice
         } else {
               #if(penL1.df){
               D.matrix<-fit$D.matrix
@@ -768,7 +787,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
               }
               edf.j<-edf.jM<-matrix(sapply(tau, function(xx){
                   edf.rq(fit, xx, vMonot = vMonot, vConc=vConc, g = g, 
-                        pesiL1=as.matrix(pesiL1)[,paste(xx)], output=df.option)}), ncol=length(tau)) #matrice
+                        pesiL1=as.matrix(pesiL1)[,paste(xx)], output=df.option, df.nc=df.nc)}), ncol=length(tau)) #matrice
         }
         #browser()
         #nomiPS.ps.ok oppure nomiVariabPEN?
@@ -781,7 +800,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     
       edf.all<- matrix(sapply(tau, function(xx){
           edf.rq(fit, xx, return.all=TRUE, output=df.option, vMonot=vMonot, vConc=vConc, g=g, 
-                  pesiL1=as.matrix(pesiL1)[,paste(xx)])}), ncol=length(tau))
+                  pesiL1=as.matrix(pesiL1)[,paste(xx)], df.nc=df.nc)}), ncol=length(tau))
       colnames(edf.all)<-paste(tau)
       #-----------------------------
       #attenzione a questo punto edf.j dovrebbe gia' esserci.. METTERLO comunque? 
@@ -861,6 +880,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     } #fine del "se ci sono termini smooth"
     #========================================
     #========================================
+    attr(fit$edf.j,"df.nc") <- df.nc
     if(y) fit$y<-Y
     if(!is.null(transf)) {
       #if(!is.null(transf)) fit$transf.inv<-transf.inv

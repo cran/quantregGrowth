@@ -191,9 +191,6 @@ ncross.rq.fitXB <-
 
     
     
-    
-    
-    
     #QUANTI VINCOLI CI SONO???? quelli di sotto sono uguali?
     #ncol(id.Matr)
     #sum(sapply(valueNcrosList, length)>0)
@@ -279,9 +276,7 @@ ncross.rq.fitXB <-
       id.df<-id.df[-1]
       attr(id.df, "nomi")<-names(lambda)
     }
-    
-    #browser()
-    
+    #UNO o PIU' QUANTILI?
     if(length(taus)<=1){ #se length(taus)==1
       all.COEF<-as.matrix(o.start$coef) #era all.COEF<- o.start$coef 
       colnames(all.COEF)<-paste(taus)
@@ -294,12 +289,15 @@ ncross.rq.fitXB <-
       all.dev2e=matrix(sigma2e, ncol=1, dimnames=list(NULL, paste(taus)))
       r$all.dev2u<-all.dev2u
       r$all.dev2e<-all.dev2e
+      #r$DF.NEG <- r$DF.POS<- NULL
     } else { #se length(taus)>1
+      DF.NEG <- DF.POS<- NULL
       Ident<-diag(p)
       COEF.POS<-COEF.NEG<-FIT.POS<-FIT.NEG<-RES.POS<-RES.NEG<-NULL
       df.pos.tau<-df.neg.tau<-rho.pos.tau<-rho.neg.tau<-NULL
       sigma2u.pos.tau<-sigma2u.neg.tau<-NULL
       sigma2e.pos.tau<-sigma2e.neg.tau<-NULL
+      #===========================================================================
       if(n.pos.taus>0){
         rho.pos.tau <-df.pos.tau <- vector(length=n.pos.taus)
         COEF.POS<-matrix(,ncol(XB),n.pos.taus)
@@ -312,6 +310,9 @@ ncross.rq.fitXB <-
           RR<- Ident
           rr<- b.start + eps
         }
+        #DF per NONcrossing
+        DF.POS <- matrix(,nrow(RR),n.pos.taus)
+        colnames(DF.POS) <- paste(pos.taus)
         
         #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
         if(id.interc.Constr){ #se ci sono smooth con interc
@@ -359,8 +360,6 @@ ncross.rq.fitXB <-
           }
           o<-rq.fit(x=XB,y=y,tau=pos.taus[i],method="fnc",R=RR,r=rr)
           
-          #browser()
-          
           o$rho<-sum(Rho(o$residuals[1:n], pos.taus[i]))
           #estrai fitted e residuals
           FIT.POS[,i]<-o$fitted.values[1:n]
@@ -380,6 +379,11 @@ ncross.rq.fitXB <-
           #estrai i coeff per "aggiornare" i vincoli rr
           b.start<-o$coef
           COEF.POS[,i]<-b.start
+          #NON ANCORA IMPLEMENTATO: confrontare dove i vincoli NONCROSSING (MA ANCHE MONOT/CONC) sono attivi
+          #vedi come considerare l'epsilon.. Inoltre la matrice RR include anche monot/conc
+          #in particolare i primi RR[1:p,]b.start rr[1:p] sono per il NONCROSSING
+          DF.POS[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
+
           rr<- if(any(monotone!=0 | concave!=0)) c(b.start+eps, r.monot) else b.start + eps
           
           #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
@@ -399,17 +403,10 @@ ncross.rq.fitXB <-
       ### PER I tau "negativi"..
       if(n.neg.taus>0){
         rho.neg.tau <-df.neg.tau <- vector(length=n.pos.taus)
-        COEF.NEG<-matrix(,ncol(XB),n.neg.taus)
+        COEF.NEG<- matrix(,ncol(XB),n.neg.taus)
         colnames(COEF.NEG)<-paste(neg.taus)
         b.start<-o.start$coef
         neg.taus<-sort(neg.taus,TRUE)
-        #if(monotone!=0){
-        #RR<-rbind(-Ident,R)
-        #rr<-c(-b.start+eps, rep(0, p1-1) )
-        # } else {
-        #RR<- -Ident
-        #rr<- -b.start+eps
-        # }
         if(any(monotone!=0 | concave!=0)){
           Ident<-diag(p)
           RR<-rbind(-Ident,R.monot)
@@ -418,6 +415,9 @@ ncross.rq.fitXB <-
           RR<- -Ident
           rr<- -b.start + eps
         }
+        #DF per NONcrossing
+        DF.NEG<- matrix(,nrow(RR),n.neg.taus)
+        colnames(DF.NEG)<-paste(neg.taus)
         
         #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
         if(id.interc.Constr){ #se ci sono smooth con interc
@@ -474,6 +474,7 @@ ncross.rq.fitXB <-
           #estrai i coeff per aggiornare i vincoli
           b.start<-o$coef
           COEF.NEG[,i]<-b.start
+          DF.NEG[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
           # rr<- if(monotone!=0) c(-b.start+eps, rep(0,p1-1) ) else -b.start+eps
           rr<- if(any(monotone!=0 | concave!=0)) c(-b.start+eps, r.monot) else -b.start + eps
           
@@ -519,8 +520,9 @@ ncross.rq.fitXB <-
       colnames(all.sigma2u)<-paste(taus)      
       rownames(all.sigma2u)<-names(lambda)
       r<-list(coefficients=all.COEF,x=XB, rho=all.rho, fitted.values=all.FIT, residuals=all.RES,
-              dev2u=sigma2u, dev2e=sigma2e, all.dev2u=all.sigma2u, all.dev2e=all.sigma2e) #tolto df=all.df
+              dev2u=sigma2u, dev2e=sigma2e, all.dev2u=all.sigma2u, all.dev2e=all.sigma2e, DF.NEG=DF.NEG, DF.POS=DF.POS) #
     } #end se length(taus)>1
+    #browser()
     #Attenzione XB include nella 2nd parte la penalizzazione relativa all'*ultima* curva stimata (quindi puo' essere un "problema" se i lambda sono diversi per quantili)
     r$id.coef <- id.df
     r$D.matrix<-D.matrix
