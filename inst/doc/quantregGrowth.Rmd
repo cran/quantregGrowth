@@ -1,0 +1,255 @@
+---
+title: "quantregGrowth: nonparametric quantile regression for growth charts and additive models"
+author: "Vito M.R. Muggeo"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{quantregGrowth}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  ##collapse = TRUE,
+  comment = ">",
+  fig.align="center",
+  out.extra='style="display:block; margin: auto"',
+  tidy=FALSE
+)
+```
+
+The package `quantregGrowth` aims to estimate the smooth, but unspecified, effect of numerical covariate(s) on one or more quantiles of the numerical response variable. The quantile regression equation can also include linear effect(s) of numerical or categorical covariates. Each flexible and unspecified relationship is expressed via a B-spline basis whose coefficients are somehow shrunken to control the wiggliness of the curve(s). The amount of smoothness is estimated as part of the model fitting as described in [Muggeo et al., 2020](https://journals.sagepub.com/doi/full/10.1177/1471082X20929802).
+
+The package relies on the well known `quantreg` package by Roger Koenker by exploiting full functionality and efficiency of its fitter functions.
+
+
+## Growth charts (for the eager :-))
+
+When focus is on multiple response quantiles (1%, 5%,..., 95%, say) depending on a single variable, the resulting fitted quantile curves are also referred as growth charts. Growth charts are smooth quantile trajectories at different probability values, 'tau', with the noncrossing property, namely the quantile curve at any specified tau value has to be always higher then the quantile curve at any lower probability value. Growth charts are used to build reference values of an outcome of interest with respect to another variable, usually age or time. Typical examples include height (or weight) or vocabulary size development versus the children's age as investigated in [wordbank website](http://wordbank.stanford.edu/). 
+
+ `quantregGrowth` uses B-splines with a penalty on the coefficients and relevant smoothing parameter `selected' within the estimation algorithm, and imposes proper constraints to prevent quantile crossing.    
+
+We build growth charts of height versus age using the data set `SiChildren` shipped with the package. The main function is `gcrq()` which requires the usual model formula inclduing the `ps()` function on the right hand side. `gcrq()` returns quantile curves at (default) probability values `c(.1, .25, .5, .75, .9)`, but in this example we choose different values via the argument `tau`, and display the result by means of the `plot` method function: 
+
+
+```{r 1, message = F, fig.width=5, fig.height=4}
+library(quantregGrowth)
+data(SiChildren)
+
+o <-gcrq(height ~ ps(age), tau=seq(.05,.95,l=7), data=SiChildren)
+
+plot(o, res=TRUE) #res=TRUE displays data too
+```
+
+In addition to the graphical output, we could look at the estimated quantile values can be obtained via the function `charts()`, which is a simple wrapper of `predict.gcrq()` to facilitate production of growth charts based on the fitted model. We display the quantiles just at some age values
+ ```{r}
+charts(o, k=c(10,10.5,11,16,17)) #the quantile at the specified k values
+```
+
+Results look reasonable, but there are some annoying features which need to be stressed: at around age=16 the highest quantile curve (the 95th) decreases, while some quantile curves (the 5th to the 65th) drop at early ages around 11 years and then increases again afterwards. 
+
+<!--
+```{r, echo=FALSE, results='asis'}
+knitr::kable(charts(o, k=19:21))
+```
+-->
+
+Broadly speaking, non monotonic growth charts could be biologically sound (for instance when modelling the body mass index), but in this example they are not. Likely, the sparseness of data on the left and right tails of age distribution, causes the drops in the fitted curves. Hence we re-fit the model by imposing positive monotonicity contraints via the argument `monotone=1` in `ps()`,  
+
+```{r 1a, message = F}
+oM<-gcrq(height ~ ps(age, monotone=1), data=SiChildren, tau=seq(.05,.95,l=7))
+```
+
+In the following, we report two plots: the first one focuses on the early ages by stressing differences between the fitted curves, and the second figure could be possibly closer to the usual growth charts, with a legend (set at the age axis value `overlap=15`), an underlying grid (with 15 vertical and 10 horizontal lines) and `customized' axis labels.  
+
+```{r 1b, message = F, fig.width=7, fig.height=4}
+par(mfrow=c(1,2))
+#the 1st plot..
+plot(o, xlim=c(10.2,12.5), col=1, lty=3, lwd=2)
+plot(oM, add=TRUE, col=2, lty=1, lwd=2)
+#the 2nd..
+plot(oM, legend=TRUE, overlap=15, grid=list(x=15,y=10), col=2, lty=1, 
+     ylab="Height (cm)", xlab="Age (years)")
+```
+
+Several options are available when plotting a `gcrq` object, see `?plot.gcrq`.
+
+## Additive model
+
+`quantregGrowth` can deal with multiple smooth terms straightforwardly. We use data simulated via `mgcv::gamSim` function (example 1). We are interested in modelling nonparametrically the effect of four covariates on the median, say. At this aim, we call `gcrq()` with several `ps()` terms and a single `tau` value,
+
+```{r 2, message=FALSE}
+set.seed(1515)
+d<-mgcv::gamSim(n=200, eg=1, verbose=FALSE) #verbose=TRUE suppresses the message..
+
+o <- gcrq(y ~ ps(x0) + ps(x1) + ps(x2) + ps(x3), data=d, tau=.5)
+```
+The plots including the fitted relationships for all 4 terms are ready obtained by 
+
+```{r fig-margin, fig.width=7, fig.height=5} 
+# Plot the fit
+par(mfrow=c(2,2))
+plot(o, res=TRUE, col=2, conf.level=.95, shade=TRUE, cex.p=.6) #cex.p<1 to reduce the points..
+
+```
+where the y-label on each plot displays the edf of each smooth term. Note, when there are multiple covariates, `res=TRUE` portrays the partial residuals (and not the observed values).
+
+
+## Additive model with linear terms
+
+`gcrq()` can also include standard linear terms: for instance, the above plots suggest that a simple linear term would suffice to capture the relationships for `x1` and `x3`. Therefore in the next model formula we include these variables outside the `ps()` function. We also display the model output via `summary.gcrq()`.
+
+```{r 3, message = F}
+o1<-gcrq(y ~ ps(x0) + x1 + ps(x2) + x3, data=d, tau=.5)
+
+#the summary method
+summary(o1)
+
+```
+
+For the parametric terms, the summary method returns point estimates, standard errors based on the sandwich formula, and $p$-values coming from the Wald statistic. Degrees of freedom for the smooth terms are printed next, along with some useful information of the fit.
+
+Of course we could estimate the same 'semiparametric' model at several probability values 
+
+```{r 4, message = F}
+o2<-gcrq(y ~ x1 + x3 + ps(x0) + ps(x2), data=d, tau=c(.12,.25,.5,.7,.8,.9))
+
+```
+with the noncrossing constraints. Summary and plots can be obtained straightforwardly.
+
+
+## Simple linear models
+
+`gcrq()` can fit purely linear models, i.e. with no `ps()` term in the formula. Here a simple example.
+
+```{r} 
+n=100
+x<-1:n/n
+y<-2*x+rnorm(n)*rev(x)
+
+o3 <-gcrq(y ~ x, tau=seq(.05,.95,l=10)) #fit 10 (noncrossing) regression quantiles
+```
+
+By means of `plot.gcrq()` with proper arguments, we display in the first plot the linear growth charts, and in the 2nd and 3rd we portray the tau-varying coefficients by setting `axis.tau=TRUE`, 
+
+```{r, fig.width=7, fig.height=3} 
+par(mfrow=c(1,3))
+plot(x,y)
+plot(o3, add=TRUE)
+plot(o3, term=1, axis.tau=TRUE)
+plot(o3, term="x", axis.tau=TRUE, conf.level = .95, col=2)
+```
+
+The 2nd and 3rd plots could be useful to assess if and how the specified coefficient changes across the quantile curves. 
+
+
+## Customizing the penalty
+
+A possibly useful feature of `quantregGrowth` is supplying a user-defined (multiplicative) penalty via the argument `pen.matrix` in `ps()`. The penalty matrix $A$, say, should be a matrix such that $\lambda||A\beta||_1$ is the penalization in the objective to be minimized. $\beta$ is the vector of spline coefficients and $\lambda$ is the smoothing parameter fixed or to be estimated. The example below illustrates how a proper penalty matrix can be set to force a zero slope in the fitted curve at large values of the covariate. At this aim we consider weighted first-order differences by assigning a very large weight to the rightmost differences to fulfill the zero slope constraint. Overall, the penalty is $\sum_j^{J-1} |\beta_j-\beta_{j-1}|w_j=||diag(w) D^{(1)}\beta||_1= ||A\beta||_1$, where $D^{(1)}$ is the first-order differences matrix and $w$ is the weight vector as defined below. To build the customized penalty matrix with appropriate dimension, it is probably helpful to set explicitly the number of the basis coefficients via the arguments `ndx` (number of covariate intervals which defaults to $min(n/4,12)$) and `deg` (spline degree which defaults to 3): Each basis has `ndx+deg-1` identifiable coefficients.
+```{r}
+data(growthData)
+
+D1 <- diff(diag(23),dif=1)[,-1] #the 1st order diff matrix
+w <- c(rep(1,15),rep(1000,7)) #the weight vector s.t. length(w)=nrow(D1)
+A <- diag(w) %*% D1 #the penalty matrix
+
+o4 <-gcrq(y~ps(x, ndx=20, pen.matrix=A), data=growthData, tau=.5)
+
+```
+The length of zero slope depends on number of large values in $w$, in the above example `rep(100,7)`. Increasing (decreasing) the number of large values would lead to increase (decrease) the zero slope interval.
+
+Figure below reports results of the aforementioned constrained fit, along with the fits obtained using unweighted first order-differences without and with additional monotonicity constraints
+
+
+```{r, fig.width=7, fig.height=3} 
+o5 <-gcrq(y~ps(x, d=1), data=growthData, tau=.5)
+o6 <-gcrq(y~ps(x, d=1, monotone = 1), data=growthData, tau=.5)
+
+par(mfrow=c(1,3))
+plot(o4, res=TRUE, col=2, lwd=3, ylim=c(0,12))
+plot(o5, res=TRUE, col=3, lwd=3, ylim=c(0,12))
+plot(o6, res=TRUE, col=4, lwd=3, ylim=c(0,12))
+```
+
+
+<!--
+output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+
+- Never uses retina figures
+- Has a smaller default figure size
+- `summary`, `print`, `predict` 
+-->
+
+
+## References
+  * Muggeo V.M.R., Torretta F, Eilers P.H.C., Sciandra M., Attanasio M. (2020). Multiple smoothing parameters selection in additive regression quantiles, Statistical Modelling, to appear. Available at https://journals.sagepub.com/doi/full/10.1177/1471082X20929802
+  
+  * Muggeo V.M.R. (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth. https://www.researchgate.net/publication/350844895_Additive_Quantile_regression_with_automatic_smoothness_selection_the_R_package_quantregGrowth
+  
+
+---
+
+<!--
+
+#Attenzione.. al preambolo era questo..
+
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+
+#questo stava in fasiolo:
+output: 
+  html_document:
+    toc: true
+
+mia porposta:
+output: 
+  html_vignette:
+    toc: true
+
+
+IO ho cambiato output per il TOC.. .
+
+
+
+## Methodological notes
+
+You can write math expressions, e.g. 
+$$
+Q_Y(\tau|x,z)=\sum_j^Js_{j\tau}(x_j)+z^T\beta_\tau
+$$
+where $z^T\beta_\tau$ represents a linear predictor, and the term $s_{\tau}(\cdot)$ expresses the potentially nonlinear effect of covariate $X_j$ via  B-splines, i.e. $s_j(\cdot)=\sum_h^{H_j} b_{jh\tau}B_{jh}(\cdot)$ where $H_j$ is the fixed number of basis functions. The model is estimated by minimization of the penalized objective
+$$
+	\mathcal{L}_\lambda(b,\beta)=\sum_i \rho_\tau(y_i-B_i^Tb-z_i^T\beta) + \sum_j\lambda_j || D^d_j b_j ||_1
+$$
+where $B_i$ includes the basis function values for all smooth terms with corresponding coefficients $b=(b_1^T,\ldots,b^T_J)^T$ and the penalty $|| D^d_j b_j ||_1$ is the sum of absolute values of the coefficient differences (of order $d$): for instance to penalize the first-order differences ($d=1$) for the $j^{th}$ smooth term, 
+$|| D^1_j b_j ||_1=\sum _h |\Delta^1 b^{(j)}_h|=\sum_h^{H_j-1}|b_{jh}-b_{j,h-1}|$. The penalty weight is tuned by the (positive) smoothing parameters $\lambda_j$s ($j=1,\ldots,J$): the larger the smoothing parameter, the smoother the fitted curve.
+
+
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))
+-->

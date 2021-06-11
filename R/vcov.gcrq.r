@@ -45,9 +45,13 @@ vcov.gcrq <- function(object, term, type=c("sandw","boot"),...){
         n<-nrow(as.matrix(object$fitted.values))
         ##################
         x.tildeUp<-object$x[1:n,,drop=FALSE] 
+        
+        #browser()
+        
         if(!is.null(object$lambda)){
             n.coefs<- sapply(object$BB, function(.x)length(attr(.x,"coef.names"))) #n. di coef per ogni termine smooth
-            lambda<- matrix(as.matrix(object$lambda), ncol=n.tau, nrow=length(object$BB)) 
+            n.coefs<-n.coefs[grep("ps\\(", names(n.coefs))]
+            lambda<- matrix(as.matrix(object$lambda), ncol=n.tau, nrow=length(n.coefs)) 
             Dt <- t(object$D.matrix)
             nrowD<- ncol(Dt)
         }

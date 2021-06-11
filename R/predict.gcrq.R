@@ -51,6 +51,7 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         xreg <- xreg[,nomiCoef]
         fit<-drop(xreg%*%b) 
       } else {
+        
         nomiCoef<-rownames(b)
         nomiCoefPen <- as.vector(unlist(sapply(object$BB, function(.x) attr(.x,"coef.names"))))
         nomiCoefUnpen <- setdiff(nomiCoef, nomiCoefPen )
@@ -70,7 +71,6 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         id.var<-match(nomiVarModello, names(newdata))
         #Qui controlla i nomi... come fare a controllare se factor?
         if(any(is.na(id.var))) stop("`newdata' does not include all the covariates in the model")
-        #browser()
         newdata <-newdata[,id.var,drop=FALSE] 
         id.var.smooth <- match(nome.smooth,names(newdata))
         x.new <-newdata[, id.var.smooth,drop=FALSE] #individua le variabili smooth
@@ -94,16 +94,18 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
             if(isTRUE(attr(object$BB[[i]],"vc"))) { 
               nomeVC <- attr(object$BB[[i]], "vcName")
               xVC <-newdata[, nomeVC ] 
-              if(is.factor(xVC)){
+              #if(is.factor(xVC)){ #
+              if(!is.null(attr(object$BB[[i]], "vcLevels"))){
+                xVC<-factor(xVC, levels=attr(object$BB[[i]], "vcLevels"))
                 Mm<-model.matrix(~0+xVC)
-                B.new<- Mm[,i]*cbind(1, B.new)
+                colnames(Mm) <- attr(object$BB[[i]], "vcLevels")
+                B.new<- Mm[,attr(object$BB[[i]], "vcCategory")]*cbind(1, B.new)
               } else {
                 B.new<- xVC*cbind(1, B.new)
               }
-              #newdata<-newdata[, setdiff(names(newdata), nomeVC), drop=FALSE]
             }
             colnames(B.new) <- attr(object$BB[[i]], "coef.names")
-            B.new.list[[i]]<- B.new           
+            B.new.list[[i]]<- B.new
         }
         #browser()
         B.new<- do.call(cbind, B.new.list)

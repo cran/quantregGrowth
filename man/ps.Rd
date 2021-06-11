@@ -12,19 +12,20 @@ passes relevant information to proper fitter functions.
 \usage{
 ps(..., lambda = -1, d = 3, by=NULL, ndx = NULL, deg = 3, knots=NULL,
     monotone = 0, concave = 0, var.pen = NULL, pen.matrix=NULL, dropc=TRUE, 
-    center=TRUE, K=2, ridge=FALSE, decompose=FALSE)
+    center=TRUE, K=2, decompose=FALSE, constr.fit=TRUE, shared.pen=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{...}{
-The quantitative covariate supposed to have a nonlinear relationships with the quantiles. 
-In growth charts this variable is typically the age.
+The covariate supposed to have a nonlinear relationship with the quantile curve(s) being estimated. A B-spline is built, and a (difference) penalty
+is applied. In growth charts this variable is typically the age. 
+%If the covariate is a factor, level-specific coefficients are estimated subject to a lasso penalty. 
 }
   \item{lambda}{
 A supplied smoothing parameter for the smooth term. If it is negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). If a positive scalar, it represents the actual smoothing parameter. If it is a vector, cross validation is performed to select the `best' value. See Details in \code{\link{gcrq}}. 
 }
   \item{d}{
-The difference order of the penalty. Default to 3.
+The difference order of the penalty. Default to 3 Ignored if \code{pen.matrix} is supplied. %and \code{d=0} leads to a lasso penalty on the spline coefficients.
 }
   \item{by}{
 if different from \code{NULL}, a numeric or factor variable of the same dimension as the covariate in \code{...} In the numeric vector case the elements multiply the smooth, evaluated at the corresponding covariate values (i.e. a varying coefficient model).
@@ -59,7 +60,7 @@ Numeric value to set up monotonicity restrictions on the second derivative of fi
 A character indicating the varying penalty. See Details.
 }
   \item{pen.matrix}{
-if provided, a penalty matrix \eqn{A}{A}, say, such that \eqn{A^T A}{A'A} is the penalty matrix actually used in the estimation process. It overwrites \code{ridge}. Currently unimplemented.
+if provided, a penalty matrix \eqn{A}{A}, say, such that the penalty in the objective function, apart from the smoothing parameter, is \eqn{||Ab||_1}{||Ab||_1} where \eqn{b}{b} is the spline coefficient vector being penalized.
 }
   \item{dropc}{
 logical. Should the first column of the B-spline basis be dropped for the basis identifiability? Default to \code{TRUE}. Note, if \code{dropc=FALSE} is set, 
@@ -71,18 +72,23 @@ logical. If \code{TRUE} the smooth effects are 'centered' over the covariate val
   \item{K}{
 A factor tuning selection of wiggliness of the smoothed curve. The larger \code{K}, the smoother the curve. Simulations suggest \code{K=2}. See details.
 }
-  \item{ridge}{
-logical. If \code{TRUE} a ridge penalty is empoyed. Currently unimplemented.
-}
   \item{decompose}{
 logical. If \code{TRUE}, the B-spline is decomposed into truncated power functions 
 such as [x, ..., x^{d-1}, Z]. See Details. Currently unimplemented.
 }
+  \item{constr.fit}{
+logical. If \code{monotone} or \code{concave} are different from 0, \code{constr.fit=TRUE} means that these constraints are set on the fitted quantiles rather than on the spline coefficients.
+}
+  \item{shared.pen}{
+logical. If \code{TRUE} and it is a VC smooth term (i.e. interaction with a factor specified in \code{by}), the smooths in each level of the factor share the same smoothing parameter.
+}
+
 }
 \details{
+\code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability. The spline coefficients are penalized via differences of order \code{d}, and \code{d=0} leads to a penalty on the coefficients themselves. \code{d} is ignored if \code{pen.matrix} is supplied.
 
-When \code{lambda}=0 an unpenalized fit is obtained. At 'middle' lambda values, the fitted curve is a \emph{piecewise} polynomial of order \code{d-1}.
-The fit gets smoother as lambda increases, and for a very large value of lambda, it approaches to a polynomial of degree \code{d-1}. 
+\code{lambda} is the tuning parameter fixed or to be estimated. When \code{lambda}=0 an unpenalized (and typically wiggly) fit is obtained, and as lambda increases the curve gets smoother till a \code{d-1} degree polynomial when lambda gets very large. At 'intermediate' lambda values, the fitted curve is a \emph{piecewise} polynomial of degree \code{d-1}.
+
 It is also possible to put a varying penalty to set a different amount of smoothing. Namely for a 
 constant smoothing (\code{var.pen=NULL}) the penalty is \eqn{\lambda\sum_k |\Delta^d_k|}{lambda sum_k |\Delta^d_k|} where 
 \eqn{\Delta^d_k}{Delta^d_k} is the k-th difference (of order \code{d}) of the spline coefficients. For instance if \eqn{d=1}{d=1}, 

@@ -24,7 +24,7 @@ summary.gcrq <- function(object, type = c("sandw", "boot"), digits = max(3, getO
             `|z|` = round(abs(est)/se, 2), `p-value` = pchisq((est/se)^2, df = 1, lower.tail = FALSE))
       rownames(ris) <- rownames(as.matrix(object$coefficients))
       if (length(object$info.smooth) > 0) {
-         nomi.p.spline <- unlist(unname(sapply(object$BB, function(.x) attr(.x, "coef.names"))))
+         nomi.p.spline <- unlist(unname(sapply(object$BB[names(object$Bderiv)], function(.x) attr(.x, "coef.names"))))
          nomi.param <- setdiff(rownames(ris), nomi.p.spline)
          ris <- ris[nomi.param, , drop = FALSE]
          cat("\n--------  Percentile:", sprintf("%.2f",object$taus[j]), "  check function: ", formatC(round(object$rho[j], digits - 1), digits=5), "-----\n")
@@ -51,7 +51,7 @@ summary.gcrq <- function(object, type = c("sandw", "boot"), digits = max(3, getO
    
    #nc<-if(sum(object$DF.POS, object$DF.NEG)>0) TRUE else FALSE
    nc <- attr(object$edf.j, "df.nc") & (length(object$tau)>1)
-   cat("\n=========================\n\nNo. of obs =", n, "   No. of params =", 
+   cat("=========================\n\nNo. of obs =", n, "   No. of params =", 
        p* n.tau, paste("(", p, sep=""),"for each quantile)", "\n")
    cat("Overall check =", round(sum(object$rho), digits - 1), " SIC =", round(sic, digits-1), 
        "on edf =", round(sum(object$edf.j), 2), "(ncross constr:",paste(nc, ")",sep=""), "\n")   

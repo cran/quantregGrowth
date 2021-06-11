@@ -12,7 +12,7 @@ more biologically plausible. Linear terms can be specified in the model formula.
 \usage{
 gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, 
     transf=NULL, y=TRUE, n.boot=0, eps=0.001, display=FALSE, 
-    method=c("REML","ML"), df.opt=2, df.nc=TRUE, lambda0=.1, h=0.8, lambda.max=2000, 
+    method=c("REML","ML"), df.opt=2, df.nc=FALSE, lambda0=.1, h=0.8, lambda.max=2000, 
     tol=0.01, it.max=20, single.lambda=TRUE, foldid=NULL, nfolds=10, 
     lambda.ridge=0, sgn.constr=NULL, adjX.constr=TRUE, contrasts=NULL, ...)
 }
@@ -38,8 +38,8 @@ a function which indicates how the possible `NA's are handled.
 }
   \item{transf}{
 an optional character string (with \code{"y"} as argument) meaning a function to apply to the response variable 
-  before fitting. E.g. \code{"log(y+0.1)"}. It can be useful to guarantee fitted values within a specified range. If provided,
-  the resulting oject fit will include the corresponding inversefunction (numerically computed) to be used to back transform predictions (see argument \code{transform} in \code{predict.gcrq} and \code{plot.gcrq}).
+  before fitting. E.g. if \code{y>=0}, it could be advisable to model \code{"log(y+0.1)"}. It can be useful to guarantee fitted values within a specified range. If provided,
+  the resulting object fit refer to the model for the transformed response and it will include the corresponding inversefunction (numerically computed) to be used to back transform predictions (see argument \code{transf} in \code{predict.gcrq} and \code{plot.gcrq}).
 }
   \item{y}{
 logical. If \code{TRUE} (default) the returned object includes also the responses vector.
@@ -68,7 +68,7 @@ How the model and term-specific degrees of freedom have to be computed. \code{df
 }
   \item{df.nc}{
 logical. If \code{TRUE} and the model refers to multiple quantile curves, the degrees of freedom account for the noncrossing constraints. 
-Ignored for single quantile fits.
+Ignored for single quantile fits. Default to \code{FALSE}, as it is still experimental.
 }
   \item{lambda0}{
 the starting value for the lambdas to be estimated. Ignored if all the smoothing parameters specified in \code{ps} terms are fixed.
@@ -183,7 +183,7 @@ V.M.R. Muggeo, F. Torretta, P.H.C. Eilers, M. Sciandra, M. Attanasio (2020).
 Multiple smoothing parameters selection in additive regression quantiles,
 Statistical Modelling, to appear.
 
-V. M. R. Muggeo (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth.
+V. M. R. Muggeo (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth. \cr
 https://www.researchgate.net/publication/350844895
 
 V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).

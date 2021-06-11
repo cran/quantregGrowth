@@ -16,8 +16,9 @@ called by the user.
 \usage{
 ncross.rq.fitXB(y, x, B=NULL, X=NULL, taus, monotone=FALSE, concave=FALSE, 
     nomiBy=NULL, byVariabili=NULL, ndx=10, deg=3, dif=3, lambda=0, eps=.0001, 
-    var.pen=NULL, penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, 
-    vcList=FALSE, dropvcList=FALSE, centerList=FALSE, colmeansB=NULL, ...)
+    var.pen=NULL, penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, 
+    decomList=FALSE, vcList=FALSE, dropvcList=FALSE, centerList=FALSE, 
+    ridgeList=FALSE, colmeansB=NULL, Bconstr=NULL, ...)
 
 ncross.rq.fitX(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04, 
     sgn.constr=1, adjX.constr=TRUE, ...)
@@ -102,9 +103,15 @@ see \code{\link{ps}}.
   \item{centerList}{
 see \code{center} in \code{\link{ps}}.
 }
+  \item{ridgeList}{
+see \code{ridge} in \code{\link{ps}}.
+}
   \item{colmeansB}{
 see \code{center} in \code{\link{ps}}.
 }
+  \item{Bconstr}{see \code{constr.fit} in \code{\link{ps}.}
+}
+
  \item{foldid}{
 vector (optional) to perform cross validation, see the same arguments in \code{\link{gcrq}}.
 }

@@ -6,12 +6,25 @@
 
 
 
+=============
+version 1.3-0  
+=============
+* new argument 'pen.matrix' in ps() to deal with a penalty matrix specified by the user.
+* new argument 'shared.pen' in ps(): when the VC term involves a 'by' factor, the level-specific smooths can share the same smoothing parameter (thanks to Abele Wolfgang for his input).
+* optionally safer shape (monotonicity/concavity) constraints via argument 'constr.fit' in ps().
+* new function charts(), a simple wrapper of predict.gcrq() to facilitate building of growth charts.
+* new argument 'axis.tau' in plot.gcrq() to display the estimated coefficients versus the probability values (when multiple quantile curves have been estimated).
+* the argument 'overlap' in plot.gcrq() can be a vector (and when specified, argument 'legend' is set TRUE automatically)
+* new dataset (SiChildren) introduced
+* bugs fixed: predict.gcrq() did not display linear effects in semiparametric fits; predict.gcrq() did not handle VC terms with categorical interaction (thanks to Abele Wolfgang for reporting); plot.gcrq() did not display correctly the derivative (if deriv>0 was set) 
+* vignette introduced summarizing some capabilities of the package
+
 
 =============
 version 1.2-1  
 =============
 * gcrq() gains argument 'df.nc' to account (optionally) for the possible noncrossing constraints in the model degrees of freedom 
-* bugs fixed: gcrq() did not work when lambda had to be selected by CV; plot.gcrq() when called with 'term=NULL', 'res=TRUE', and 'conf.level>0' displayed (clearly) wrong pointwise confidence intervals; vcov.gcrq() ignored the correct lambda values (when the fit was obtained by setting 'single.lambda=FALSE')
+* bugs fixed: gcrq() did not work when lambda had to be selected by CV; plot.gcrq() displayed (clearly) wrong pointwise confidence intervals when called with 'term=NULL' *and* 'res=TRUE' *and* 'conf.level>0'; vcov.gcrq() ignored the correct lambda values (when the fit was obtained by setting 'single.lambda=FALSE')
 
 
 =============
