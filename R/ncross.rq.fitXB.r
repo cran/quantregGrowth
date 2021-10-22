@@ -160,8 +160,9 @@ ncross.rq.fitXB <-
         pLin<-0
       }
       H <- length(n.par) #n. smooths
-      list.b <-tapply(b, id.coef, function(.x).x)
+      list.b <-tapply(b, id.coef, function(.x).x) 
       names(list.b)<- nomiGruppi
+      if(any(vConc!=0)) list.b1 <-list.b #creato list.b1 per l'eventuale concav (infatti list.b viene sovrascritto dalla monot)
       id.Xlin <- match("Xlin", nomiGruppi, 0)
       if(output<=2){
         stop("df.option not allowed")
@@ -178,10 +179,13 @@ ncross.rq.fitXB <-
         return(df.j)
       }   
       P<- if(nrow(D.matrix)==0) crossprod(D.matrix) else crossprod(drop(pesiL1)*D.matrix[(1:length(pesiL1)),,drop=FALSE])
+      
+      #browser()
+      
       if(any(vMonot!=0)){
         wMon<- lapply(1:H, function(.x) matrix(0,n.par[.x]-1,n.par[.x]))
         for(j in 1:H){ 
-          if(attr(Bconstr[[j]], "constr.fit")) list.b[[j+ id.Xlin]] <-  drop(Bconstr[[j]] %*% list.b[[j+ id.Xlin]])
+          if(attr(Bconstr[[j]], "constr.fit")) list.b[[j + id.Xlin]] <-  drop(Bconstr[[j]] %*% list.b[[j + id.Xlin]])
           wMon[[j]]  <- crossprod((10^6*(abs(diff(list.b[[j+ id.Xlin]], diff=1))<.00001))*D1[[j]])
         }
         wMon<-if(length(wMon)==1) wMon[[1]] else do.call("blockdiag", wMon)
@@ -192,8 +196,8 @@ ncross.rq.fitXB <-
       if(any(vConc!=0)){
         wConc<-lapply(1:H, function(.x) matrix(0,n.par[.x]-2,n.par[.x]))
         for(j in 1:H){ 
-          if(attr(Bconstr[[j]], "constr.fit")) list.b[[j+ id.Xlin]] <-  drop(Bconstr[[j]] %*% list.b[[j+ id.Xlin]])
-          wConc[[j]] <- crossprod((10^6*(abs(diff(list.b[[j+ id.Xlin]], diff=2))<.00001))*D2[[j]])
+          if(attr(Bconstr[[j]], "constr.fit")) list.b1[[j+ id.Xlin]] <-  drop(Bconstr[[j]] %*% list.b1[[j+ id.Xlin]])
+          wConc[[j]] <- crossprod((10^6*(abs(diff(list.b1[[j+ id.Xlin]], diff=2))<.00001))*D2[[j]])
         }
         if(any(vConc!=0)) wConc <-if(length(wConc)==1) wConc[[1]] else do.call("blockdiag", wConc) 
         if(nomiGruppi[1]=="Xlin") wConc <-blockdiag(matrix(0, pLin, pLin), wConc) 
@@ -226,6 +230,15 @@ ncross.rq.fitXB <-
     
     taus<-sort(taus)
     n<-length(y)
+    
+    
+    
+    
+    #browser()
+    
+    
+    
+    
     
     #===========================
     #Se manca la base B, costruiscila
@@ -318,7 +331,7 @@ ncross.rq.fitXB <-
       valueNcrosInterc <- c(1, unlist(colmeansB[!vcList])) #intercetta si assume nella posiz 1.. colmeansB e' 0 per basi noncentrate
     }
     if(exist.VC) {
-      id.Matr <- id.Matr[,-1][, vcList, drop=FALSE]
+      id.Matr <- id.Matr[,-1, drop=FALSE][, vcList, drop=FALSE] #ORA!!!!!!!!!!!
       valueNcrosVC <- colmeansB[vcList]
     }
     
@@ -544,17 +557,17 @@ ncross.rq.fitXB <-
             rr[1] <- sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
           }
           if(id.VC.Constr) {#se ci sono VC 
-            for(i in 1:length(id.intc.VC)){
-              rr[id.intc.VC[i]] <-  sum( valueNcrosVC[[i]] * b.start[id.Matr[,i]] )
+            for(ii in 1:length(id.intc.VC)){
+              rr[id.intc.VC[ii]] <-  sum( valueNcrosVC[[ii]] * b.start[id.Matr[,ii]] )
             }
           }
         
           
-          #browser()
-          
           o$n<-n
           #--------calcolo edf
           pesiL1<-abs((D.matrix%*%o$coefficients))
+          
+
           #lambdaM ha tante colonne quanti i tau...
           lambdasTutti<- rep(lambdaM[,paste(pos.taus[i])], sapply(D.list, nrow)) #controlla se serve -1*dropcList
           if(!is.null(pLin) && pLin>0) lambdasTutti<-c(rep(0, pLin),lambdasTutti)
@@ -640,8 +653,8 @@ ncross.rq.fitXB <-
             rr[1] <- -sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
           }
           if(id.VC.Constr) {#se ci sono VC 
-            for(i in 1:length(id.intc.VC)){
-              rr[id.intc.VC[i]] <-  -sum( valueNcrosVC[[i]] * b.start[id.Matr[,i]] )
+            for(ii in 1:length(id.intc.VC)){
+              rr[id.intc.VC[ii]] <-  -sum( valueNcrosVC[[ii]] * b.start[id.Matr[,ii]] )
             }
           }
           

@@ -304,9 +304,9 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     tau<-sort(tau)
     call <- match.call()
     if (missing(data)) data <- environment(formula)
-    tf <- terms(formula, specials = c("ps","ridge"))
-    id.ps<-attr(tf,"specials")$ps #posizione nel modelframe; pu? essere un vettore se ci sono pi? termini..include y ma non dipende se c'? intercetta o meno..
-    
+    tf <- terms(formula, specials = "ps")
+    id.ps<-attr(tf,"specials")$ps #posizione nel modelframe; vettore se ci sono piu' termini..include y ma non da interc
+
     mf <- match.call(expand.dots = FALSE)
     m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
     mf <- mf[c(1, m)]
@@ -432,6 +432,11 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 		  
 		  if(any(shared.penList) && !single.lambda) stop("single.lambda=FALSE is not (yet) allowed with shared penalty")
 		  
+		  
+		  if(any(decomList)) stop("spline decomposition not yet allowed")
+		  
+		  if(any(decomList) && length(tau)>1) stop("spline decomposition is not allowed with multiple quantile")
+		  
 		  mVariabili<-NULL
 		  rangeSmooth<-NULL
 		  #se ci sono termini ps()+ps(..,by) il nome delle variabili smooth vengono cambiati per aggiungere la variabile by
@@ -449,34 +454,37 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 		  nomiPS.ps<- sapply(nomiPS.orig, function(.x)paste("ps(",list(.x),")",sep=""))
 		  nomiPS.ps<-unlist(lapply(paste(nomiPS.ps, nomiBy, sep=":"), function(.x) sub(":NULL", "", .x)))
 		  nomiPS.ps.ok<-as.list(nomiPS.ps) #serve lista
-		  #if(!is.null(unlist(penMatrixList))) stop(" 'pen.matrix' in ps() not yet allowed.")
-		  #if(any(decomList) || any(ridgeList)) stop(" 'ridge' or 'decompose' in ps() not (yet) implemented.")
-		  if(any(decomList)) stop(" 'decompose' in ps() not (yet) implemented.")
-		  
+
 		  for(j in id.ps) mVariabili[length(mVariabili)+1]<-mf[j]
       BFixed<-nomiCoefPEN<-B<-BB<-Bderiv<- vector(length=length(mVariabili) , "list")
       #
       #
       colMeansBorig.list <- NULL 
       
-      #browser()
       for(j in 1:length(mVariabili)) {
         if(nomiBy[j]=="NULL"){
           nomiBy.j <- NULL
-          variabileSmooth<- drop(mVariabili[[j]])
+          #variabileSmooth<- if(is.matrix(mVariabili[[j]]))  else c(mVariabili[[j]]) #c() rimuove gli attributi! Prima era drop()
+          variabileSmooth<- drop(mVariabili[[j]]) #c() non va bene con matrici! le converte in vettori!
         } else { #se ci sono termini VC
           nomiBy.j <- nomiBy[j]
           variabileSmooth<- mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE] 
           variabileBy<- mVariabili[[j]][, ncol(mVariabili[[j]]),drop=TRUE]
+          #variabileSmooth<- c(mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]) 
+          #variabileBy<- c(mVariabili[[j]][, ncol(mVariabili[[j]]),drop=TRUE])
         } 
+        #browser()
         
+        for(jj in c("center", "dropc", "shared.pen", "decom", "dimSmooth", "nomeBy", 
+          "ridge", "K", "nomeX", "lambda", "constr.fit", "conc", "monot", 
+          "pdiff", "deg")) attr(variabileSmooth,jj)<-NULL
         
-      #browser()
+        #browser()
         if(ridgeList[j]){
           dropcList[j] <- FALSE
           vMonot[j]<-0 #per evitare sorprese..
           vConc[j] <-0 #per evitare sorprese..
-          vDiff[j] <-0 #serve per ottenere una penalit? ridge
+          vDiff[j] <-0 #serve per ottenere una penalita' ridge
           vDeg[j]  <-0
           vNdx[j]  <-length(unique(variabileSmooth))
           #se ridge, la variabile sicuramente NON e' numerica..
@@ -499,9 +507,10 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           if(decomList[j]) {
             Dj<-diff(diag(ncol(B[[j]])), diff = vDiff[j])
             B[[j]]<- B[[j]]%*%t(solve(tcrossprod(Dj),Dj)) #sono ncol(B[[j]])-vDiff[j]
-            vMonot[j]<-0 #per evitare sorprese..
             BFixed[[j]]<-poly(variabileSmooth, degree=vDiff[j]-1, raw=TRUE)
             colnames(BFixed[[j]])<- paste(nomiPS[j],"fix",1:(vDiff[j]-1),sep=".")
+            vDiff[j]<-0
+            vMonot[j]<-0 #per evitare sorprese.. Pero' se uno vuole imporre la monot? Dovrebbe essere possibile...
           }
           if(!is.null(nomiBy.j)){
             if(!dropcList[j] && centerList[j]) {
@@ -627,6 +636,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
             attr(BB1,"colmeansB")<- colmeansB
             attr(BB1,"ndx")<- vNdx[j]
             attr(BB1,"deg")<- vDeg[j]
+            attr(BB1,"diff")<- vDiff[j]
             attr(BB1,"knots")<- knotsList[[j]]
             attr(BB1,"center")<- centerList[j]
             attr(BB1,"drop") <- dropcList[j]
@@ -666,6 +676,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         #interc<-TRUE
     }
     X<- X[,-grep( "ps[(]" , colnames(X)), drop=FALSE]
+    
+    #browser()
     
     BBlin<-vector("list", ncol(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE]))
     if(length(setdiff(colnames(X),"(Intercept)"))>=1){ #se ci sono termini lineari (oltre l'intercetta)
@@ -716,13 +728,27 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         colnames(K.matrix)<-paste(tau)
         h.ok<-h
         
-        fit<-list(edf.all=1, pLin=0)
+        fit<-list(coefficients=1, pLin=0)
+        
+
+
+                
         for(j in 1:it.max){ #
-          #pesi<- drop(fit$edf.all)
+          #pesi<- drop(abs(fit$coefficients)+.0001)
           #if(fit$pLin>0) pesi<- pesi[-c(1:fit$pLin)]
           #penMatrixList[[1]]<-diag(ncol(penMatrixList[[1]]))/sqrt(pesi)
           
+          #if(j==2) browser()
           expand.lambda<- rep(lambda, tapply(id.shared.pen, id.shared.pen, length))
+          if(!single.lambda) expand.lambda <- matrix(expand.lambda, ncol=length(tau))
+          #se !single.lambda, dopo la 1st iterazione (per j>=2) lambda e' una matrice (n.col=n.tau), che pero' viene trasformata in vettore 
+          #dalla linea rep(..). Ma se e' un vettore e !single.lambda, ncross.rq.fitXB() da errore. Allora:
+          # 1) lancia if(!single.lambda) expand.lambda <- matrix(expand.lambda, ncol=length(tau))
+          # 2) per ora !single.lambda e' incompatibile con shared penalty, per cui potresti:
+          #   if(single.lambda){
+          #       expand.lambda<- rep(lambda, tapply(id.shared.pen, id.shared.pen, length))
+          #          } else { expand.lambda <- lambda }
+          
           fit <-suppressWarnings(ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
                   lambda=expand.lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
                   lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList, 
@@ -757,11 +783,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           
           #giugno 2021, usa gli edf.j calcolati in ncross.rq.fitXB()
           edf.jM<-edf.j<-fit$edf.j
-          
-          
 
-          
-          
           if(single.lambda){ #un unico lambda per tutti i percentili..
             dev2u<-apply(fit$all.dev2u,1,sum) #all.dev2u e' matrice . con un singolo tau era "fit$dev2u"
             if(attr(fit$id.coef, "nomi")[1]!="Xlin") edf.jM<-rbind(0, edf.jM) #edf.j<-c(0,edf.j)
@@ -885,7 +907,10 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           warning(paste(length(id.NA), "boot resamples without convergence"), call.=FALSE)
         }
       } #end if n.boot
-      nomiCoefUNPEN<-rownames(as.matrix(fit$coefficients))[1:ncol(X)]
+      
+    #browser()
+    
+    nomiCoefUNPEN<-rownames(as.matrix(fit$coefficients))[1:ncol(X)]
       nn<-c(nomiCoefUNPEN,unlist(nomiCoefPEN))
       
       

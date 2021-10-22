@@ -9,7 +9,7 @@ Log Likelihood, AIC and BIC for gcrq objects
 The function returns the log-likelihood value(s) evaluated at the estimated coefficients
 }
 \usage{
-\method{logLik}{gcrq}(object, summ=TRUE, ...)
+\method{logLik}{gcrq}(object, summ=FALSE, ...)
 \method{AIC}{gcrq}(object, ..., k=2)
 
 }
@@ -29,7 +29,11 @@ optional  arguments (nothing in \code{logLik.gcrq}). For \code{AIC.gcrq}, \code{
 }
 }
 \details{
-The 'logLikelihood' is computed according to \code{\link{logLik.rq}}, namely \eqn{n (\log(\tau(1-\tau))-1-\log(\rho_\tau/n))}{n * (log(tau * (1 - tau)) - 1 - log(object$rho/n))}, where \eqn{\rho_\tau}{object$rho} is the minimized objective function.
+The 'logLikelihood' is computed by assuming an asymmetric Laplace distribution for the response as in \code{\link{logLik.rq}}, namely \eqn{n (\log(\tau(1-\tau))-1-\log(\rho_\tau/n))}{n * (log(tau * (1 - tau)) - 1 - log(object$rho/n))}, where \eqn{\rho_\tau}{object$rho} is the minimized objective function. When there are multiple quantile curves \eqn{j=1,2,...,J} (and \code{summ=TRUE}) the formula is
+
+\eqn{n (\sum_j\log(\tau_j(1-\tau_j))-J-\log(\sum_j\rho_{\tau_j}/(n J))}{n * ( Sum_j log(tau_j * (1 - tau_j)) - J - log(Sum_j object$rho_j/(n*J)))}
+
+\code{AIC.gcrq} simply returns \code{-2*logLik + k*edf} where \code{k} is 2 or \code{log(n)}.  
 }
 \value{
 The log likelihood(s) of the model fit \code{object}

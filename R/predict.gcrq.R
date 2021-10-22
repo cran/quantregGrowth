@@ -52,15 +52,22 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         fit<-drop(xreg%*%b) 
       } else {
         
+        #browser()
+        
         nomiCoef<-rownames(b)
-        nomiCoefPen <- as.vector(unlist(sapply(object$BB, function(.x) attr(.x,"coef.names"))))
+        idVeriSmooth<-sapply(object$BB, function(.x) !is.null(attr(.x,"smoothName1")))
+        nome.smooth <- sapply(object$BB, function(.x) attr(.x, "smoothName")) ##nomi variabili smooth (quelle vere.. non con ps()...) usa "smoothName1" 
+        nome.smooth<- nome.smooth[idVeriSmooth] #solo i veri smooth, togli i termini lineari...
+        n.smooth <-length(nome.smooth)
+        
+        nomiCoefPen <- sapply(object$BB, function(.x) attr(.x,"coef.names"))
+        nomiCoefPen <- as.vector(unlist(nomiCoefPen[idVeriSmooth]))
         nomiCoefUnpen <- setdiff(nomiCoef, nomiCoefPen )
         id.coef.smooth <-match(nomiCoefPen, nomiCoef)
-        info.smooth<-object$info.smooth #estrai 
-        nome.smooth <- sapply(object$BB, function(.x) attr(.x, "smoothName")) ##nomi variabili smooth (quelle vere.. non con ps()...) usa "smoothName1" 
-        n.smooth <-length(nome.smooth)
-
         b.smooth<-b[id.coef.smooth, ]
+        
+        info.smooth<-object$info.smooth #estrai 
+
         nomiVarModelloRispo<-all.vars(object$call$formula) #include la risposta che puo' includere piu nome se e scritta come y[g==1]
         nRispo<-length(all.vars(update.formula(object$call$formula,.~1)))
         nomiVarModello <-nomiVarModelloRispo[-(1:length(nRispo))]
@@ -76,17 +83,26 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         x.new <-newdata[, id.var.smooth,drop=FALSE] #individua le variabili smooth
         newdata <-newdata[,-id.var.smooth, drop=FALSE] #togli le variabili smooth
         #costruire la base su x.new.. prendere il min max..
-        B.new.list<-vector("list", length=n.smooth)
+        B.new.list<- B.fixed.list<- vector("list", length=n.smooth)
         for(i in 1:n.smooth){
             m<-min(attr(object$BB[[i]], "covariate.35"))       #as.numeric(attr(object$BB[[1]], "covariate.n"))
             M<-max(attr(object$BB[[i]], "covariate.35"))
             B.new<-bspline(c(m, x.new[,i], M), ndx=info.smooth$ndx[i], deg=info.smooth$deg[i])
-            #modifica la base in funzione di drop, center, vc
-            if(isTRUE(attr(object$BB[[i]],"drop"))) B.new<-B.new[,-1,drop=FALSE]
-            if(isTRUE(attr(object$BB[[i]],"center"))){
-              colmeansB<-attr(object$BB[[i]],"colmeansB")
-              B.new0 <- B.new
-              B.new <- sweep(B.new, 2, colmeansB)
+            if(!is.null(attr(object$BB[[i]],"name.fixed.params"))){
+              nomi.okF <-attr(object$BB[[i]],"name.fixed.params")
+              d<-length(nomi.okF)+1 #ricostruiamo l'ordine diff
+              Di<-diff(diag(ncol(B.new)), diff=d)
+              B.new <- B.new %*%t(solve(tcrossprod(Di),Di)) #sono ncol(B[[j]])-vDiff[j]
+              B.fixed.list[[i]]<-poly(x.new[,i], degree=d-1, raw=TRUE)
+              colnames(B.fixed.list[[i]])<- nomi.okF 
+            } else {
+              #modifica la base in funzione di drop, center, vc
+              if(isTRUE(attr(object$BB[[i]],"drop"))) B.new<-B.new[,-1,drop=FALSE]
+              if(isTRUE(attr(object$BB[[i]],"center"))){
+                colmeansB<-attr(object$BB[[i]],"colmeansB")
+                B.new0 <- B.new
+                B.new <- sweep(B.new, 2, colmeansB)
+              }
             }
             B.new<-B.new[-c(1,nrow(B.new)),,drop=FALSE] #rimuovi le righe relative al min e max aggiunte sopra!
     
@@ -108,7 +124,9 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
             B.new.list[[i]]<- B.new
         }
         #browser()
-        B.new<- do.call(cbind, B.new.list)
+        B.new <- do.call(cbind, B.new.list)
+        B.fixed.new <- do.call(cbind, B.fixed.list)
+        B.new <- cbind(B.new, B.fixed.new)
         if(ncol(newdata)>0) {
           newdata<-model.matrix(as.formula(paste("~0+",paste(colnames(newdata),collapse = "+"))), 
                     data= newdata)
@@ -119,7 +137,7 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         if("(Intercept)" %in% nomiCoef ) xreg<-cbind("(Intercept)"=1, xreg)
         #xreg)<-c(nomiCoefUnpen, nomiCoefPen)
         xreg <- xreg[,nomiCoef]
-        fit<-drop(xreg%*%b) #mettere b[nomiCoef,]? Non dovrebbe servire..
+        fit<-drop(xreg%*%b) #mettere b[nomiCoef,]? Non serve perche' nomiCoef<-rownames(b)
       } #end if there are smooths
     } #end if(missing(newdata)) else.. 
   } else { #se c'e' xreg

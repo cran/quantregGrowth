@@ -35,7 +35,7 @@ plot(oM, legend=TRUE, overlap=15, grid=list(x=15,y=10), col=2, lty=1,
 
 ## ----2, message=FALSE---------------------------------------------------------
 set.seed(1515)
-d<-mgcv::gamSim(n=200, eg=1, verbose=FALSE) #verbose=TRUE suppresses the message..
+d<-mgcv::gamSim(n=200, eg=1, verbose=FALSE) #verbose=FALSE just suppresses the message..
 
 o <- gcrq(y ~ ps(x0) + ps(x1) + ps(x2) + ps(x3), data=d, tau=.5)
 

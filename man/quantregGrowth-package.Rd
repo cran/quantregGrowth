@@ -12,11 +12,11 @@ Fits non-crossing regression quantiles as a function of linear covariates
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 1.3-0\cr
-Date: \tab 2021-06-11\cr
+Version: \tab 1.3-1\cr
+Date: \tab 2021-10-22\cr
 License: \tab GPL\cr
 }
-Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles (i.e. probability values), \code{gcrq} estimates non-crossing quantile curves as a flexible function of quantitative covariates (typically age in growth charts), and possibly additional linear terms. To ensure flexibility, B-splines with a difference \eqn{L_1}{L1} penalty are employed to estimate nonparametrically the curves wherein monotonicity and concavity constraints may be also set. Multiple smooth terms are allowed and the amount of smoothness for each term is efficiently included in the model fitting algorithm, see Muggeo et al. (2020). \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 
+Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles (i.e. probability values), \code{gcrq} estimates non-crossing quantile curves as a flexible function of quantitative covariates (typically age in growth charts), and possibly additional linear terms. To ensure flexibility, B-splines with a difference \eqn{L_1}{L1} penalty are employed to estimate non parametrically the curves wherein monotonicity and concavity constraints may be also set. Multiple smooth terms, including varying coefficients, are allowed and the amount of smoothness for each term is efficiently included in the model fitting algorithm, see Muggeo et al. (2021). \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 
 }
 \author{
 Vito M.R. Muggeo
@@ -24,9 +24,9 @@ Vito M.R. Muggeo
 Maintainer: Vito M.R. Muggeo <vito.muggeo@unipa.it>
 }
 \references{
-Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2020).
+Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2021).
 Multiple smoothing parameters selection in additive regression quantiles,
-\emph{Statistical Modelling}, to appear. \cr doi: 10.1177/1471082X20929802
+\emph{Statistical Modelling}, \bold{21}, 428-448. 
 
 Muggeo VMR (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth. \cr
 https://www.researchgate.net/publication/350844895

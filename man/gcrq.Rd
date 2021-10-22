@@ -64,7 +64,7 @@ character, \code{"ML"} or \code{"REML"} affecting the smoothing parameter estima
 Ignored if no smoothing parameter has to be estimated. 
 }
   \item{df.opt}{
-How the model and term-specific degrees of freedom have to be computed. \code{df.opt=1} means via the null penalized coefficients, and \code{df.opt=2} via the trace of the approximate hat  matrix. Ignored if no smoothing parameter has to be estimated.
+How the model and term-specific degrees of freedom are computed. \code{df.opt=1} means via the null penalized coefficients, and \code{df.opt=2} via the trace of the approximate hat  matrix. Ignored if no smoothing parameter is be estimated.
 }
   \item{df.nc}{
 logical. If \code{TRUE} and the model refers to multiple quantile curves, the degrees of freedom account for the noncrossing constraints. 
@@ -100,7 +100,7 @@ the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} a
   \item{lambda.ridge}{
 Numerical value (typically very small) to stabilize model estimation.
 }
-  \item{sgn.constr}{optional. Vector of signs for the noncrossing constraints affecting the slopes of linear covariates. If provided, its lenght should be ugual to the model matrix columns otherwise it will be recycled. If \code{NULL}, its value is determined by 
+  \item{sgn.constr}{optional. Vector of signs for the noncrossing constraints affecting the slopes of linear covariates. If provided, its lenght should be ugual to the number of linear coefficients otherwise it will be recycled. If \code{NULL}, its value is determined by 
   a preliminary heteroscedastic model. Appropriate only with linear models (i.e. no \code{ps} term in the formula).
 }
   \item{adjX.constr}{logical. If \code{TRUE}, each linear covariate is shifted (by adding or substracting its min or max) in order make the constraints on the intercept more effective to prevent crossing of quantile curves. 
@@ -113,14 +113,15 @@ Numerical value (typically very small) to stabilize model estimation.
 The function fits regression quantiles at specified percentiles given in \code{tau} as a function of 
 covariates specified in the \code{formula} argument. The \code{formula} may include linear terms and  one or several \code{\link{ps}} 
 terms to model nonlinear relationships with quantitative covariates, usually age in growth charts. When the \code{lambda} argument 
-in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). 
-If a positive scalar, it represents the actual smoothing parameter value. When it is a vector (and the model includes a single \code{ps} term), 'K-fold' cross validation is performed to select the `optimal' lambda value and the model is fitted at such selected lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique \code{ps} term in the formula.
+in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). If a positive scalar, it represents the actual smoothing parameter value. 
+
+Smoothing parameter selection via 'K-fold' cross validation (CV) is also allowed (but not recommended) if the model includes a single \code{ps} term:  \code{lambda} should be a vector of candidate values, and the final fit is returned at the `optimal' lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique \code{ps} term in the formula.
 }
 \value{
 This function returns an object of class \code{gcrq}, that is a list with the following components (only the most important are listed)
   \item{coefficients}{The matrix of estimated regression parameters; the number of columns equals the number of the fitted quantile curves.}
   \item{x}{the design matrix of the final fit (including the dummy rows used by penalty).}
-  \item{edf.j}{a matrix reporting the df values for each term in the model and each quantile curve. See the section 'Warning' below.  }
+  \item{edf.j}{a matrix reporting the edf values for each term at each quantile curve. See the section 'Warning' below.  }
   \item{rho}{a vector including the values of the objective functions at the solution for each quantile curve.}
 
   \item{fitted.values}{a matrix of fitted quantiles (a column for each \code{tau} value)}
@@ -134,7 +135,7 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
     stuff useful for plotting via \code{plot.gcrq()}.}
   \item{Bderiv}{if the smooth term is included, the first derivative of the B spline basis.}
   \item{boot.coef}{The array including the estimated coefficients at different bootstrap samples (provided that \code{n.boot}>0 has been set).}
-  \item{y}{the response vector (if gcrq() has been called with \code{y=TRUE}).}
+  \item{y}{the response vector (if \code{gcrq()} has been called with \code{y=TRUE}).}
   \item{contrasts}{the contrasts used, when the model contains a factor.}
   \item{xlevels}{the levels of the factors (when included) used in fitting.}
   \item{taus}{a vector of values between 0 and 1 indicating the estimated quantile curves.}
@@ -142,13 +143,17 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
 }
 
 \section{Warning}{
-The words \code{'REML'} or \code{'ML'} to specify the \code{method} argument, refer to how the degrees of freedom are computed to update the lambda estimates.
+The options \code{'REML'} or \code{'ML'} of the argument \code{method}, refer to how the degrees of freedom are computed to update the lambda estimates. 
 
 Currently, standard errors are obtained via the sandwich formula or the nonparametric bootstrap (case resampling). Both methods ignore uncertainty in the smoothing parameter selection. 
 
 Since version 1.2-1, computation of the approximate edf can account for the noncrossing constraints by specifying \code{df.nc=TRUE}. That could affect model estimation when the smoothing parameter(s) have to be estimated, because the term specific edf are used to update the lambda value(s). When lambda is not being estimated (it is fixed or there is no \code{ps} term in the formula), parameter estimate is independent of the \code{df.nc} value. The \code{summary.gcrq} method reports if the edf account for the noncrossing constraints.     
 
-Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve while guaranteeing noncrossing constraints.  %\cr
+Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in the fitted curve while guaranteeing noncrossing constraints.  
+
+Currently, decomposition of Bsplines (i.e. \code{ps(..,decom=TRUE)}) is incompatible with shape (monotonicity and concavity) restrictions and even with noncrossing constraints.
+
+%\cr
 }
 %The function (and underlying method) works pretty well in obtaining point estimates and displaying quantile curves accordingly.
 %Typically this is the main (and unique) goal when dealing with growth charts. However from a statistical viewpoint 

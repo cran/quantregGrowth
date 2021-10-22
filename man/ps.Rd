@@ -12,7 +12,7 @@ passes relevant information to proper fitter functions.
 \usage{
 ps(..., lambda = -1, d = 3, by=NULL, ndx = NULL, deg = 3, knots=NULL,
     monotone = 0, concave = 0, var.pen = NULL, pen.matrix=NULL, dropc=TRUE, 
-    center=TRUE, K=2, decompose=FALSE, constr.fit=TRUE, shared.pen=FALSE)
+    center=TRUE, K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -64,7 +64,7 @@ if provided, a penalty matrix \eqn{A}{A}, say, such that the penalty in the obje
 }
   \item{dropc}{
 logical. Should the first column of the B-spline basis be dropped for the basis identifiability? Default to \code{TRUE}. Note, if \code{dropc=FALSE} is set, 
-it is necessary to omit the model intercept AND \code{center=FALSE} or to set \code{lambda.ridge>0} to fit the model.
+it is necessary to omit the model intercept AND not to center the basis, i.e. \code{center=FALSE}. Alternatively, both a full basis and the model intercept may be included by adding a small ridge penalty via \code{lambda.ridge>0}.
 }
   \item{center}{
 logical. If \code{TRUE} the smooth effects are 'centered' over the covariate values, i.e. \eqn{\sum_i \hat{f}(x_i)=0}{sum_i f(xi)=0}.
@@ -72,9 +72,9 @@ logical. If \code{TRUE} the smooth effects are 'centered' over the covariate val
   \item{K}{
 A factor tuning selection of wiggliness of the smoothed curve. The larger \code{K}, the smoother the curve. Simulations suggest \code{K=2}. See details.
 }
-  \item{decompose}{
+  \item{decom}{
 logical. If \code{TRUE}, the B-spline is decomposed into truncated power functions 
-such as [x, ..., x^{d-1}, Z]. See Details. Currently unimplemented.
+such as [x, ..., x^{d-1}, Z], where \eqn{Z= B D'(DD')^{-1}}{Z= B D'(DD')^{-1}}, \eqn{d}{d} is the difference order and \eqn{B}{B} is the B-spline basis. Only the coefficients of Z are penalized via an identity matrix. Currently \code{decom=TRUE} does not work with shape (monotonicity and concavity) restrictions and noncrossing constraints.
 }
   \item{constr.fit}{
 logical. If \code{monotone} or \code{concave} are different from 0, \code{constr.fit=TRUE} means that these constraints are set on the fitted quantiles rather than on the spline coefficients.
@@ -85,16 +85,18 @@ logical. If \code{TRUE} and it is a VC smooth term (i.e. interaction with a fact
 
 }
 \details{
-\code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability. The spline coefficients are penalized via differences of order \code{d}, and \code{d=0} leads to a penalty on the coefficients themselves. \code{d} is ignored if \code{pen.matrix} is supplied.
+\code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability, and the spline coefficients are penalized via differences of order \code{d}; \code{d=0} leads to a penalty on the coefficients themselves.  If \code{pen.matrix} is supplied, \code{d} is ignored.
 
 \code{lambda} is the tuning parameter fixed or to be estimated. When \code{lambda}=0 an unpenalized (and typically wiggly) fit is obtained, and as lambda increases the curve gets smoother till a \code{d-1} degree polynomial when lambda gets very large. At 'intermediate' lambda values, the fitted curve is a \emph{piecewise} polynomial of degree \code{d-1}.
 
-It is also possible to put a varying penalty to set a different amount of smoothing. Namely for a 
+It is also possible to put a varying penalty via the argument \code{var.pen}. Namely for a 
 constant smoothing (\code{var.pen=NULL}) the penalty is \eqn{\lambda\sum_k |\Delta^d_k|}{lambda sum_k |\Delta^d_k|} where 
 \eqn{\Delta^d_k}{Delta^d_k} is the k-th difference (of order \code{d}) of the spline coefficients. For instance if \eqn{d=1}{d=1}, 
  \eqn{|\Delta^1_k|=|b_k-b_{k-1}|}{|\Delta^1_k|=|b_k-b_{k-1}|} where the \eqn{b_k}{b_k}  are the spline coefficients.
-When a varying penalty is set, the penalty becomes \eqn{\lambda\sum_k |\Delta_k^d| w_k}{lambda sum_k |\Delta^d_k| w_k}. 
-The weights \eqn{w_k}{w_k} depend on \code{var.pen}; for instance \code{var.pen="((1:k)^2)"} results in \eqn{w_k=k^2}{w_k=k^2}. See model \code{m5} in examples of \code{\link{gcrq}}.
+When a varying penalty is set, the penalty becomes \eqn{\lambda\sum_k |\Delta_k^d| w_k}{lambda sum_k |\Delta^d_k| w_k} where the weights \eqn{w_k}{w_k} depend on \code{var.pen}; for instance \code{var.pen="((1:k)^2)"} results in \eqn{w_k=k^2}{w_k=k^2}. See models \code{m6} and \code{m6a} in the examples of \code{\link{gcrq}}.
+
+If \code{decom=TRUE}, the smooth can be plotted with or without the fixed part, see \code{overall.eff} in the function \code{\link{plot.gcrq}}.
+
 }
 \value{
 The function simply returns the covariate with added attributes relevant to 
@@ -121,7 +123,7 @@ Vito M. R. Muggeo
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{gcrq}}
+\code{\link{gcrq}}, \code{\link{plot.gcrq}}
 }
 \examples{
 ##see ?gcrq

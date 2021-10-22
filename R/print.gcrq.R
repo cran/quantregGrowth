@@ -14,7 +14,8 @@ print.gcrq <-function(x, digits = max(3, getOption("digits") - 4), ...){
          print(round(x$edf.j, digits))
       }
       all.sic <- log(x$rho/n) + log(n) * colSums(as.matrix(x$edf.j))/(2*n)
-      sic<- sum(all.sic) #sum(log(x$rho/n)) +log(n)*sum(x$edf.j)/(2*n)
+      sic<-log(sum(x$rho)/(n*n.tau))+sum(x$edf.j)*log(n*n.tau)/(2*n*n.tau)
+      #sic<- sum(all.sic) #sum(log(x$rho/n)) +log(n)*sum(x$edf.j)/(2*n)
       cat("\nOverall check =", round(sum(x$rho),digits), "  SIC =", round(sic,digits), " (on edf =",paste(round(sum(x$edf.j),digits-1),")",sep="") ,"\n")
 }
 

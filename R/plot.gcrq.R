@@ -32,6 +32,7 @@ plot.gcrq <-
       B
     }
     #===============================================================================
+    type<- match.arg(type)
     if(conf.level>0) VAR <-vcov.gcrq(x, type=type)  
     b<-x$coefficients
     
@@ -189,6 +190,7 @@ plot.gcrq <-
       
       fit.35<-if(deriv) x$Bderiv[[term]]%*%b else BB%*%b #matrici
       ###########=================================================
+      corr.df<-0
       if(is.character(xvar.35) && xvar.35[1]=="ridge") { #if ridge, plot the single coeffs 
         b<-b # +shift, nell'altra versione c'era come argomento shift=0.. non so se utile..
         if(add) {
@@ -200,12 +202,16 @@ plot.gcrq <-
           abline(h=0, lty=3)
         }
       } else {
+  #browser()
         if(!is.null(attr(BB,"name.fixed.params"))){ #se c'e' stata una decomp di spline 
         #if(!missing(n.points)) warning("argument 'n.points' ignored", call. = FALSE)
         if(overall.eff){ #e vuoi disegnare tutto l'effetto  
           nomi.okF<-attr(BB,"name.fixed.params")
           b.fix<-if(is.matrix(x$coefficients)) x$coefficients[nomi.okF,select.tau] else x$coefficients[nomi.okF]
           fit.35<- fit.35 +  drop(poly(xvar.35, degree=length(b.fix), raw=TRUE)%*%b.fix)  
+          corr.df <-length(nomi.okF) #serve per correggere i df in Ylab
+        } else {
+            interc <- FALSE
           }
         }
         if(is.null(shift) && isTRUE(vc.term)){ 
@@ -246,7 +252,7 @@ plot.gcrq <-
         if(length(select.tau)==1 && ncol(BB)!=1 ){ #ncol(BB)==1 se il termine e' lineare, altrimenti se e' una base ha molte piu' colonne..
           .df.term <- as.matrix(x$edf.j)[term, select.tau, drop=FALSE]
           if(isTRUE(vc.term)) .df.term <- .df.term-1  #se e' un VC term, dal conteggio df togli l'intercetta (cosi come avviene per i termini smooth non-VC)
-          Ylab.ok<- gsub(")", paste(", df=", round(.df.term[term,],2),")",sep=""), term)
+          Ylab.ok<- gsub(")", paste(", df=", round(.df.term[term,]+corr.df,2),")",sep=""), term)
         } else {
           Ylab.ok <- paste("Effect of ", term)
         }

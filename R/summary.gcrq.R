@@ -14,7 +14,8 @@ summary.gcrq <- function(object, type = c("sandw", "boot"), digits = max(3, getO
    n <- nrow(as.matrix(object$fitted.values))
    p <- nrow(as.matrix(object$coefficients))
    n.tau <- ncol(as.matrix(object$coefficients))
-   sic <- sum(log(object$rho/n)) + log(n) * sum(object$edf.j)/(2 * n)
+   #sic <- sum(log(object$rho/n)) + log(n) * sum(object$edf.j)/(2 * n)
+   sic<- log(sum(object$rho)/(n*n.tau))+sum(object$edf.j)*log(n*n.tau)/(2*n*n.tau)
    
    list.vcov <- vcov.gcrq(object, type = type)
    for (j in 1:n.tau) {

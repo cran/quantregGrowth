@@ -4,7 +4,7 @@ author: "Vito M.R. Muggeo"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{quantregGrowth}
+  %\VignetteIndexEntry{An introduction to quantregGrowth}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The package `quantregGrowth` aims to estimate the smooth, but unspecified, effect of numerical covariate(s) on one or more quantiles of the numerical response variable. The quantile regression equation can also include linear effect(s) of numerical or categorical covariates. Each flexible and unspecified relationship is expressed via a B-spline basis whose coefficients are somehow shrunken to control the wiggliness of the curve(s). The amount of smoothness is estimated as part of the model fitting as described in [Muggeo et al., 2020](https://journals.sagepub.com/doi/full/10.1177/1471082X20929802).
+The package `quantregGrowth` aims to estimate the smooth, but unspecified, effect of numerical covariate(s) on one or more quantiles of the numerical response variable. The quantile regression equation can also include linear effect(s) of numerical or categorical covariates. Each flexible and unspecified relationship is expressed via a B-spline basis whose coefficients are somehow shrunken to control the wiggliness of the curve(s). The amount of smoothness is estimated as part of the model fitting as described in [Muggeo et al., 2021](https://journals.sagepub.com/doi/full/10.1177/1471082X20929802).
 
 The package relies on the well known `quantreg` package by Roger Koenker by exploiting full functionality and efficiency of its fitter functions.
 
@@ -47,12 +47,12 @@ o <-gcrq(height ~ ps(age), tau=seq(.05,.95,l=7), data=SiChildren)
 plot(o, res=TRUE) #res=TRUE displays data too
 ```
 
-In addition to the graphical output, we could look at the estimated quantile values can be obtained via the function `charts()`, which is a simple wrapper of `predict.gcrq()` to facilitate production of growth charts based on the fitted model. We display the quantiles just at some age values
- ```{r}
+In addition to the graphical output, we could look at the estimated quantile values via the function `charts()` which is a simple wrapper of `predict.gcrq()` to facilitate production of growth charts based on the fitted model. We display the quantiles just at some age values
+```{r}
 charts(o, k=c(10,10.5,11,16,17)) #the quantile at the specified k values
 ```
 
-Results look reasonable, but there are some annoying features which need to be stressed: at around age=16 the highest quantile curve (the 95th) decreases, while some quantile curves (the 5th to the 65th) drop at early ages around 11 years and then increases again afterwards. 
+Results look reasonable, but there are some annoying features which need to be stressed: at around age=16 the highest quantile curve (the 95th) decreases, while some quantile curves (the 5th to the 65th) drop at early ages around 11 years and then increase again afterwards. 
 
 <!--
 ```{r, echo=FALSE, results='asis'}
@@ -66,7 +66,7 @@ Broadly speaking, non monotonic growth charts could be biologically sound (for i
 oM<-gcrq(height ~ ps(age, monotone=1), data=SiChildren, tau=seq(.05,.95,l=7))
 ```
 
-In the following, we report two plots: the first one focuses on the early ages by stressing differences between the fitted curves, and the second figure could be possibly closer to the usual growth charts, with a legend (set at the age axis value `overlap=15`), an underlying grid (with 15 vertical and 10 horizontal lines) and `customized' axis labels.  
+In the following, we report two plots: the first one focuses on the early ages by stressing differences between the fitted curves, and the second figure could be possibly closer to the usual growth charts, with legend (set at the age value `overlap=15`), underlying grid (with 15 vertical and 10 horizontal lines) and `customized' axis labels.  
 
 ```{r 1b, message = F, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
@@ -86,7 +86,7 @@ Several options are available when plotting a `gcrq` object, see `?plot.gcrq`.
 
 ```{r 2, message=FALSE}
 set.seed(1515)
-d<-mgcv::gamSim(n=200, eg=1, verbose=FALSE) #verbose=TRUE suppresses the message..
+d<-mgcv::gamSim(n=200, eg=1, verbose=FALSE) #verbose=FALSE just suppresses the message..
 
 o <- gcrq(y ~ ps(x0) + ps(x1) + ps(x2) + ps(x3), data=d, tau=.5)
 ```
@@ -136,7 +136,7 @@ y<-2*x+rnorm(n)*rev(x)
 o3 <-gcrq(y ~ x, tau=seq(.05,.95,l=10)) #fit 10 (noncrossing) regression quantiles
 ```
 
-By means of `plot.gcrq()` with proper arguments, we display in the first plot the linear growth charts, and in the 2nd and 3rd we portray the tau-varying coefficients by setting `axis.tau=TRUE`, 
+By means of `plot.gcrq()` with proper arguments, we display in the first plot the linear growth charts, and in the 2nd and 3rd figure, we portray the tau-varying coefficients by setting `axis.tau=TRUE`, 
 
 ```{r, fig.width=7, fig.height=3} 
 par(mfrow=c(1,3))
@@ -146,7 +146,7 @@ plot(o3, term=1, axis.tau=TRUE)
 plot(o3, term="x", axis.tau=TRUE, conf.level = .95, col=2)
 ```
 
-The 2nd and 3rd plots could be useful to assess if and how the specified coefficient changes across the quantile curves. 
+The 2nd and 3rd plots could be useful to assess if and how the specified coefficient estimate changes across the quantile curves. 
 
 
 ## Customizing the penalty
@@ -188,7 +188,8 @@ output type provides a custom style sheet (and tweaks some options) to ensure th
 
 
 ## References
-  * Muggeo V.M.R., Torretta F, Eilers P.H.C., Sciandra M., Attanasio M. (2020). Multiple smoothing parameters selection in additive regression quantiles, Statistical Modelling, to appear. Available at https://journals.sagepub.com/doi/full/10.1177/1471082X20929802
+  * Muggeo V.M.R., Torretta F, Eilers P.H.C., Sciandra M., Attanasio M. (2021). Multiple smoothing parameters selection in additive regression quantiles, Statistical Modelling, 21, 428 - 448.
+  https://journals.sagepub.com/doi/full/10.1177/1471082X20929802
   
   * Muggeo V.M.R. (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth. https://www.researchgate.net/publication/350844895_Additive_Quantile_regression_with_automatic_smoothness_selection_the_R_package_quantregGrowth
   

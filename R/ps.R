@@ -1,7 +1,7 @@
 ps <-
 function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL, 
     monotone=0, concave=0, var.pen=NULL, pen.matrix=NULL, dropc=TRUE, center=TRUE,
-    K=2, decompose=FALSE, constr.fit=TRUE, shared.pen=FALSE){
+    K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE){
 #arguments in ... such as 'a=3' are ignored
 #dropc, if TRUE the first column of the basis is dropped..
 #decompose: if TRUE the decomposition of the B-spline is employed. Notice the new basis becomes
@@ -36,7 +36,7 @@ function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL,
     names(vars)<-nomi
     
 
-    if(is.factor(vars[[1]]) || is.matrix(vars[[1]]) || length(nomi)>1) stop("ps() accepts single numerical terms only")
+    #if(is.factor(vars[[1]]) || is.matrix(vars[[1]]) || length(nomi)>1) stop("ps() accepts single numerical terms only")
     #if(length(nomi)>1) stop(" ps() accepts single terms only") #: numeric/factor vector or matrix")
     
     p<-1
@@ -58,7 +58,7 @@ function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL,
     attr(r,"deg")<-deg
     attr(r,"pdiff")<-d
     attr(r,"monot")<-monotone #isTRUE(monotone)
-    attr(r,"conc")<-concave
+    attr(r,"conc")<- -concave
     attr(r,"constr.fit")<-constr.fit
     attr(r,"lambda")<-lambda
     attr(r,"nomeX")<- (nomi[[1]])#deparse(substitute(x))
@@ -68,18 +68,18 @@ function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL,
     attr(r,"nomeBy")<-deparse(substitute(by), backtick = TRUE, width.cutoff = 500)
     attr(r,"levelsBy")<-levels(by)
     attr(r,"dimSmooth")<-p
-    attr(r,"decom")<-decompose
+    attr(r,"decom")<-decom
     attr(r,"shared.pen")<-shared.pen
-    if(monotone!=0 && decompose) stop("'decom=TRUE' is incompatible with monotonicity restrictions") #se i vincoli sono sui fitted e' OK..
-    if(concave!=0 && decompose) stop("'decom=TRUE' is incompatible with concavity restrictions")
-    if(decompose) dropc<-FALSE
+    if(monotone!=0 && decom) stop("'decom=TRUE' is incompatible with monotonicity restrictions") #se i vincoli sono sui fitted e' OK..
+    if(concave!=0 && decom) stop("'decom=TRUE' is incompatible with concavity restrictions")
+    if(decom) {dropc<-FALSE;center=FALSE}
     
     if(!is.null(by)) colnames(r)<-c(nomi, "by") else nomi
     #colnames(r)<-c(nomi, "by")
     #if(!is.null(by)) colnames(r)<-c(deparse(substitute(x)), deparse(substitute(by)))
     attr(r,"dropc")<-dropc
     attr(r,"center")<-center
-    if(dropc && decompose) stop("'decom=TRUE' is incompatible with 'dropc=TRUE' ")
+    if(dropc && decom) stop("'decom=TRUE' is incompatible with 'dropc=TRUE' ")
 	#browser()
 	r
 }

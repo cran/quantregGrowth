@@ -79,7 +79,7 @@ logical. If \code{TRUE}, the covariate distribution is displayed as a rug plot a
 %Should the edf value to be reported as y label? If \code{NULL}, \code{edf.ylab} is set to TRUE only if there is a single quantile curve to be plotted.
 %}
   \item{overall.eff}{
-logical. If the smooth term has been called via \code{ps(.., decompose=TRUE)}, by specifying \code{overall.eff=TRUE} the overall smooth effect is drawn. Currently unimplemented.
+logical. If the smooth term has been called via \code{ps(.., decom=TRUE)}, by specifying \code{overall.eff=TRUE} the overall smooth effect is drawn, otherwise only the penalized part is portrayed (always \emph{without} intercept).
 }
   \item{grid}{
 if provided, a grid of horizontal and vertical lines is drawn. \code{grid} has to be a list with the following components \code{x,y,col,lty,lwd}. 
@@ -109,7 +109,7 @@ When \code{axis.tau=TRUE}, all arguments accepted by \code{plot()}, \code{points
 }
 }
 \details{
-Takes a "gcrq" object and diplays the fitted quantile curves as a function of the covariate specified in \code{term}. If \code{conf.level}>0 pointwise confidence intervals are also displayed. When the object contains the component \code{cv}, \code{plot.gcrq} can display cross-validation scores against the lambda values, see argument \code{cv}. If a single quantile curve is being displayed, the default 'ylab' includes the relevant edf value (leaving out the basis intercept). If \code{axis.tau=TRUE} and the model 
+Takes a "gcrq" object and diplays the fitted quantile curves as a function of the covariate specified in \code{term}. If \code{conf.level}>0 pointwise confidence intervals are also displayed. When the object contains the component \code{cv}, \code{plot.gcrq} can display cross-validation scores against the lambda values, see argument \code{cv}. If a single quantile curve is being displayed, the default 'ylab' includes the relevant edf value (leaving out the basis intercept). If \code{axis.tau=TRUE} and the fit includes several quantile curves, \code{plot.gcrq()} portrays the estimated coefficients versus the probability values.
 % per gli IC, col e' quello dei quantili, lwd = lwd(quantili)*.5, e lty=lty(quantili)+1 (se un solo valore e' specificato) oppure e' proprio quello  
 %dei quantili se questo e' un vettore.
 }
