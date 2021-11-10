@@ -441,7 +441,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 		  rangeSmooth<-NULL
 		  #se ci sono termini ps()+ps(..,by) il nome delle variabili smooth vengono cambiati per aggiungere la variabile by
 		  nomiPS.orig <- nomiPS
-		  #browser()
+		  
 		  nomiPS.By <-paste(nomiPS, nomiBy, sep=":")
 		  nomiPS <- unlist(lapply(nomiPS.By, function(.x) sub(":NULL", "", .x)))
 		  #nomiPS.By <-paste(nomiBy, nomiPS, sep=":")
@@ -530,14 +530,19 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           }
           #-------se VC terms..
           
+        #browser()
+
           if(!is.null(nomiBy.j)) {
             if(dropcList[j]) dropvcList[j]<-TRUE
-            if(is.null(levelsBy[[j]])){
-              B[[j]]<- if(dropvcList[j]) cbind(variabileBy, variabileBy*B[[j]]) else variabileBy*B[[j]]
+            if(is.null(levelsBy[[j]])){ #se e' vc con variabile continua
+              #CAMBIO 25/10 non aggiungere MAI variabileBy alla base..
+              #B[[j]]<- if(dropvcList[j]) cbind(variabileBy, variabileBy*B[[j]]) else variabileBy*B[[j]]
+              B[[j]]<-variabileBy*B[[j]]
               nomiCoefPEN[[j]]<- sapply(1:ncol(B[[j]]), function(x) gsub(":", paste(".",x, ":", sep="") , nomiPS.ps[j]))
-              } else {
+            } else {
               M<-model.matrix(~0+factor(variabileBy))
-              B[[j]]<- if(dropvcList[j]) lapply(1:ncol(M), function(.x) cbind(M[,.x],M[,.x]*B[[j]])) else lapply(1:ncol(M), function(.x) M[,.x]*B[[j]])
+              #B[[j]]<- if(dropvcList[j]) lapply(1:ncol(M), function(.x) cbind(M[,.x],M[,.x]*B[[j]])) else lapply(1:ncol(M), function(.x) M[,.x]*B[[j]])
+              B[[j]]<- lapply(1:ncol(M), function(.x) M[,.x]*B[[j]])
               nomiCoefPEN[[j]] <- lapply(1:length(B[[j]]), 
                      function(.y)
                         {paste(sapply(1:ncol(B[[j]][[.y]]), 
@@ -607,7 +612,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       ### un altro ciclo for.. per le colMeans e per le info per i disegni..
       ########################################################################
       for(j in 1:length(B)) {
-        nomiBy.j<- if(nomiBy[j]=="NULL") NULL else nomiBy[j]
+          nomiBy.j<- if(nomiBy[j]=="NULL") NULL else nomiBy[j]
           if(ridgeList[j]){
             variabileSmooth <- if(is.null(nomiBy.j)) drop(mVariabili[[j]]) else mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
             BB1 <- if(is.matrix(variabileSmooth)) variabileSmooth else model.matrix(~0+ factor(unique(variabileSmooth)))

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Vito M.R. Muggeo" />
 
-<meta name="date" content="2021-10-22" />
+<meta name="date" content="2021-11-09" />
 
 <title>quantregGrowth: nonparametric quantile regression for growth charts and additive models</title>
 
@@ -141,7 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">quantregGrowth: nonparametric quantile regression for growth charts and additive models</h1>
 <h4 class="author">Vito M.R. Muggeo</h4>
-<h4 class="date">2021-10-22</h4>
+<h4 class="date">2021-11-09</h4>
 
 
 
@@ -155,7 +155,7 @@ text-align: justify}
 <h2>Growth charts (for the eager :-))</h2>
 <p>When focus is on multiple response quantiles (1%, 5%,…, 95%, say) depending on a single variable, the resulting fitted quantile curves are also referred as growth charts. Growth charts are smooth quantile trajectories at different probability values, ‘tau’, with the noncrossing property, namely the quantile curve at any specified tau value has to be always higher then the quantile curve at any lower probability value. Growth charts are used to build reference values of an outcome of interest with respect to another variable, usually age or time. Typical examples include height (or weight) or vocabulary size development versus the children’s age as investigated in <a href="http://wordbank.stanford.edu/">wordbank website</a>.</p>
 <p><code>quantregGrowth</code> uses B-splines with a penalty on the coefficients and relevant smoothing parameter `selected’ within the estimation algorithm, and imposes proper constraints to prevent quantile crossing.</p>
-<p>We build growth charts of height versus age using the data set <code>SiChildren</code> shipped with the package. The main function is <code>gcrq()</code> which requires the usual model formula inclduing the <code>ps()</code> function on the right hand side. <code>gcrq()</code> returns quantile curves at (default) probability values <code>c(.1, .25, .5, .75, .9)</code>, but in this example we choose different values via the argument <code>tau</code>, and display the result by means of the <code>plot</code> method function:</p>
+<p>We build growth charts of height versus age using the data set <code>SiChildren</code> shipped with the package. The main function is <code>gcrq()</code> which requires the usual model formula including the <code>ps()</code> function on the right hand side. <code>gcrq()</code> returns quantile curves at (default) probability values <code>c(.1, .25, .5, .75, .9)</code>, but in this example we choose different values via the argument <code>tau</code>, and display the result by means of the <code>plot</code> method function:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(quantregGrowth)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(SiChildren)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -295,7 +295,7 @@ output type provides a custom style sheet (and tweaks some options) to ensure th
 
 #Attenzione.. al preambolo era questo..
 
-date: "2021-10-22"
+date: "2021-11-09"
 output: rmarkdown::html_vignette
 
 #questo stava in fasiolo:

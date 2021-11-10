@@ -35,7 +35,7 @@ When focus is on multiple response quantiles (1%, 5%,..., 95%, say) depending on
 
  `quantregGrowth` uses B-splines with a penalty on the coefficients and relevant smoothing parameter `selected' within the estimation algorithm, and imposes proper constraints to prevent quantile crossing.    
 
-We build growth charts of height versus age using the data set `SiChildren` shipped with the package. The main function is `gcrq()` which requires the usual model formula inclduing the `ps()` function on the right hand side. `gcrq()` returns quantile curves at (default) probability values `c(.1, .25, .5, .75, .9)`, but in this example we choose different values via the argument `tau`, and display the result by means of the `plot` method function: 
+We build growth charts of height versus age using the data set `SiChildren` shipped with the package. The main function is `gcrq()` which requires the usual model formula including the `ps()` function on the right hand side. `gcrq()` returns quantile curves at (default) probability values `c(.1, .25, .5, .75, .9)`, but in this example we choose different values via the argument `tau`, and display the result by means of the `plot` method function: 
 
 
 ```{r 1, message = F, fig.width=5, fig.height=4}

@@ -28,7 +28,7 @@ A supplied smoothing parameter for the smooth term. If it is negative scalar, th
 The difference order of the penalty. Default to 3 Ignored if \code{pen.matrix} is supplied. %and \code{d=0} leads to a lasso penalty on the spline coefficients.
 }
   \item{by}{
-if different from \code{NULL}, a numeric or factor variable of the same dimension as the covariate in \code{...} In the numeric vector case the elements multiply the smooth, evaluated at the corresponding covariate values (i.e. a varying coefficient model).
+if different from \code{NULL}, a numeric or factor variable of the same dimension as the covariate in \code{...} If numeric the elements multiply the smooth (i.e. a varying coefficient model); if factor, a smooth is fitted for each factor level. Usually the variable \code{by} is also included as main effect in the formula.
 }
   \item{ndx}{
 The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, it is taken \eqn{min(n/4,9)}{min(n/4,9)} (versions <=1.1-0 it was \eqn{min(n/4,40)}{min(n/4,40)}, the empirical rule of Ruppert). It could be reduced further (but no less than 5 or 6, say) if the sample size is not large and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}. Likewise, if the underlying relationship is strongly nonlinear, \code{ndx} could be increased. The returned basis wil have `\code{ndx}+\code{deg}-\code{1}' (if \code{dropc=TRUE}) basis functions.
@@ -103,9 +103,9 @@ The function simply returns the covariate with added attributes relevant to
 smooth term.
 }
 \references{
-Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2020).
+Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2021).
 Multiple smoothing parameters selection in additive regression quantiles,
-\emph{Statistical Modelling}, to appear.
+\emph{Statistical Modelling}, 21, 428-448.
 
 
 For a general discussion on using B-spline and penalties in regression model see

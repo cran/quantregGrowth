@@ -184,11 +184,11 @@ to increase (even by a small amount) the lambda value. Sometimes even by changin
 
 \references{
 
-V.M.R. Muggeo, F. Torretta, P.H.C. Eilers, M. Sciandra, M. Attanasio (2020).
+V.M.R. Muggeo, F. Torretta, P.H.C. Eilers, M. Sciandra, M. Attanasio (2021).
 Multiple smoothing parameters selection in additive regression quantiles,
-Statistical Modelling, to appear.
+Statistical Modelling, 21: 428-448.
 
-V. M. R. Muggeo (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth. \cr
+V. M. R. Muggeo (2021). Additive Quantile regression with automatic smoothness selection: the R package quantregGrowth. 
 https://www.researchgate.net/publication/350844895
 
 V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).
@@ -247,24 +247,34 @@ plot(m7, cv=TRUE) #display CV score versus lambda values
 plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fit at the best lambda (by CV) 
 
 
-#===VC example
+#=== VC examples
 
 n=50
 x<-1:n/n
 y0<-10+sin(2*pi*x)
 y1<-seq(7,11,l=n)
-y<-c(y0,y1)+rnorm(2*n)*.1
+y<-c(y0,y1)+rnorm(2*n)*.2 #small noise.. just to illustrate..
 x<-c(x,x)
 z<-rep(0:1, each=n)
 
-#include as a continuous covariate..
-o<-gcrq(y~ ps(x, ndx=5) + ps(x,by=z,ndx=5), n.boot=0, tau=.5)
-predict(o, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
-
-#.. as a factor
+# approach 1: a smooth in each *factor* level 
 g<-factor(z)
-o1<-gcrq(y~ 0+ps(x,by=g,ndx=5), tau=.5) #you have to remove the model intercept!
-predict(o1, newdata=data.frame(x=c(.3,.7), g=factor(c(0,1))))
+o <-gcrq(y~ g+ps(x,by=g), tau=.5) 
+predict(o, newdata=data.frame(x=c(.3,.7), g=factor(c(0,1))))
+par(mfrow=c(2,2))
+plot(x[1:50],y0)
+plot(x[1:50],y1)
+plot(o, term=1:2, split=FALSE)
+
+# approach 2: a general smooth plus the (smooth) 'interaction' with a continuous covariate..
+o1 <-gcrq(y~ ps(x) + z+ ps(x,by=z), tau=.5)
+par(mfrow=c(2,2))
+plot(x[1:50],y0)
+plot(x[1:50],y1-y0)
+plot(o1, split=FALSE)
+
+predict(o1, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
+
 
 
 }

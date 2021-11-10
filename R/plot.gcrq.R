@@ -1,7 +1,7 @@
 plot.gcrq <-
   function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, axis.tau=FALSE, interc=TRUE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
            transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, #n.points=100,  
-           grid=NULL, smoos=NULL, split=FALSE, shift=NULL, type=c("sandw","boot"), ...){
+           grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), ...){
     #===============================================================================
     bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
       # x: vettore di dati
@@ -127,7 +127,7 @@ plot.gcrq <-
       if(!all(term %in% names(x$BB))) stop(paste("Unknown term. It should be numeric or one of: ",paste(names(x$BB),collapse=" ")))
     }
     
-    n.smooths<-length(term)  
+    n.smooths<-length(term)  #include anche termini lineari..
     
     if(n.smooths>1 && split) {
       n.plot<-c(ceiling(n.smooths/2),2)
@@ -159,6 +159,8 @@ plot.gcrq <-
     
     #browser()
     
+    #if(length(x$info.smooth$lambda)!=n.smooths)
+    #eliminare da all.term.names i nomi dei termini lineari?
     #################################################################################################
     for(term in all.term.names){
       #if(term=="x") browser()
@@ -171,16 +173,21 @@ plot.gcrq <-
       xvar.35 <-attr(BB,"covariate.35") 
       vc.term<-attr(BB,"vc")
       smoothName<-attr(BB,"smoothName") #attr(BB,"smoothName1") ps(x) o ps(x):z
-      if(isTRUE(vc.term)) {
-        if(isTRUE(attr(BB,"drop"))){
-          if(interc) {BB<-cbind(1,BB)} else {nomi.ok<-nomi.ok[-1]}
-        } else {
-          if(!interc) warning(" 'interc=FALSE' ignored with vc terms called with 'dropc=FALSE' ", call.=FALSE)
-        }
-        interc<-FALSE  
-      } else {
-        if(is.null(shift)) shift<-0 #se NON e' un VC e shift=NULL (default), poni shift<-0
-      }
+      
+      
+      #if(isTRUE(vc.term)) {
+      #  if(isTRUE(attr(BB,"drop"))){
+      #    #if(interc) {BB<-cbind(1,BB)} else {nomi.ok<-nomi.ok[-1]}
+      #  } else {
+      #    if(!interc) warning(" 'interc=FALSE' ignored with vc terms called with 'dropc=FALSE' ", call.=FALSE)
+      #  }
+      #  interc<-FALSE  
+      #} else {
+      #  if(is.null(shift)) shift<-0 #se NON e' un VC e shift=NULL (default), poni shift<-0
+      #}
+      #shift=0
+      
+      
       ###################################
       ### ATTENZIONE: con vc models interc e' posto FALSE il che preclude di disegnare l'effetto con la model intercept
       #  comunque da una prova fatta se metti interc=TRUE, poi i codici seguenti funzionano...
@@ -201,28 +208,36 @@ plot.gcrq <-
           axis(1, at=1:nrow(as.matrix(b)), labels=attr(BB,"coef.names"), cex.axis=.7)
           abline(h=0, lty=3)
         }
-      } else {
+      } else { #altrimenti disegni del segnale smooth..
   #browser()
         if(!is.null(attr(BB,"name.fixed.params"))){ #se c'e' stata una decomp di spline 
         #if(!missing(n.points)) warning("argument 'n.points' ignored", call. = FALSE)
-        if(overall.eff){ #e vuoi disegnare tutto l'effetto  
-          nomi.okF<-attr(BB,"name.fixed.params")
-          b.fix<-if(is.matrix(x$coefficients)) x$coefficients[nomi.okF,select.tau] else x$coefficients[nomi.okF]
-          fit.35<- fit.35 +  drop(poly(xvar.35, degree=length(b.fix), raw=TRUE)%*%b.fix)  
-          corr.df <-length(nomi.okF) #serve per correggere i df in Ylab
-        } else {
+          if(overall.eff){ #e vuoi disegnare tutto l'effetto  
+            nomi.okF<-attr(BB,"name.fixed.params")
+            b.fix<-if(is.matrix(x$coefficients)) x$coefficients[nomi.okF,select.tau] else x$coefficients[nomi.okF]
+            fit.35<- fit.35 +  drop(poly(xvar.35, degree=length(b.fix), raw=TRUE)%*%b.fix)  
+            corr.df <-length(nomi.okF) #serve per correggere i df in Ylab
+          } else {
             interc <- FALSE
           }
         }
-        if(is.null(shift) && isTRUE(vc.term)){ 
-          if("(Intercept)"%in%rownames(as.matrix(x$coefficients))){
-          fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
-          }
-          shift<-0
-        }
+        
+        #blocco commentato il 25/10/21
+        #if(is.null(shift) && isTRUE(vc.term)){ 
+        #  if("(Intercept)"%in%rownames(as.matrix(x$coefficients))){
+        #    fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
+        # }
+        #  shift<-0
+        #}
+        
+        
         if(interc && "(Intercept)"%in%rownames(as.matrix(x$coefficients))) {#NB qui interc e' sempre FALSE per termini VC 
           fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
         }
+        
+        
+        
+        
         fit.35<-fit.35+shift
         m.x<- if(is.null(list(...)$xlim)) min(xvar.35) else min(list(...)$xlim)
         M.x<- if(is.null(list(...)$xlim)) max(xvar.35) else max(list(...)$xlim)
@@ -251,7 +266,7 @@ plot.gcrq <-
         if(!is.null(f.transf.inv)) l$y<- apply(as.matrix(l$y), 2, f.transf.inv) #l$y <- eval(parse(text=transf), list(y=l$y))               
         if(length(select.tau)==1 && ncol(BB)!=1 ){ #ncol(BB)==1 se il termine e' lineare, altrimenti se e' una base ha molte piu' colonne..
           .df.term <- as.matrix(x$edf.j)[term, select.tau, drop=FALSE]
-          if(isTRUE(vc.term)) .df.term <- .df.term-1  #se e' un VC term, dal conteggio df togli l'intercetta (cosi come avviene per i termini smooth non-VC)
+          #if(isTRUE(vc.term)) .df.term <- .df.term-1  #se e' un VC term, dal conteggio df togli l'intercetta (cosi come avviene per i termini smooth non-VC)
           Ylab.ok<- gsub(")", paste(", df=", round(.df.term[term,]+corr.df,2),")",sep=""), term)
         } else {
           Ylab.ok <- paste("Effect of ", term)

@@ -5,7 +5,7 @@
 Easy computing growth charts
 }
 \description{
-Computes and returns quantiles as a function of the specied values
+Computes and returns quantiles as a function of the specified covariate values
 }
 \usage{
 charts(fit, k, file = NULL, digits=2, ...)
@@ -16,7 +16,7 @@ charts(fit, k, file = NULL, digits=2, ...)
 The object fit returned by \code{\link{gcrq}}
 }
   \item{k}{
-Scalar or vector indicating the covariate values. If scalar, the quantiles are computed at \code{k} equispaced values in the covariate range. If \code{k} is vector, these values are taken.
+Scalar or vector indicating the covariate values. If scalar, \code{k} equispaced values in the covariate range are taken. 
 }
   \item{file}{
 If specified, the (path) file name wherein the returned matrix including the quantiles will be written via \code{write.csv()}

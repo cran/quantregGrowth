@@ -115,9 +115,9 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
                 xVC<-factor(xVC, levels=attr(object$BB[[i]], "vcLevels"))
                 Mm<-model.matrix(~0+xVC)
                 colnames(Mm) <- attr(object$BB[[i]], "vcLevels")
-                B.new<- Mm[,attr(object$BB[[i]], "vcCategory")]*cbind(1, B.new)
+                B.new<- Mm[,attr(object$BB[[i]], "vcCategory")]*B.new #cbind(1, B.new)
               } else {
-                B.new<- xVC*cbind(1, B.new)
+                B.new<- xVC*B.new #cbind(1, B.new)
               }
             }
             colnames(B.new) <- attr(object$BB[[i]], "coef.names")

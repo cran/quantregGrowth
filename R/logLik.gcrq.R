@@ -1,4 +1,4 @@
-logLik.gcrq<- function (object, summ=FALSE, ...) {
+logLik.gcrq<- function(object, summ=TRUE, ...) {
   taus<- object$taus
   val<- object$rho
   n.tau<-length(taus)

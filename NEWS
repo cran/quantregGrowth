@@ -5,11 +5,16 @@
 *******************************
 
 
+=============
+version 1.4-0  (2021-11-09)
+=============
+* changes in gcrq when handling VC terms: the basis now does *not* include the 'main' effect of the interacting variable. Thus fits involving the same variables are allowed (e.g. ps(z)+ps(x1, by=z)+ps(x2, by=z) (thanks to Rafael M. Mas for his input)
+
 
 =============
 version 1.3-1  (2021-10-22)
 =============
-* a small correction in the logLik and SIC formulas in logLik.gcrq, print.gcrq and, summary.gcrq and for multiple quantile curves
+* a small correction in the logLik and SIC formulas in logLik.gcrq, print.gcrq, and summary.gcrq for multiple quantile curves
 * a small correction in ps: 'concave=1' actually meant convex functions
 * bug fixed in handling VC terms with continuous variables (thanks to Rafael M. Mas for reporting)
 

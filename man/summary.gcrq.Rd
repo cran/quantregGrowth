@@ -37,7 +37,7 @@ further arguments.
 \code{summary.gcrq} returns some information on the fitted quantile curve at different probability values, such as the estimates, standard errors, values of check (objective) function values at solution. Currently there is no \code{print.summary.gcrq} method, so 
 \code{summary.gcrq} itself prints results.
 
-The SIC returned by \code{print.gcrq} and \code{summary.gcrq} is computed as \eqn{\sum_i\log(\rho/n)) + \log(n)  edf/(2 n)}{sum(log(rho/n)) + log(n) * edf/(2 * n)}, differently from \code{\link{AIC.gcrq}}. 
+The SIC returned by \code{print.gcrq} and \code{summary.gcrq} is computed as \eqn{\log(\rho_\tau/n) + \log(n)  edf/(2 n)}{log(rho/n) + log(n) * edf/(2 * n)}, where \eqn{\rho_tau}{rho} is the usual asymmetric sum of residuals (in absolute value). For multiple \eqn{J}{J} quantiles it is \eqn{\log(\sum_\tau\rho_\tau/(n J)) + \log(n J)  edf/(2 n J)}{log(Sum rho/(n*J)) + log(n*J) * edf/(2 * n *J)}. Note that computation of SIC in \code{\link{AIC.gcrq}} relies on the Laplace assumption for the response. 
 }
 %\value{
 %%  ~Describe the value returned

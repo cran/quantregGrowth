@@ -301,7 +301,7 @@ ncross.rq.fitXB <-
     #fallo per tutte le basi.. tanto quando non e' centrato la media e' zero..
     for(j in 1:H){
       colmeansB[[j]] <- -colmeansB[[j]]
-      if(vcList[j] && dropvcList[j]) colmeansB[[j]] <- c(1, colmeansB[[j]])
+      #if(vcList[j] && dropvcList[j]) colmeansB[[j]] <- c(1, colmeansB[[j]])
     }
 
     if(length(dropvcList)!=length(all.p)) stop("errore..") #non dovrebbe servire..
@@ -499,6 +499,10 @@ ncross.rq.fitXB <-
           RR[1,idsmoothInter] <- valueNcrosInterc
           rr[1] <- sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
         }
+        
+        
+        #browser()
+        
         if(id.VC.Constr) {#se ci sono VC 
           for(i in 1:length(id.intc.VC)){
             RR[id.intc.VC[i], id.Matr[,i]] <- valueNcrosVC[[i]]

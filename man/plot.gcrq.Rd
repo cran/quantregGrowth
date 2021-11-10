@@ -8,10 +8,10 @@ Plot method for gcrq objects
 Displaying the estimated growth charts from a \code{gcrq} fit.
 }
 \usage{
-\method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, axis.tau=FALSE, interc=TRUE, 
-    legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, transf=NULL, 
-    lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, %%n.points=100,
-    grid=NULL, smoos=NULL, split=FALSE, shift=NULL, type=c("sandw","boot"), ...)
+\method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, axis.tau=FALSE, 
+   interc=TRUE, legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, transf=NULL, 
+   lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, %%n.points=100,
+   grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,10 +23,8 @@ the variable name (or its index in the formula) entering the model. Both linear 
 If \code{axis.tau=TRUE}, \code{term=1} refers to the model intercept (if in the model).
 }
   \item{interc}{
-Should the smooth term be plotted along with the model intercept (provided it is included in the model)? If the smooth term is a varying coefficient, 
-  \code{interc} refers to the intercept of its basis, and not the overall model intercept (see argument \code{shift} to plot a VC smooth curve with the model intercept). Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'. Note that \code{interc=TRUE} is requested to display the noncrossing curves (if multiple quantile curves are being plotted).  
+Should the smooth term be plotted along with the model intercept (provided it is included in the model)? Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'. Note that \code{interc=TRUE} is requested to display the noncrossing curves (if multiple quantile curves are being plotted).  
 }
-
   \item{add}{
 logical. If \code{TRUE} the fitted quantile curves are added on the current plot.
 }
@@ -92,8 +90,9 @@ logical, indicating if the residuals (provided that \code{res=TRUE}) will be dra
 logical. If there are multiple smooth terms and \code{split=TRUE}, \code{plot.gcrq()} tries to split the plotting area in 2 columns and number of rows depending on the number of smooths. If \code{split=FALSE}, the plots are produced on the current device according to the current graphics settings. Ignored if there is single smooth term. 
 }
   \item{shift}{
-Numerical value to be added to the curve(s) to be plotted. Default is \code{NULL} which means the 'model intercept' for VC smooth term and 0 otherwise.
-It can be useful to plot the VC term accounting for the model intercept. 
+Numerical value to be added to the curve(s) to be plotted. 
+%Default is \code{NULL} which means the 'model intercept' for VC smooth term and 0 otherwise.
+%It can be useful to plot the VC term accounting for the model intercept. 
 }
   \item{type}{
 If \code{conf.level>0}, which covariance matrix should be used to compute and to portray the pointwise confidence intervals? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}, \code{'sandw'} mean via the sandwich formula.
