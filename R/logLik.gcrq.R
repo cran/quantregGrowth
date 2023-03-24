@@ -1,9 +1,17 @@
 logLik.gcrq<- function(object, summ=TRUE, ...) {
+  #browser()
+  
+  if(inherits(summ,"gcrq") ) stop(" 'logLik.gcrq' does not work with multiple 'gcrq' fits")
+  
+  if(length(list(...))>0 && inherits(list(...)[[1]],"gcrq")) stop(" 'logLik.gcrq' does not work with multiple 'gcrq' fits")
+  
+  
   taus<- object$taus
   val<- object$rho
   n.tau<-length(taus)
   n <- if(length(taus)>1) nrow(object$residuals) else length(object$residuals) 
   edf <- colSums(object$edf.j)
+  
   if(summ) {
     val <- n * (sum(log(taus * (1 - taus))) - n.tau - log(sum(object$rho)/(n*n.tau)) )
     edf<-sum(edf)

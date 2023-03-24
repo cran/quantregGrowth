@@ -19,10 +19,10 @@ ps(..., lambda = -1, d = 3, by=NULL, ndx = NULL, deg = 3, knots=NULL,
   \item{...}{
 The covariate supposed to have a nonlinear relationship with the quantile curve(s) being estimated. A B-spline is built, and a (difference) penalty
 is applied. In growth charts this variable is typically the age. 
-%If the covariate is a factor, level-specific coefficients are estimated subject to a lasso penalty. 
+If the covariate is a factor, level-specific coefficients are estimated subject to a lasso penalty. See the last example in ?gcrq.
 }
   \item{lambda}{
-A supplied smoothing parameter for the smooth term. If it is negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). If a positive scalar, it represents the actual smoothing parameter. If it is a vector, cross validation is performed to select the `best' value. See Details in \code{\link{gcrq}}. 
+A supplied smoothing parameter for the smooth term. If it is negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2021). If a positive scalar, it represents the actual smoothing parameter. If it is a vector, cross validation is performed to select the `best' value. See Details in \code{\link{gcrq}}. 
 }
   \item{d}{
 The difference order of the penalty. Default to 3 Ignored if \code{pen.matrix} is supplied. %and \code{d=0} leads to a lasso penalty on the spline coefficients.
@@ -38,7 +38,7 @@ The degree of the spline polynomial. Default to 3. The B-spline basis is compose
 %However if a varying coefficient term is specified via \code{by}, removing a column is not requested for the identifiability issue. 
 }
   \item{knots}{
-The knots locations. If \code{NULL}, equispaced knots are set.
+The knots locations. If \code{NULL}, equispaced knots are set. Note if predictions outside the observed covariate range have to be computed (via \code{predict.gcrq}), the knots should be set enought outside the observed range. 
 }
  \item{monotone}{
 Numeric value to set up monotonicity restrictions on the first derivative of fitted smooth function
@@ -87,7 +87,7 @@ logical. If \code{TRUE} and it is a VC smooth term (i.e. interaction with a fact
 \details{
 \code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability, and the spline coefficients are penalized via differences of order \code{d}; \code{d=0} leads to a penalty on the coefficients themselves.  If \code{pen.matrix} is supplied, \code{d} is ignored.
 
-\code{lambda} is the tuning parameter fixed or to be estimated. When \code{lambda}=0 an unpenalized (and typically wiggly) fit is obtained, and as lambda increases the curve gets smoother till a \code{d-1} degree polynomial when lambda gets very large. At 'intermediate' lambda values, the fitted curve is a \emph{piecewise} polynomial of degree \code{d-1}.
+\code{lambda} is the tuning parameter, fixed or to be estimated. When \code{lambda}=0 an unpenalized (and typically wiggly) fit is obtained, and as lambda increases the curve gets smoother till a \code{d-1} degree polynomial. At 'intermediate' lambda values, the fitted curve is a \emph{piecewise} polynomial of degree \code{d-1}.
 
 It is also possible to put a varying penalty via the argument \code{var.pen}. Namely for a 
 constant smoothing (\code{var.pen=NULL}) the penalty is \eqn{\lambda\sum_k |\Delta^d_k|}{lambda sum_k |\Delta^d_k|} where 

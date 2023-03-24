@@ -5,6 +5,16 @@
 *******************************
 
 
+
+
+=============
+version 1.5-0  (2023-03-24)
+=============
+* ps() now accepts factors which can be useful to model 'penalized/random intercepts' 
+* gcrq() did use but not save information on knots when specified in ps() (thanks to Matthieu Wilhelm for his input)
+* attributes removed by AIC.gcrq()
+
+
 =============
 version 1.4-0  (2021-11-09)
 =============

@@ -270,6 +270,8 @@ ncross.rq.fitXB <-
     #===========================
     if(missing(x)) plott<-0
     
+    #browser()
+    
     #deve diventare una matrice..
     all.p<-sapply(B, ncol)
     pSmooth<- sum(all.p)

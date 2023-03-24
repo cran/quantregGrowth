@@ -13,12 +13,11 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
     # Restituisce ndx+deg basis functions per ndx-1 inner nodi
     #ci sono "ndx+1" nodi interni + "2*deg" nodi esterni
     #    require(splines)
-    if(is.null(knots)) {
+  if(is.null(knots)) {
     if (is.null(xlr)) {
         xl <- min(x) - 0.01 * diff(range(x))
         xr <- max(x) + 0.01 * diff(range(x))
-    }
-    else {
+    } else {
         if (length(xlr) != 2)
             stop("quando fornito, xlr deve avere due componenti")
         xl <- xlr[1]
@@ -26,12 +25,12 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
     }
     dx <- (xr - xl)/ndx
     knots <- seq(xl - deg * dx, xr + deg * dx, by = dx)
-      }
+  }
       #else {
       #if(length(knots)!=(ndx+1+2*deg)) stop("errore nel numero di nodi fornito")
       #}
-    B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
-    B
+  B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
+  B
   }
   n<-length(object$y)
   b<-as.matrix(object$coefficients)  #corretto in 0.3-1
@@ -87,7 +86,7 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         for(i in 1:n.smooth){
             m<-min(attr(object$BB[[i]], "covariate.35"))       #as.numeric(attr(object$BB[[1]], "covariate.n"))
             M<-max(attr(object$BB[[i]], "covariate.35"))
-            B.new<-bspline(c(m, x.new[,i], M), ndx=info.smooth$ndx[i], deg=info.smooth$deg[i])
+            B.new<-bspline(c(m, x.new[,i], M), ndx=info.smooth$ndx[i], deg=info.smooth$deg[i], knots=info.smooth$knots[[i]])
             if(!is.null(attr(object$BB[[i]],"name.fixed.params"))){
               nomi.okF <-attr(object$BB[[i]],"name.fixed.params")
               d<-length(nomi.okF)+1 #ricostruiamo l'ordine diff

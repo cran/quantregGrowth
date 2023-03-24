@@ -1,28 +1,28 @@
 citHeader("To cite quantregGrowth in publications use:")
 
-citEntry(entry="Article",
-         title = "Multiple smoothing parameters selection in additive regression quantiles",
-         author = personList(as.person("V.M.R. Muggeo"),as.person("F. Torretta"),as.person("P. Eilers"),as.person("M. Sciandra"), as.person("M. Attanasio")),
-         journal      = "Statistical Modelling",
-         year         = "2020",
-	       volume       = "xx",
-	       pages        = "xx--xx",
-	       url          = "https://journals.sagepub.com/doi/full/10.1177/1471082X20929802",
-         textVersion = 
-         paste("V. M. R. Muggeo, F. Torretta, P. H. C. Eilers, M. Sciandra, M. Attanasio(2020).", 
-               "Multiple smoothing parameters selection in additive regression quantiles.",
-               "Statistical Modelling, doi: 10.1177/1471082X20929802. To appear.")
+bibentry(bibtype="Article",
+      title = "Multiple smoothing parameters selection in additive regression quantiles",
+      author = c(person("V.M.R. Muggeo"),person("F. Torretta"),person("P. Eilers"),person("M. Sciandra"), person("M. Attanasio")),
+      journal      = "Statistical Modelling",
+      year         = "2021",
+	    volume       = "21",
+	    pages        = "428--448",
+      url          = "https://journals.sagepub.com/doi/full/10.1177/1471082X20929802", 
+      textVersion = 
+         paste("Muggeo VMR, Torretta F, Eilers PHC, Sciandra M, Attanasio M (2021) Multiple smoothing 
+         parameters selection in additive regression quantiles. Statistical Modelling, 21:428-448")
 )
 
-citEntry(entry="Article",
-         title = "Estimating growth charts via nonparametric quantile regression: a practical framework with application in ecology",
-         author = personList(as.person("V.M.R. Muggeo"),as.person("M. Sciandra"), as.person("A. Tomasello"), as.person("S. Calvo")),
-         journal      = "Environmental and Ecological Statistics",
-         year         = "2013",
-	       volume       = "20",
-	       pages        = "519--531",
-         textVersion = 
-         paste("V. M. R. Muggeo, M. Sciandra, A. Tomasello, S. Calvo (2013).", 
-               "Estimating growth charts via nonparametric quantile regression: a practical framework with application in ecology.",
+bibentry(bibtype="Article",
+      title = "Estimating growth charts via nonparametric quantile regression: a practical framework with application in     ecology",
+      author = c(person("V.M.R. Muggeo"),person("M. Sciandra"), person("A. Tomasello"), person("S. Calvo")),
+      journal      = "Environmental and Ecological Statistics",
+      year         = "2013",
+      volume       = "20",
+	    pages        = "519--531",
+      textVersion = 
+         paste("Muggeo VMR, Sciandra M, Tomasello A, Calvo S (2013).", 
+               "Estimating growth charts via nonparametric quantile regression: 
+                a practical framework with application in   ecology.",
                "Environmental and Ecological Statistics, 20, 519-531.")
 )

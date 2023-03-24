@@ -19,8 +19,9 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 a fitted \code{"gcrq"} object.
 }
   \item{term}{
-the variable name (or its index in the formula) entering the model. Both linear ad spline terms (i.e. included in the model via \code{ps}) can be specified and relevant fitted quantile curves (as optionally specified by \code{select.tau}) will be plotted. If the model includes both linear and smooth terms, the smooth terms are drawn first. If \code{NULL}, all smooth terms are plotted according to the \code{split} argument.
-If \code{axis.tau=TRUE}, \code{term=1} refers to the model intercept (if in the model).
+the variable name or its index in the formula entering the model. Can be vector. Both linear ad spline terms (i.e. included in the model via \code{ps}) can be specified and relevant fitted quantile curves (as optionally specified by \code{select.tau}) will be plotted. If the model includes both linear and smooth terms, the smooth terms are counted and drawn *first*: therefore if the model formula is \code{y~z+ps(x)}, \code{term=1} refers to the smooth term. If \code{NULL}, all smooth terms are plotted according to the \code{split} argument.
+If the model includes multiple quantile curves and \code{axis.tau=TRUE}, \code{term=1} refers to the model intercept (if in the model). The variable name should be reported within 'ps()', e.g. \code{'ps(age)'} regardless of additional arguments
+specified in \code{ps}.
 }
   \item{interc}{
 Should the smooth term be plotted along with the model intercept (provided it is included in the model)? Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'. Note that \code{interc=TRUE} is requested to display the noncrossing curves (if multiple quantile curves are being plotted).  
@@ -87,7 +88,7 @@ If \code{x} (\code{y}) is a vector, the vertical (horizontal) lines are drawn at
 logical, indicating if the residuals (provided that \code{res=TRUE}) will be drawn using a \emph{smoothed} scatterplot. If \code{NULL} (default) the smoothed scatterplot will be employed when the number of observation is larger than 10000.
 }
   \item{split}{
-logical. If there are multiple smooth terms and \code{split=TRUE}, \code{plot.gcrq()} tries to split the plotting area in 2 columns and number of rows depending on the number of smooths. If \code{split=FALSE}, the plots are produced on the current device according to the current graphics settings. Ignored if there is single smooth term. 
+logical. If there are multiple terms (both smooth and linear) and \code{split=TRUE}, \code{plot.gcrq()} tries to split the plotting area in 2 columns and number of rows depending on the number of smooths. If \code{split=FALSE}, the plots are produced on the current device according to the current graphics settings. Ignored if there is single smooth term. 
 }
   \item{shift}{
 Numerical value to be added to the curve(s) to be plotted. 
@@ -108,7 +109,7 @@ When \code{axis.tau=TRUE}, all arguments accepted by \code{plot()}, \code{points
 }
 }
 \details{
-Takes a "gcrq" object and diplays the fitted quantile curves as a function of the covariate specified in \code{term}. If \code{conf.level}>0 pointwise confidence intervals are also displayed. When the object contains the component \code{cv}, \code{plot.gcrq} can display cross-validation scores against the lambda values, see argument \code{cv}. If a single quantile curve is being displayed, the default 'ylab' includes the relevant edf value (leaving out the basis intercept). If \code{axis.tau=TRUE} and the fit includes several quantile curves, \code{plot.gcrq()} portrays the estimated coefficients versus the probability values.
+Takes a "gcrq" object and diplays the fitted quantile curves as a function of the covariate specified in \code{term}. If \code{conf.level}>0 pointwise confidence intervals are also displayed. When the object contains the component \code{cv}, \code{plot.gcrq} can display cross-validation scores against the lambda values, see argument \code{cv}. If a single quantile curve is being displayed, the default 'ylab' includes the relevant edf value (leaving out the basis intercept). If \code{axis.tau=TRUE} and the fit includes several quantile curves, \code{plot.gcrq()} portrays the estimated coefficients versus the probability values. If \code{term} refers to a categorical variable, the point estimates against the categories are plotted (\code{conf.level} is ignored).
 % per gli IC, col e' quello dei quantili, lwd = lwd(quantili)*.5, e lty=lty(quantili)+1 (se un solo valore e' specificato) oppure e' proprio quello  
 %dei quantili se questo e' un vettore.
 }

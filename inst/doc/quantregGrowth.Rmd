@@ -162,7 +162,7 @@ A <- diag(w) %*% D1 #the penalty matrix
 o4 <-gcrq(y~ps(x, ndx=20, pen.matrix=A), data=growthData, tau=.5)
 
 ```
-The length of zero slope depends on number of large values in $w$, in the above example `rep(100,7)`. Increasing (decreasing) the number of large values would lead to increase (decrease) the zero slope interval.
+The length of zero slope depends on number of large values in $w$, in the above example `rep(1000,7)`. Increasing (decreasing) the number of large values would lead to increase (decrease) the zero slope interval.
 
 Figure below reports results of the aforementioned constrained fit, along with the fits obtained using unweighted first order-differences without and with additional monotonicity constraints
 

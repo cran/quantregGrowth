@@ -276,6 +276,23 @@ plot(o1, split=FALSE)
 predict(o1, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
 
 
+#== random intercepts example
+n=50
+x<-1:n/n
+
+set.seed(69)
+z<- sample(1:15, size=n, replace=TRUE)
+#table(z)
+
+#true model: linear effect + 3 non-null coeffs when z= 3, 7, and 13
+y<-2*x+  I(z==3)- I(z==7)  + 2*I(z==13) + rnorm(n)*.15
+id<-factor(z)
+
+o <-gcrq(y~x+ps(id), tau=.5) 
+plot(o, term=1) #plot the subject-specific intercepts
+
+
+
 
 }
 }

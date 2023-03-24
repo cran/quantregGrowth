@@ -369,7 +369,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         for(i in 1:n.boot) {
           id<-sample(1:n, size=n, replace=TRUE)
           .o.b<-try(ncross.rq.fitX(y=Y[id], X=X[id,,drop=FALSE], taus=tau, eps=eps, sgn.constr=sgn.constr,adjX.constr=adjX.constr), silent=TRUE)
-          if(class(.o.b)!="try-error") coef.boot[,,i]<-.o.b$coef else id.NA[length(id.NA)+1]<-i
+          #if(class(.o.b)!="try-error") 
+          if(!inherits(.o.b,"try-error"))  coef.boot[,,i]<-.o.b$coef else id.NA[length(id.NA)+1]<-i
         } #end i=1,..,n.boot
         if(!is.null(id.NA)) {
           coef.boot<-coef.boot[,,-id.NA]
@@ -611,10 +612,12 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       ########################################################################
       ### un altro ciclo for.. per le colMeans e per le info per i disegni..
       ########################################################################
+      #browser()
       for(j in 1:length(B)) {
           nomiBy.j<- if(nomiBy[j]=="NULL") NULL else nomiBy[j]
+          variabileSmooth <- if(is.null(nomiBy.j)) drop(mVariabili[[j]]) else mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
           if(ridgeList[j]){
-            variabileSmooth <- if(is.null(nomiBy.j)) drop(mVariabili[[j]]) else mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
+            #variabileSmooth <- if(is.null(nomiBy.j)) drop(mVariabili[[j]]) else mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
             BB1 <- if(is.matrix(variabileSmooth)) variabileSmooth else model.matrix(~0+ factor(unique(variabileSmooth)))
             colnames(BB1)<- colnames(B[[j]])
             attr(BB1,"covariate.n")<- variabileSmooth #NB mVariabili[,j] (che viene assegnato a attr(,"covariate.n")) contiene altri attributi "ndx", "deg", "pdiff", "monot", "lambda","nomeX"
@@ -753,6 +756,9 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           #   if(single.lambda){
           #       expand.lambda<- rep(lambda, tapply(id.shared.pen, id.shared.pen, length))
           #          } else { expand.lambda <- lambda }
+          
+          
+          #browser()
           
           fit <-suppressWarnings(ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
                   lambda=expand.lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
@@ -905,7 +911,9 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
                             df.option=df.option, df.nc=df.nc),
                                 silent=TRUE)
 
-          if(class(.o.b)!="try-error") coef.boot[,,i]<-.o.b$coef else id.NA[length(id.NA)+1]<-i
+          
+          #if(class(.o.b)!="try-error") 
+          if(!inherits(.o.b,"try-error"))  coef.boot[,,i]<-.o.b$coef else id.NA[length(id.NA)+1]<-i
         } #end i=1,..,n.boot
         if(!is.null(id.NA)) {
           coef.boot<-coef.boot[,,-id.NA]
@@ -922,10 +930,11 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       if(is.matrix(fit$coefficients)) rownames(fit$coefficients)<-nn else names(fit$coefficients)<-nn
       
       
-      names(BB)<-nomiVariabPEN
-      names(dropvcList)<-names(centerList)<-names(decomList)<-names(dropcList)<- names(vNdx)<- names(vDeg)<- names(vDiff)<- nomiVariabPEN
+      names(BB)<-names(dropvcList)<-names(centerList)<-names(decomList)<-names(dropcList)<- names(vNdx)<- names(vDeg)<- 
+        names(vDiff)<- names(knotsList)<-nomiVariabPEN
 	    fit$info.smooth<-list(monotone=vMonot, ndx=vNdx, lambda=lambda, deg=vDeg, dif=vDiff, concave=vConc, 
-                    dropcList=dropcList, decomList=decomList, centerList=centerList, vcList=vcList, dropvcList=dropvcList, testo.ps=nomiVariabPEN) #che e' nomiPS.ps.ok. Prima era testo.ps
+                    dropcList=dropcList, decomList=decomList, centerList=centerList, vcList=vcList, dropvcList=dropvcList, 
+                    testo.ps=nomiVariabPEN, knots=knotsList) #che e' nomiPS.ps.ok. Prima era testo.ps
 
 	    ###########################
       if(is.matrix(lambda)) {

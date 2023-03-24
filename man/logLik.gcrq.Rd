@@ -10,7 +10,7 @@ The function returns the log-likelihood value(s) evaluated at the estimated coef
 }
 \usage{
 \method{logLik}{gcrq}(object, summ=TRUE, ...)
-\method{AIC}{gcrq}(object, ..., k=2)
+\method{AIC}{gcrq}(object, ..., k=2, bondell=FALSE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -24,6 +24,10 @@ If \code{TRUE}, the log likelihood values (and relevant edf) are summed over the
 \item{k}{
 Optional numeric specifying the penalty of the edf in the AIC formula. \code{k < 0} means \code{k=log(n)}.
 }
+\item{bondell}{
+Logical. If \code{TRUE}, the \emph{SIC} according to formula (7) in Bondell et al. (2010) is computed. \code{k} is ignored and \eqn{k=\log(n)}{k=log(n)} is always used.
+}
+
   \item{\dots}{
 optional  arguments (nothing in \code{logLik.gcrq}). For \code{AIC.gcrq}, \code{summ=TRUE} or \code{FALSE} can be set. 
 }
@@ -38,9 +42,9 @@ The 'logLikelihood' is computed by assuming an asymmetric Laplace distribution f
 \value{
 The log likelihood(s) of the model fit \code{object}
 }
-%\references{
-%% ~put references to the literature/web site here ~
-%}
+\references{
+Bondell HD, Reich BJ, Wang H (2010) Non-crossing quantile regression curve estimation, Biometrika, 97: 825-838.
+}
 \author{
 Vito Muggeo
 }

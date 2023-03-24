@@ -199,13 +199,21 @@ plot.gcrq <-
       ###########=================================================
       corr.df<-0
       if(is.character(xvar.35) && xvar.35[1]=="ridge") { #if ridge, plot the single coeffs 
-        b<-b # +shift, nell'altra versione c'era come argomento shift=0.. non so se utile..
+        if(conf.level>0) warning(" 'conf.level>0' not (yet) implemented", call.=FALSE, immediate. = FALSE)
+        #browser()
+        tt <- sub("\\)","",gsub("ps\\(","" ,term, ))
+        if(is.matrix(b)){
+          etich <- sub(tt,"",rownames(b), fixed=TRUE)
+        } else {
+          etich <- sub(tt,"",names(b), fixed=TRUE)
+          }
+        #b<-b # +shift, nell'altra versione c'era come argomento shift=0.. non so se utile..
         if(add) {
           if(is.matrix(b)) matpoints(1:length(b), b,...) else points(1:length(b), b,...)
         } else {
           #sqrt(diag(VAR[[1]]))[attr(BB,"coef.names")] #se vuoi metterci gli IC
-          if(is.matrix(b)) matplot(b, xlab=term, xaxt="n", ylab="Estimate", ... ) else plot(b, xlab=term, xaxt="n", ylab="Estimate", ...)
-          axis(1, at=1:nrow(as.matrix(b)), labels=attr(BB,"coef.names"), cex.axis=.7)
+          if(is.matrix(b)) matplot(b, xlab=tt, xaxt="n", ylab="Estimate", ... ) else plot(b, xlab=tt, xaxt="n", ylab="Estimate", ...)
+          axis(1, at=1:nrow(as.matrix(b)), labels=etich, cex.axis=.7) #labels=attr(BB,"coef.names")
           abline(h=0, lty=3)
         }
       } else { #altrimenti disegni del segnale smooth..
