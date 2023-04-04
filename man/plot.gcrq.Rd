@@ -91,7 +91,7 @@ logical, indicating if the residuals (provided that \code{res=TRUE}) will be dra
 logical. If there are multiple terms (both smooth and linear) and \code{split=TRUE}, \code{plot.gcrq()} tries to split the plotting area in 2 columns and number of rows depending on the number of smooths. If \code{split=FALSE}, the plots are produced on the current device according to the current graphics settings. Ignored if there is single smooth term. 
 }
   \item{shift}{
-Numerical value to be added to the curve(s) to be plotted. 
+Numerical value(s) to be added to the curve(s) to be plotted. If vector with length equal to the number of quantile curves to plot, the \code{shift[j]} is added to the jth quantile curve. 
 %Default is \code{NULL} which means the 'model intercept' for VC smooth term and 0 otherwise.
 %It can be useful to plot the VC term accounting for the model intercept. 
 }
@@ -122,9 +122,9 @@ The function simply generates a new plot or adds fitted curves to an existing on
 \author{
 Vito M. R. Muggeo %%with contribution by Gianluca Sottile (gianluca.sottile@unipa.it)
 }
-%\note{
-%%  ~~further notes~~
-%}
+\note{
+Plotting non-crossing curves could depend on the arguments 'interc' and 'shift', in turn depending on how the model has been specified. Take care about that! %%For instance, see fit \code{o2} in Example 3 in \code{\link{gcrq}}.
+}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 

@@ -18,10 +18,11 @@ ncross.rq.fitXB(y, x, B=NULL, X=NULL, taus, monotone=FALSE, concave=FALSE,
     nomiBy=NULL, byVariabili=NULL, ndx=10, deg=3, dif=3, lambda=0, eps=.0001, 
     var.pen=NULL, penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, 
     decomList=FALSE, vcList=FALSE, dropvcList=FALSE, centerList=FALSE, 
-    ridgeList=FALSE, colmeansB=NULL, Bconstr=NULL, ...)
+    ridgeList=FALSE, ps.matrix.list=FALSE, colmeansB=NULL, Bconstr=NULL, 
+    adjX.constr=TRUE, ...)
 
-ncross.rq.fitX(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04, 
-    sgn.constr=1, adjX.constr=TRUE, ...)
+ncross.rq.fitX(y, X = NULL, taus, adjX.constr=TRUE, lambda.ridge = 0, eps = 1e-04,...) 
+    %sgn.constr=1, adjX.constr=TRUE, ...)
 
 gcrq.rq.cv(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL, 
     penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, 
@@ -106,6 +107,9 @@ see \code{center} in \code{\link{ps}}.
   \item{ridgeList}{
 see \code{ridge} in \code{\link{ps}}.
 }
+  \item{ps.matrix.list}{
+nothing relevant for the user.
+}
   \item{colmeansB}{
 see \code{center} in \code{\link{ps}}.
 }
@@ -121,8 +125,7 @@ number of folds for crossvalidation, see the same arguments in \code{\link{gcrq}
   \item{cv}{
 returning cv scores; see the same arguments in \code{\link{gcrq}}.
 }
-  \item{sgn.constr}{optional. Vector of signs for the noncrossing constraints. Appropriate only with linear models.}
-  \item{adjX.constr}{logical to shift the linear covariates. Appropriate only with linear models.
+  \item{adjX.constr}{logical to shift the linear covariates. Appropriate only with linear terms.
 }
   \item{\dots}{
 optional.

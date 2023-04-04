@@ -1,5 +1,5 @@
-ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04, 
-                           sgn.constr = 1, adjX.constr=TRUE, ...) {
+ncross.rq.fitX <- function(y, X = NULL, taus, adjX.constr=TRUE, lambda.ridge = 0, eps = 1e-04, ...) {
+#                           sgn.constr = 1, adjX.constr=TRUE, ...) {
   # Stima dei non-crossing rq con X lineari (la X dovrebbe avere una colonna di 1, se richiesta..) 
   #--------------------------------------------------------
       adj.middle = FALSE
@@ -39,34 +39,57 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
         r <- list(coefficients = all.COEF, B = B, df = all.df, rho = all.rho, 
                   fitted.values = o.start$fitted.values[1:n], residuals = o.start$residuals[1:n])
       } else { # se length(taus)>1
+        #browser()
         DF.NEG <- DF.POS<- NULL
-
-        signB <- apply(B, 2, function(.x){prod(sign(range(.x)))} )
-        if(any(signB<0)) warning("covariate(s) taking pos AND neg values: noncrossing is not guaranteed.", call. = FALSE)
-        
         Ident <- diag(p)
-        if (is.null(sgn.constr)) {
-          # i segni per i vincoli..
-          yres <- lm.fit(y = y, x = B)$residuals^2
-          if("(Intercept)" %in% colnames(B)){
-            sgn.constr <- c(1, sign(lm.fit(y = yres, x = B)$coefficients[-1]))
-          } else {
-            sgn.constr <- sign(lm.fit(y = yres, x = B)$coefficients)
-          }
+        
+        colnamesB <- colnames(B)
+        if("(Intercept)" %in% colnames(B)) {
+          if(!ncol(B)>=2) stop("At leat one covariate")
+          is.inter <- TRUE
+          minX <- apply(B[,-1,drop=FALSE] ,2, min)
+          names(minX)<-colnames(B)[-1]
+          B<- cbind(B[,1], apply(B[,-1,drop=FALSE], 2, function(.x) .x- min(.x)))
         } else {
-          sgn.constr<-rep(sgn.constr, l=ncol(B))
+          if(!ncol(B)>=1) stop("At leat one covariate")
+          is.inter <- FALSE
+          minX <- apply(B ,2, min)
+          names(minX)<-colnames(B)
+          B<- apply(B, 2, function(.x) .x- min(.x))
         }
-        #traslare la variabile?
-        if(adjX.constr && ("(Intercept)" %in% colnames(B))){
-          const<-c(NA, rep(0, ncol(B)-1))
-          for(j in 2:ncol(B)){
-            if((sgn.constr[j]<0) && (min(B[,j])>=0)) {const[j]<- max(B[,j]); B[,j]<- B[,j] - max(B[,j])}  
-            if((sgn.constr[j]>0) && (max(B[,j])<=0)) {const[j]<- min(B[,j]); B[,j]<- B[,j] - min(B[,j])}
-          }
-        } else {
-          const<-rep(0, ncol(B))
-        }
-        names(const)<-colnames(B)
+        colnames(B)<-colnamesB
+        all.max <- apply(B, 2, max)
+        
+        
+
+        
+        
+        # signB <- apply(B, 2, function(.x){prod(sign(range(.x)))} )
+        # if(any(signB<0)) warning("covariate(s) taking pos AND neg values: noncrossing is not guaranteed.", call. = FALSE)
+        # 
+        # 
+        # if (is.null(sgn.constr)) {
+        #   # i segni per i vincoli..
+        #   yres <- lm.fit(y = y, x = B)$residuals^2
+        #   if("(Intercept)" %in% colnames(B)){
+        #     sgn.constr <- c(1, sign(lm.fit(y = yres, x = B)$coefficients[-1]))
+        #   } else {
+        #     sgn.constr <- sign(lm.fit(y = yres, x = B)$coefficients)
+        #   }
+        # } else {
+        #   sgn.constr<-rep(sgn.constr, l=ncol(B))
+        # }
+        # #traslare la variabile?
+        # if(adjX.constr && ("(Intercept)" %in% colnames(B))){
+        #   const<-c(NA, rep(0, ncol(B)-1))
+        #   for(j in 2:ncol(B)){
+        #     if((sgn.constr[j]<0) && (min(B[,j])>=0)) {const[j]<- max(B[,j]); B[,j]<- B[,j] - max(B[,j])}  
+        #     if((sgn.constr[j]>0) && (max(B[,j])<=0)) {const[j]<- min(B[,j]); B[,j]<- B[,j] - min(B[,j])}
+        #   }
+        # } else {
+        #   const<-rep(0, ncol(B))
+        # }
+        # names(const)<-colnames(B)
 
         o.start <- rq.fit(x = B, y = y, tau = start.tau)        
         
@@ -78,10 +101,16 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
           colnames(COEF.POS) <- paste(pos.taus)
           b.start <- o.start$coef
 
-          RR <- Ident
-          rr <- b.start + eps
-          diag(RR) <- diag(RR) * sgn.constr
-          rr <- rr * sgn.constr
+          if(is.inter){
+            RR <- diag(all.max)
+            RR[,1]<-1
+            rr <- c(b.start[1], b.start[1] + b.start[-1]*all.max[-1]) + eps
+          } else {
+            RR<-Ident
+            rr <- b.start + eps
+          }
+          #diag(RR) <- diag(RR) #* sgn.constr
+          #rr <- rr * sgn.constr
           
           # DF per NONcrossing
           DF.POS <- matrix(,nrow(RR),n.pos.taus)
@@ -98,8 +127,13 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
             b.start <- o$coef
             COEF.POS[, i] <- b.start
             DF.POS[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
-            rr <- b.start + eps
-            rr <- rr * sgn.constr
+            if(is.inter) {
+              rr <- c(b.start[1], b.start[1] + b.start[-1]*all.max[-1]) + eps
+            } else {
+              rr <- b.start + eps
+            }
+            #rr <- b.start + eps
+            #rr <- rr * sgn.constr
           }  #end for
         }  #end if(n.pos.taus>0)
         
@@ -109,10 +143,20 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
           colnames(COEF.NEG) <- paste(neg.taus)
           b.start <- o.start$coef
           neg.taus <- sort(neg.taus, TRUE)
-          RR <- -Ident
-          rr <- -b.start + eps
-          diag(RR) <- diag(RR) * sgn.constr
-          rr <- rr * sgn.constr
+          
+          if(is.inter){
+            RR <- -diag(all.max)
+            RR[,1]<- -1
+            rr <- -(c(b.start[1], b.start[1] + b.start[-1]*all.max[-1]) - eps)
+          } else {
+            RR<- -Ident
+            rr <- -b.start + eps
+          }
+          
+          # RR <- -Ident
+          # rr <- -b.start + eps
+          # diag(RR) <- diag(RR) * sgn.constr
+          # rr <- rr * sgn.constr
           #DF per NONcrossing
           DF.NEG<- matrix(,nrow(RR),n.neg.taus)
           colnames(DF.NEG)<-paste(neg.taus)
@@ -128,8 +172,14 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
             b.start <- o$coef
             COEF.NEG[, i] <- b.start
             DF.NEG[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
-            rr <- -b.start + eps
-            rr <- rr * sgn.constr
+            if(is.inter) {
+              rr <- -(c(b.start[1], b.start[1] + b.start[-1]*all.max[-1]) - eps)
+            } else {
+              rr <- -b.start + eps
+            }
+            
+            #rr <- -b.start + eps
+            #rr <- rr * sgn.constr
           }  #end for
         }  #end if(n.neg.taus>0)
         #------------------------------
@@ -159,7 +209,7 @@ ncross.rq.fitX <- function(y, X = NULL, taus, lambda.ridge = 0, eps = 1e-04,
         all.df <- c(df.neg.tau[n.neg.taus:1], sum(abs(o.start$residuals[1:n]) <= 1e-06), df.pos.tau)
         all.rho <- c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals[1:n], start.tau)), rho.pos.tau)
         r <- list(coefficients = all.COEF, x = B, df = all.df, rho = all.rho, 
-                  fitted.values = all.FIT, residuals = all.RES, constX=const, DF.NEG=DF.NEG, DF.POS=DF.POS)
+                  fitted.values = all.FIT, residuals = all.RES, DF.NEG=DF.NEG, DF.POS=DF.POS, minX=minX)
       }
       id.coef <- 1:ncol(X)
       attr(id.coef, "nomi") <- colnames(X)

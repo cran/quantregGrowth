@@ -3,17 +3,17 @@
 \alias{quantregGrowth}
 \docType{package}
 \title{
-Growth Charts via Smooth Regression Quantiles with Automatic Smoothness Estimation and Additive Terms 
+Non-Crossing Additive Regression Quantiles and Non-Parametric Growth Charts. 
 }
 \description{
 Fits non-crossing regression quantiles as a function of linear covariates 
-  and smooth terms via B-splines with difference penalties. Automatic smoothness estimation for several spline terms is allowed. }
+  and smooth terms via P-splines with difference penalties. Random intercepts and selection of linear variables are allowed via the lasso penalties. Estimation of both the smoothing and tuning parameters for the spline terms, the random intercepts and the variables selector are carried out efficientely as part of model fitting. }
 \details{
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 1.5-0\cr
-Date: \tab 2023-03-24\cr
+Version: \tab 1.6-0\cr
+Date: \tab 2023-04-04\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles (i.e. probability values), \code{gcrq} estimates non-crossing quantile curves as a flexible function of quantitative covariates (typically age in growth charts), and possibly additional linear terms. To ensure flexibility, B-splines with a difference \eqn{L_1}{L1} penalty are employed to estimate non parametrically the curves wherein monotonicity and concavity constraints may be also set. Multiple smooth terms, including varying coefficients, are allowed and the amount of smoothness for each term is efficiently included in the model fitting algorithm, see Muggeo et al. (2021). \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 

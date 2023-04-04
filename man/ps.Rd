@@ -12,14 +12,13 @@ passes relevant information to proper fitter functions.
 \usage{
 ps(..., lambda = -1, d = 3, by=NULL, ndx = NULL, deg = 3, knots=NULL,
     monotone = 0, concave = 0, var.pen = NULL, pen.matrix=NULL, dropc=TRUE, 
-    center=TRUE, K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE)
+    center=TRUE, K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{...}{
-The covariate supposed to have a nonlinear relationship with the quantile curve(s) being estimated. A B-spline is built, and a (difference) penalty
-is applied. In growth charts this variable is typically the age. 
-If the covariate is a factor, level-specific coefficients are estimated subject to a lasso penalty. See the last example in ?gcrq.
+The covariate supposed to have a nonlinear relationship with the quantile curve(s) being estimated. A B-spline is built, and a (difference) penalty is applied. In growth charts this variable is typically the age. 
+If the covariate is a factor, category-specific coefficients are estimated subject to a lasso penalty. See the last example in ?gcrq. A matrix of (continuous) covariates can be also supplied to perfom variable selection (among its columns).
 }
   \item{lambda}{
 A supplied smoothing parameter for the smooth term. If it is negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2021). If a positive scalar, it represents the actual smoothing parameter. If it is a vector, cross validation is performed to select the `best' value. See Details in \code{\link{gcrq}}. 
@@ -28,7 +27,7 @@ A supplied smoothing parameter for the smooth term. If it is negative scalar, th
 The difference order of the penalty. Default to 3 Ignored if \code{pen.matrix} is supplied. %and \code{d=0} leads to a lasso penalty on the spline coefficients.
 }
   \item{by}{
-if different from \code{NULL}, a numeric or factor variable of the same dimension as the covariate in \code{...} If numeric the elements multiply the smooth (i.e. a varying coefficient model); if factor, a smooth is fitted for each factor level. Usually the variable \code{by} is also included as main effect in the formula.
+if different from \code{NULL}, a numeric or factor variable of the same dimension as the covariate in \code{...} If numeric the elements multiply the smooth (i.e. a varying coefficient model); if factor, a smooth is fitted for each factor level. Usually the variable \code{by} is also included as main effect in the formula, see examples in \code{\link{gcrq}}. When \code{by} includes a factor, the formula should include the model intecept, i.e. \code{y~g+ps(x,by=g)} and not \code{y~ 0+g+ps(x,by=g)}. 
 }
   \item{ndx}{
 The number of intervals of the covariate range used to build the B-spline basis. Non-integer values are rounded by \code{round()}. If \code{NULL}, default, it is taken \eqn{min(n/4,9)}{min(n/4,9)} (versions <=1.1-0 it was \eqn{min(n/4,40)}{min(n/4,40)}, the empirical rule of Ruppert). It could be reduced further (but no less than 5 or 6, say) if the sample size is not large and the default value leads to some error in the fitting procedure, see section \code{Note} in \code{\link{gcrq}}. Likewise, if the underlying relationship is strongly nonlinear, \code{ndx} could be increased. The returned basis wil have `\code{ndx}+\code{deg}-\code{1}' (if \code{dropc=TRUE}) basis functions.
@@ -80,12 +79,17 @@ such as [x, ..., x^{d-1}, Z], where \eqn{Z= B D'(DD')^{-1}}{Z= B D'(DD')^{-1}}, 
 logical. If \code{monotone} or \code{concave} are different from 0, \code{constr.fit=TRUE} means that these constraints are set on the fitted quantiles rather than on the spline coefficients.
 }
   \item{shared.pen}{
-logical. If \code{TRUE} and it is a VC smooth term (i.e. interaction with a factor specified in \code{by}), the smooths in each level of the factor share the same smoothing parameter.
+logical. If \code{TRUE} and the smooth is a VC term with a factor specified in \code{by}, the smooths in each level of the factor share the same smoothing parameter.
 }
-
+  \item{st}{
+logical. If \code{TRUE} the variable(s) are standardized via the \code{scale()} function. Typically used for lasso.
+}
+  \item{ad}{
+a positive number. If a matrix has been supplied in \code{ps()}, a form of \emph{adaptive} lasso is employed. More specifically, at each step the penalty is \eqn{\lambda\sum_jw_j|\beta_j|}{sumj wj |betaj|} where \eqn{w_j=|\tilde{\beta}_j|^\mathtt{-ad}}{w_j=|prev.beta_j|^(-ad)} and \eqn{\tilde{\beta}_j}{prev.beta_j} are estimates coming from the previous iteration with a different value of  \eqn{\lambda}{lambda}. \code{ad=0} means the standard lasso and \code{ad=1} the adaptive lasso. Currently not implemented.
+}
 }
 \details{
-\code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability, and the spline coefficients are penalized via differences of order \code{d}; \code{d=0} leads to a penalty on the coefficients themselves.  If \code{pen.matrix} is supplied, \code{d} is ignored.
+If a numeric variable has been supplied, \code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability, and the spline coefficients are penalized via differences of order \code{d}; \code{d=0} leads to a penalty on the coefficients themselves.  If \code{pen.matrix} is supplied, \code{d} is ignored. Since versions 1.5-0 and 1.6-0, a factor or matrix can be supplied.
 
 \code{lambda} is the tuning parameter, fixed or to be estimated. When \code{lambda}=0 an unpenalized (and typically wiggly) fit is obtained, and as lambda increases the curve gets smoother till a \code{d-1} degree polynomial. At 'intermediate' lambda values, the fitted curve is a \emph{piecewise} polynomial of degree \code{d-1}.
 
@@ -96,7 +100,6 @@ constant smoothing (\code{var.pen=NULL}) the penalty is \eqn{\lambda\sum_k |\Del
 When a varying penalty is set, the penalty becomes \eqn{\lambda\sum_k |\Delta_k^d| w_k}{lambda sum_k |\Delta^d_k| w_k} where the weights \eqn{w_k}{w_k} depend on \code{var.pen}; for instance \code{var.pen="((1:k)^2)"} results in \eqn{w_k=k^2}{w_k=k^2}. See models \code{m6} and \code{m6a} in the examples of \code{\link{gcrq}}.
 
 If \code{decom=TRUE}, the smooth can be plotted with or without the fixed part, see \code{overall.eff} in the function \code{\link{plot.gcrq}}.
-
 }
 \value{
 The function simply returns the covariate with added attributes relevant to 

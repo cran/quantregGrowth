@@ -1,5 +1,5 @@
 ---
-title: "quantregGrowth: nonparametric quantile regression for growth charts and additive models"
+title: "quantregGrowth: nonparametric quantile regression for additive/semiparametric models and growth charts"
 author: "Vito M.R. Muggeo"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -121,7 +121,56 @@ Of course we could estimate the same 'semiparametric' model at several probabili
 o2<-gcrq(y ~ x1 + x3 + ps(x0) + ps(x2), data=d, tau=c(.12,.25,.5,.7,.8,.9))
 
 ```
-with the noncrossing constraints. Summary and plots can be obtained straightforwardly.
+with the non-crossing constraints. Summary and plots can be obtained straightforwardly.
+
+
+## Varying coefficient models
+
+A particular case of 'semiparametric' model is given by the so-called varying coefficient (VC) model, wherein the linear effect of a (even categorical) covariate, $x_1$ say, depends flexibly on a continuous variable $x_2$. The relevant term in the linear predictor can be written $\beta(x_2)x_1$, where $\beta(\cdot)$ is the smooth expressed via B-splines. We simulate data via the `gamSim()` function again.    
+```{r, message=F}
+d<-mgcv::gamSim(n=200, eg=3, scale=1) #simulated data with VC effect
+```
+and the fit is obtained by means of the argument `by` in `ps()`,
+
+```{r}
+o <- gcrq(y~ x1 + ps(x2, by=x1), data=d, tau=.5)
+```
+It should be noted we also specify the linear term `x1`, since `ps()` makes the basis identifiable. The fitted curve can be displayed as usual via `plot.gcrq()`. 
+
+When the linear covariate `x1` is categorical, e.g. the gender, fitting VC terms means to fit the smooth effect of `x2` into each category of `x1`. We illustrate that with a simulated dataset
+
+```{r, fig.width=7, fig.height=3} 
+n=50
+x0<-x1<-x<-1:n/n
+y0<-10+sin(2*pi*x) #sinusoidal relationship + intercept
+y1<-seq(7,11,l=n)  #linear relationship + intercept
+sigma<- .2
+y<-c(y0,y1)+rnorm(2*n)*sigma
+x<-c(x,x)
+z<-rep(0:1, each=n) #numeric variable
+g <-factor(z)  #factor
+o<-gcrq(y ~ g + ps(x, by=g), tau=.5)
+```
+Again, the same model could be obtained using a full B-spline in each group, i.e. `gcrq(y ~ 0 + ps(x, by=g, dropc=FALSE, center=FALSE), tau=.5)`.
+
+We compare the true and fitted quantile curves in the next plots 
+
+```{r, fig.width=7, fig.height=3} 
+par(mfrow=c(1,2))
+plot(x0, y[1:50]);lines(x0,y0)
+plot(o, term=1, add=TRUE, col=2, lwd=2)
+
+plot(x1, y[51:100]);lines(x1,y1)
+plot(o, term=2, add=TRUE, col=3, lwd=2, shift=coef(o)["g1",1])
+
+```
+To overlap the lines in the second group, we add the estimated coefficient of the corresponding category (`g1`) to the fitted quantile curve (via the argument `shift` of `plot.gcrq()`. When the variable in `by` is categorical, `gcrq()` automatically knows that category-specific curves have to be fitted. However it could be probably instructive to fit the same model using the numerical covariate `z`, namely   
+
+```{r}
+o1<-gcrq(y ~ z + ps(x) + ps(x, by=z), tau=.5)
+```
+
+Note the plot of the VC term `ps(x, by=z)` represents the difference between the smooth relationships `y1-y0`, bar a constant depending on the intercepts.
 
 
 ## Simple linear models
@@ -136,17 +185,16 @@ y<-2*x+rnorm(n)*rev(x)
 o3 <-gcrq(y ~ x, tau=seq(.05,.95,l=10)) #fit 10 (noncrossing) regression quantiles
 ```
 
-By means of `plot.gcrq()` with proper arguments, we display in the first plot the linear growth charts, and in the 2nd and 3rd figure, we portray the tau-varying coefficients by setting `axis.tau=TRUE`, 
+By means of `plot.gcrq()` with proper arguments, we display in the first plot the linear growth charts, and in the 2nd  figure, we portray the tau-varying coefficient by setting `axis.tau=TRUE`, 
 
-```{r, fig.width=7, fig.height=3} 
-par(mfrow=c(1,3))
+```{r, fig.width=7, fig.height=4} 
+par(mfrow=c(1,2))
 plot(x,y)
 plot(o3, add=TRUE)
-plot(o3, term=1, axis.tau=TRUE)
 plot(o3, term="x", axis.tau=TRUE, conf.level = .95, col=2)
 ```
 
-The 2nd and 3rd plots could be useful to assess if and how the specified coefficient estimate changes across the quantile curves. 
+The 2nd plot could be useful to assess if and how the specified coefficient estimate changes across the quantile curves. 
 
 
 ## Customizing the penalty
@@ -177,6 +225,29 @@ plot(o5, res=TRUE, col=3, lwd=3, ylim=c(0,12))
 plot(o6, res=TRUE, col=4, lwd=3, ylim=c(0,12))
 ```
 
+
+## Variable selection
+
+We conclude with a simple example illustrating how `quantregGrowth` can be used to perform variable selection, namely when we are interested in spotting, typically few, important covariates among a large number of candidates. Thus the response below depends on the variables in the columns 3, 5, and 11 of the matrix `X` and on the linear covariate `z` which enter the model unpenalized  
+
+
+```{r}
+n <- 50
+z <-1:n/n
+p <-20
+X<-matrix(runif(n*p),n,p)
+true.coef <-rep(0,p)
+true.coef[c(3,5,11)] <- c(.7,1.5,-1)
+y<-5 + 1.5*z+  drop(X%*%true.coef) + rnorm(n)*.25
+```
+The model is fitted straightforwardly by including the matrix `X` in `ps()`, and the unpenalized covariate in the main formula.  
+
+```{r, fig.width=5, fig.height=3} 
+o <-gcrq(y~ z + ps(X), tau=.5) 
+plot(o,1)
+
+```
+The `plot` method returns the estimated coefficients relevant to the columns of `X`. 
 
 <!--
 output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:

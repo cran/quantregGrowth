@@ -36,6 +36,7 @@ plot.gcrq <-
     if(conf.level>0) VAR <-vcov.gcrq(x, type=type)  
     b<-x$coefficients
     
+    if("terms" %in% names(list(...))) stop(" 'terms' is not allowed.. Do you mean 'term'? ")
     
     if(axis.tau){
       if(!is.matrix(b) || ncol(b)<=1) stop("axis.tau=TRUE is meaningless with a single quantile fit")
@@ -153,6 +154,8 @@ plot.gcrq <-
     if(deriv) y<-interc<-FALSE
     if(add) y<-FALSE
     
+    if(length(shift)>1 && length(shift)!=length(select.tau)) stop(" 'shift' should be a scalar or an appropriate vector")
+    
     shift00<-shift  
     interc00<- interc
     all.term.names<-term
@@ -164,10 +167,11 @@ plot.gcrq <-
     #################################################################################################
     for(term in all.term.names){
       #if(term=="x") browser()
+      #browser()
       interc <- interc00
       shift<-shift00
       BB<-x$BB[[term]] 
-      if(!is.null(x$constX)) BB<- BB - x$constX[[term]] 
+      if(!is.null(x$minX) && term%in%names(x$minX)) BB<- BB - x$minX[[term]] 
       nomi.ok<- attr(BB, "coef.names") ##nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
       xvar.n <-attr(BB,"covariate.n") 
       xvar.35 <-attr(BB,"covariate.35") 
@@ -198,6 +202,7 @@ plot.gcrq <-
       fit.35<-if(deriv) x$Bderiv[[term]]%*%b else BB%*%b #matrici
       ###########=================================================
       corr.df<-0
+      #browser()
       if(is.character(xvar.35) && xvar.35[1]=="ridge") { #if ridge, plot the single coeffs 
         if(conf.level>0) warning(" 'conf.level>0' not (yet) implemented", call.=FALSE, immediate. = FALSE)
         #browser()
@@ -208,11 +213,18 @@ plot.gcrq <-
           etich <- sub(tt,"",names(b), fixed=TRUE)
           }
         #b<-b # +shift, nell'altra versione c'era come argomento shift=0.. non so se utile..
+        #browser()
+        if(is.matrix(b)) {
+          xx1 <- matrix(1:nrow(b), nrow(b), ncol(b)) + matrix(seq(0,.3,l=ncol(b)), nrow(b), ncol(b), byrow = TRUE) 
+        } else {
+          xx1 <- 1:length(b)
+        }
+          
         if(add) {
-          if(is.matrix(b)) matpoints(1:length(b), b,...) else points(1:length(b), b,...)
+          if(is.matrix(b)) matpoints(xx1, b,...) else points(xx1, b,...)
         } else {
           #sqrt(diag(VAR[[1]]))[attr(BB,"coef.names")] #se vuoi metterci gli IC
-          if(is.matrix(b)) matplot(b, xlab=tt, xaxt="n", ylab="Estimate", ... ) else plot(b, xlab=tt, xaxt="n", ylab="Estimate", ...)
+          if(is.matrix(b)) matplot(xx1, b, xlab=tt, xaxt="n", ylab="Estimate", ... ) else plot(xx1, b, xlab=tt, xaxt="n", ylab="Estimate", ...)
           axis(1, at=1:nrow(as.matrix(b)), labels=etich, cex.axis=.7) #labels=attr(BB,"coef.names")
           abline(h=0, lty=3)
         }
@@ -243,10 +255,7 @@ plot.gcrq <-
           fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
         }
         
-        
-        
-        
-        fit.35<-fit.35+shift
+        fit.35<-fit.35+ matrix(shift, nrow(fit.35), ncol(fit.35),byrow = TRUE) 
         m.x<- if(is.null(list(...)$xlim)) min(xvar.35) else min(list(...)$xlim)
         M.x<- if(is.null(list(...)$xlim)) max(xvar.35) else max(list(...)$xlim)
         select.n<-xvar.n>=m.x & xvar.n<= M.x
@@ -313,6 +322,7 @@ plot.gcrq <-
           }
         }          
         #######
+        #browser()
         if(y){
           id.res.ok<-which.min(abs(x$taus[select.tau]-.5))
           ff<-splinefun(xvar.35, fit.35[,id.res.ok])
@@ -336,15 +346,20 @@ plot.gcrq <-
           if(is.null(l1$xlim)) l1$xlim <- c(min(xvar.35), max(xvar.35))  #era xvar.n
           l1$x[l1$x>max(l1$xlim)]<-NA #metti NA prima di incrementare il limite
           if(legend && is.null(overlap)) l1$xlim <- l1$xlim*c(1,1.03) 
-          if(conf.level>0 & is.null(l1$ylim)) {
-            l1$ylim <- if(shade) range(c(l2$y, l1$y)) else c(min(c(l2$y,l1$y)), max(c(l3$y,l1$y)))
+          if(is.null(l1$ylim)){
+            if(conf.level>0) {
+              l1$ylim <- if(shade) range(c(l2$y, l1$y)) else c(min(c(l2$y,l1$y)), max(c(l3$y,l1$y)))
+            } else {
+              l1$ylim <- range(c(l$y,l1$y))
+            }
           }
           if(is.null(smoos)) { smoos <- if(length(l1$x)>10000) TRUE else FALSE }
           if(smoos){
             l1$type<-"n"
             do.call(plot, l1)
             smoothScatter(l1$x, l1$y, add=TRUE, nrpoints = 0, colramp= colorRampPalette(c("white", grey(.4))))
-          } else {
+          #browser()
+            } else {
             do.call(plot, l1)              
           }
           if(!is.null(grid)){
@@ -381,6 +396,7 @@ plot.gcrq <-
         l$col.p<-NULL
         l$cex.p<-NULL
         l$pch.p<-NULL
+        #browser()
         if(add){
           if(!is.null(l$col)) l$col<-adjustcolor(l$col,.65)
           do.call(matlines, l)

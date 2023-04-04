@@ -6,6 +6,14 @@
 
 
 
+=============
+version 1.6-0  (2023-04-04)
+=============
+* ps() now accepts a matrix to perform variable selection of its columns via lasso
+* charts() now gains argument 'conf.level' to return pointwise confidence intervals (thanks to Lea Tybirk for her input)
+* More examples in vignette (about VC terms)
+* bugs fixed/small changes: a small correction in plot.gcrq() when managing 'ylim'; ps(..,constr.fit=FALSE) was not working correctly; 'shift' in plot.gcrq() now can be a vector; argument 'sgn.constr' in gcrq() removed (to the benefit of safer noncrossing constraints when managing linear relationships) 
+
 
 =============
 version 1.5-0  (2023-03-24)

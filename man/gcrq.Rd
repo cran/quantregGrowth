@@ -14,7 +14,7 @@ gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action,
     transf=NULL, y=TRUE, n.boot=0, eps=0.001, display=FALSE, 
     method=c("REML","ML"), df.opt=2, df.nc=FALSE, lambda0=.1, h=0.8, lambda.max=2000, 
     tol=0.01, it.max=20, single.lambda=TRUE, foldid=NULL, nfolds=10, 
-    lambda.ridge=0, sgn.constr=NULL, adjX.constr=TRUE, contrasts=NULL, ...)
+    lambda.ridge=0, adjX.constr=TRUE, contrasts=NULL, ...) %, sgn.constr=NULL, 
 }
 \arguments{
   \item{formula}{
@@ -100,11 +100,10 @@ the smoothing parameter. Default to 10, but it is ignored if the \code{lambda} a
   \item{lambda.ridge}{
 Numerical value (typically very small) to stabilize model estimation.
 }
-  \item{sgn.constr}{optional. Vector of signs for the noncrossing constraints affecting the slopes of linear covariates. If provided, its lenght should be ugual to the number of linear coefficients otherwise it will be recycled. If \code{NULL}, its value is determined by 
-  a preliminary heteroscedastic model. Appropriate only with linear models (i.e. no \code{ps} term in the formula).
-}
-  \item{adjX.constr}{logical. If \code{TRUE}, each linear covariate is shifted (by adding or substracting its min or max) in order make the constraints on the intercept more effective to prevent crossing of quantile curves. 
-  Appropriate only with linear models.
+%  \item{sgn.constr}{optional. Vector of signs for the noncrossing constraints affecting the slopes of linear covariates. If provided, its lenght should be ugual to the number of linear coefficients otherwise it will be recycled. If \code{NULL}, its value is determined by 
+%  a preliminary heteroscedastic model. Appropriate only with linear models (i.e. no \code{ps} term in the formula).
+%}
+  \item{adjX.constr}{logical. If \code{TRUE}, each linear covariate is shifted (by substracting its min) in order to set up effective constraints to prevent crossing. Useful only if \code{tau} is a vector and the model includes linear terms.
 }
   \item{contrasts}{an optional list. See argument \code{contrasts.arg} in \code{model.matrix.default}.}
   \item{\dots}{further arguments.}
@@ -113,7 +112,7 @@ Numerical value (typically very small) to stabilize model estimation.
 The function fits regression quantiles at specified percentiles given in \code{tau} as a function of 
 covariates specified in the \code{formula} argument. The \code{formula} may include linear terms and  one or several \code{\link{ps}} 
 terms to model nonlinear relationships with quantitative covariates, usually age in growth charts. When the \code{lambda} argument 
-in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2020). If a positive scalar, it represents the actual smoothing parameter value. 
+in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2021). If a positive scalar, it represents the actual smoothing parameter value. 
 
 Smoothing parameter selection via 'K-fold' cross validation (CV) is also allowed (but not recommended) if the model includes a single \code{ps} term:  \code{lambda} should be a vector of candidate values, and the final fit is returned at the `optimal' lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique \code{ps} term in the formula.
 }
@@ -143,6 +142,10 @@ This function returns an object of class \code{gcrq}, that is a list with the fo
 }
 
 \section{Warning}{
+Variable selection is still at an experimental stage. 
+
+When including linear terms, the covariates \eqn{X_j}{Xj} are shifted such that \eqn{min(X_j)=0}{min(X_j)=0}. 
+
 The options \code{'REML'} or \code{'ML'} of the argument \code{method}, refer to how the degrees of freedom are computed to update the lambda estimates. 
 
 Currently, standard errors are obtained via the sandwich formula or the nonparametric bootstrap (case resampling). Both methods ignore uncertainty in the smoothing parameter selection. 
@@ -207,13 +210,16 @@ https://www.researchgate.net/publication/323573492
 }
 \examples{
 \dontrun{
-#An additive examples.. from ?mgcv::gam
+##=== Example 1: an additive model from ?mgcv::gam
+
 d<-mgcv::gamSim(n=200, eg=1)
 o<-gcrq(y ~ ps(x0) + ps(x1)+ ps(x2) + ps(x3), data=d, tau=.5, n.boot=50)
 plot(o, res=TRUE, col=2, conf.level=.9, shade=TRUE, split=TRUE)
 
 
-#some simple examples involving just a single smooth
+
+##=== Example 2: some simple examples involving just a single smooth
+
 data(growthData) #load data
 tauss<-seq(.1,.9,by=.1) #fix the percentiles of interest
 
@@ -247,7 +253,7 @@ plot(m7, cv=TRUE) #display CV score versus lambda values
 plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fit at the best lambda (by CV) 
 
 
-#=== VC examples
+##=== Example 3: VC models
 
 n=50
 x<-1:n/n
@@ -266,17 +272,28 @@ plot(x[1:50],y0)
 plot(x[1:50],y1)
 plot(o, term=1:2, split=FALSE)
 
+# multiple quantile curves..
+y<-c(y0,y1)+rnorm(2*n)*1.2
+o1 <-gcrq(y ~ g+ps(x,by=g), tau=seq(.1,.9,l=9)) 
+
+o3 <-gcrq(y ~ 0+ps(x,by=g,dropc=FALSE, center=FALSE), tau=seq(.1,.9,l=9)) #using the full bases 
+
+par(mfcol=c(1,2))
+plot(o1,1:2)
+
 # approach 2: a general smooth plus the (smooth) 'interaction' with a continuous covariate..
-o1 <-gcrq(y~ ps(x) + z+ ps(x,by=z), tau=.5)
+b1 <-gcrq(y~ ps(x) + z+ ps(x,by=z), tau=.5)
 par(mfrow=c(2,2))
 plot(x[1:50],y0)
 plot(x[1:50],y1-y0)
-plot(o1, split=FALSE)
+plot(b1, split=FALSE)
 
-predict(o1, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
+predict(b1, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
 
 
-#== random intercepts example
+
+##=== Example 4: random intercepts example
+
 n=50
 x<-1:n/n
 
@@ -292,10 +309,23 @@ o <-gcrq(y~x+ps(id), tau=.5)
 plot(o, term=1) #plot the subject-specific intercepts
 
 
+#== variable selection
+n=50
+p=30
+p1<-10
 
+X<-matrix(rnorm(n*p,5),n,p)
+b<-rep(0,p)
+id<-sample(1:p, p1)
+b[id]<-round(runif(p1,.5,2),2)
+b[id]<-b[id]* sign(ifelse(runif(p1)<.5,1,-1))
+lp <- drop(tcrossprod(X,t(b)))
+y <- 2+lp+rnorm(n)*1.5
 
+gcrq(y~ps(X), tau=.7) 
 }
 }
+
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ regression }

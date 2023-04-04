@@ -1,7 +1,11 @@
 ps <-
 function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL, 
     monotone=0, concave=0, var.pen=NULL, pen.matrix=NULL, dropc=TRUE, center=TRUE,
-    K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE){
+    K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0){
+#------------
+  #sc: se TRUE la variabile o le colonne della matrice sono standardizzate
+  #ad: se >0 l'esponente per il lasso adattivo dove il peso e' "abs(b)^(-ad)" => quindi una bridge pen con esponente 1-ad 
+  
 #arguments in ... such as 'a=3' are ignored
 #dropc, if TRUE the first column of the basis is dropped..
 #decompose: if TRUE the decomposition of the B-spline is employed. Notice the new basis becomes
@@ -52,6 +56,8 @@ function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL,
     r<- if(!is.null(by)) cbind(r,by) else cbind(r) #cbind(r,1)
     #r<- apply(r,2, function(.x)as.numeric(as.character(as.factor(.x)))) #non funziona se la prima colonna non ha numeri..
     #r<- apply(r,2, function(.x)as.numeric(as.factor(.x)))
+    attr(r,"adapt")<-ad
+    attr(r,"sc")<-st
     attr(r,"penMatrix")<-pen.matrix
     attr(r,"nodi")<-knots
     attr(r,"ndx")<-ndx
