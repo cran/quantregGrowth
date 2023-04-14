@@ -127,10 +127,15 @@ true.coef <-rep(0,p)
 true.coef[c(3,5,11)] <- c(.7,1.5,-1)
 y<-5 + 1.5*z+  drop(X%*%true.coef) + rnorm(n)*.25
 
-## ---- fig.width=5, fig.height=3-----------------------------------------------
+## ---- fig.width=6, fig.height=4-----------------------------------------------
 o <-gcrq(y~ z + ps(X), tau=.5) 
-plot(o,1)
+plot(o, term=1)
 
+## ---- fig.width=9, fig.height=4-----------------------------------------------
+o <-gcrq(y ~ z + ps(X)) 
+par(mfrow=c(1,2))
+plot(o, term=1, legend=TRUE)
+plot(o, term=2)
 
 ## ---- echo=FALSE, results='asis'----------------------------------------------
 knitr::kable(head(mtcars, 10))

@@ -5,6 +5,13 @@
 *******************************
 
 
+=============
+version 1.6-1  (2023-04-14)
+=============
+* plot.gcrq() gains argument 'se.interc' to portray CI (when conf.level>0) accounting for uncertainty in the model intercept estimate 
+* charts() gains argument 'dataframe' to return a dataframe with better formatting, rather than a simple matrix.  
+* bug fix: charts(.., k=1) did not work
+
 
 =============
 version 1.6-0  (2023-04-04)

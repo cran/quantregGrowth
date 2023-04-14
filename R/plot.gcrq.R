@@ -1,7 +1,8 @@
 plot.gcrq <-
-  function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, axis.tau=FALSE, interc=TRUE, legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, 
-           transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, #n.points=100,  
-           grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), ...){
+  function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, axis.tau=FALSE, interc=TRUE, se.interc=FALSE,
+           legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, transf=NULL, lambda0=FALSE, shade=FALSE, 
+           overlap=NULL, rug=FALSE, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, 
+           shift=0, type=c("sandw","boot"), ...){
     #===============================================================================
     bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
       # x: vettore di dati
@@ -106,8 +107,7 @@ plot.gcrq <-
     if(!is.null(overlap)) legend<-TRUE
     type<-match.arg(type)
     y<-res
-    
-    
+
     if(is.null(x$info.smooth)){ #if((x$pLin-match("(Intercept)", rownames(x$coefficients),0))>0)
       if(is.null(term)){
         term<-colnames(x$x)
@@ -221,12 +221,32 @@ plot.gcrq <-
         }
           
         if(add) {
-          if(is.matrix(b)) matpoints(xx1, b,...) else points(xx1, b,...)
+          if(is.matrix(b)) matpoints(xx1, b, ...) else points(xx1, b, ...)
         } else {
           #sqrt(diag(VAR[[1]]))[attr(BB,"coef.names")] #se vuoi metterci gli IC
-          if(is.matrix(b)) matplot(xx1, b, xlab=tt, xaxt="n", ylab="Estimate", ... ) else plot(xx1, b, xlab=tt, xaxt="n", ylab="Estimate", ...)
-          axis(1, at=1:nrow(as.matrix(b)), labels=etich, cex.axis=.7) #labels=attr(BB,"coef.names")
+           opz<- list(...)
+           opz$xaxt <- "n"
+           if(is.null(opz$xlab)) opz$xlab<-tt
+           if(is.null(opz$ylab)) opz$ylab<-"Estimate"
+           opz$x<- xx1
+           opz$y<- b
+           if(is.matrix(b)){
+             if(is.null(opz$col)) opz$col<-(1:ncol(b))+1
+             if(is.null(opz$pch)) opz$pch<-(1:ncol(b))
+             do.call(matplot, opz)
+           } else {
+             if(is.null(opz$col)) opz$col<-2
+             do.call(plot, opz)
+           }
+          #if(is.matrix(b)) matplot(xx1, b, xlab=tt, xaxt="n", ylab="Estimate", ... ) else plot(xx1, b, xlab=tt, xaxt="n", ylab="Estimate", ...)
+          axis(1, at=1:nrow(as.matrix(b)), labels=etich, cex.axis=.5) #labels=attr(BB,"coef.names")
           abline(h=0, lty=3)
+          abline(v=1:nrow(as.matrix(b))+.7, col=grey(.8))
+          if(legend) {
+            opz.leg<-list(pch=opz$pch, col=opz$col, bty="n", legend=x$taus, cex=.5, x="topright")
+            do.call("legend", opz.leg)
+            #legend("topright", legend=x$taus, bty="n", cex  = .5, ...)
+          }
         }
       } else { #altrimenti disegni del segnale smooth..
   #browser()
@@ -250,8 +270,8 @@ plot.gcrq <-
         #  shift<-0
         #}
         
-        
-        if(interc && "(Intercept)"%in%rownames(as.matrix(x$coefficients))) {#NB qui interc e' sempre FALSE per termini VC 
+        id.model.interc <- "(Intercept)"%in%rownames(as.matrix(x$coefficients)) 
+        if(interc && id.model.interc) {#NB qui interc e' sempre FALSE per termini VC 
           fit.35<-fit.35 + matrix(as.matrix(x$coefficients)["(Intercept)", select.tau], ncol=ncol(fit.35), nrow=nrow(fit.35), byrow=TRUE)
         }
         
@@ -301,6 +321,12 @@ plot.gcrq <-
           a <- c(a, 1 - a)
           fac <- qnorm(a)
           #se vc e interc=FALSE la BB ha una colonna in meno!! (certo perche' interc=FALSE ha portato alla rimozione ...)
+          
+          if(id.model.interc && se.interc) {
+            nomi.ok <- c("(Intercept)", nomi.ok)
+            BB <- cbind(1, BB)
+          }
+
           V<- lapply(VAR, function(x) x[nomi.ok, nomi.ok])
           se<-sapply(V, function(x)sqrt(rowSums((BB %*% x * BB)))) 
           low.q <- fit.35 + fac[1]*se[select.35, select.tau, drop=FALSE]

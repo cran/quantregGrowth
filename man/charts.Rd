@@ -9,7 +9,7 @@ Computes and returns quantiles as a function of the specified covariate values
 }
 \usage{
 charts(fit, k, file = NULL, digits=2, conf.level=0, 
-    transf=NULL, se.type=c("sandw","boot"), ...)
+    dataframe=FALSE, transf=NULL, se.type=c("sandw","boot"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,7 +17,7 @@ charts(fit, k, file = NULL, digits=2, conf.level=0,
 The object fit returned by \code{\link{gcrq}}
 }
   \item{k}{
-Scalar or vector indicating the covariate values. If scalar, \code{k} equispaced values in the covariate range are taken. 
+Numeric indicating the covariate values. If integer (and scalar, specified via \code{5L}, say) , \code{k} equispaced values in the covariate range are taken. 
 }
   \item{file}{
 If specified, the (path) file name wherein the returned matrix including the quantiles will be written via \code{write.csv()}
@@ -27,6 +27,9 @@ Number of digits whereby the estimated quantiles are rounded.
 }
   \item{conf.level}{
 If larger than zero, the pointwise confidence intervals for the estimated quantiles are also returned. If \code{conf.level=0} the simple point estimates. 
+}
+  \item{dataframe}{
+Logical. If \code{TRUE} and \code{conf.level>0} a dataframe is returned having point estimate and confidence intervals collapsed.  Otherwise a matrix having number of rows equal to the number of covariate values.
 }
   \item{transf}{
 An optional character string (with \code{"y"} as argument) meaning a function to apply to the predicted values. E.g. \code{"(exp(y)-0.1)"}. 
@@ -63,7 +66,10 @@ Vito Muggeo
 }
 \examples{
 \dontrun{
-charts(_fit_, k=10)
+charts(_fit_, k=1L) #prediction at the minimum of covariate
+charts(_fit_, k=1) #prediction at covariate value 1.
+
+charts(_fit_, k=10L)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

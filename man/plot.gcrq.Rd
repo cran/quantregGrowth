@@ -9,8 +9,8 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 }
 \usage{
 \method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, axis.tau=FALSE, 
-   interc=TRUE, legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, transf=NULL, 
-   lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, %%n.points=100,
+   interc=TRUE, se.interc=FALSE, legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, 
+   transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, %%n.points=100,
    grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -26,6 +26,10 @@ specified in \code{ps}.
   \item{interc}{
 Should the smooth term be plotted along with the model intercept (provided it is included in the model)? Of course such argument is ignored if the smooth term has been called via \code{ps(, dropc=FALSE)} and the plot always includes implicitly the `intercept'. Note that \code{interc=TRUE} is requested to display the noncrossing curves (if multiple quantile curves are being plotted).  
 }
+  \item{se.interc}{
+logical. If \code{TRUE} the standard errors of fitted quantile curves account for uncertainty of the model intercept (provided it is included in the model). If \code{FALSE}, then the uncertainty relates purely to the (usually centred) smooth itself. Ignored if \code{conf.level=0}.
+}
+
   \item{add}{
 logical. If \code{TRUE} the fitted quantile curves are added on the current plot.
 }

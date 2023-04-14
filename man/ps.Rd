@@ -82,7 +82,7 @@ logical. If \code{monotone} or \code{concave} are different from 0, \code{constr
 logical. If \code{TRUE} and the smooth is a VC term with a factor specified in \code{by}, the smooths in each level of the factor share the same smoothing parameter.
 }
   \item{st}{
-logical. If \code{TRUE} the variable(s) are standardized via the \code{scale()} function. Typically used for lasso.
+logical. If \code{TRUE} the variable(s) are standardized via the \code{scale()} function. Typically used for lasso, i.e. when a matrix of covariates is passed in \code{ps()}.
 }
   \item{ad}{
 a positive number. If a matrix has been supplied in \code{ps()}, a form of \emph{adaptive} lasso is employed. More specifically, at each step the penalty is \eqn{\lambda\sum_jw_j|\beta_j|}{sumj wj |betaj|} where \eqn{w_j=|\tilde{\beta}_j|^\mathtt{-ad}}{w_j=|prev.beta_j|^(-ad)} and \eqn{\tilde{\beta}_j}{prev.beta_j} are estimates coming from the previous iteration with a different value of  \eqn{\lambda}{lambda}. \code{ad=0} means the standard lasso and \code{ad=1} the adaptive lasso. Currently not implemented.
