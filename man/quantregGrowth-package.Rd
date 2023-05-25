@@ -12,8 +12,8 @@ Fits non-crossing regression quantiles as a function of linear covariates
 \tabular{ll}{
 Package: \tab quantregGrowth\cr
 Type: \tab Package\cr
-Version: \tab 1.6-1\cr
-Date: \tab 2023-04-14\cr
+Version: \tab 1.6-2\cr
+Date: \tab 2023-05-25\cr
 License: \tab GPL\cr
 }
 Package quantregGrowth allows estimation of growth charts via quantile regression. Given a set of percentiles (i.e. probability values), \code{gcrq} estimates non-crossing quantile curves as a flexible function of quantitative covariates (typically age in growth charts), and possibly additional linear terms. To ensure flexibility, B-splines with a difference \eqn{L_1}{L1} penalty are employed to estimate non parametrically the curves wherein monotonicity and concavity constraints may be also set. Multiple smooth terms, including varying coefficients, are allowed and the amount of smoothness for each term is efficiently included in the model fitting algorithm, see Muggeo et al. (2021). \code{plot.gcrq} displays the fitted lines along with observations and poitwise confidence intervals. 

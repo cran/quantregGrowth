@@ -13,7 +13,7 @@ data(SiChildren)
 
 o <-gcrq(height ~ ps(age), tau=seq(.05,.95,l=7), data=SiChildren)
 
-plot(o, res=TRUE) #res=TRUE displays data too
+plot(o, res=TRUE, col=-1) #res=TRUE displays data too; col<0 for the default palette
 
 ## -----------------------------------------------------------------------------
 charts(o, k=c(10,10.5,11,16,17)) #the quantile at the specified k values
@@ -62,7 +62,7 @@ d<-mgcv::gamSim(n=200, eg=3, scale=1) #simulated data with VC effect
 ## -----------------------------------------------------------------------------
 o <- gcrq(y~ x1 + ps(x2, by=x1), data=d, tau=.5)
 
-## ---- fig.width=7, fig.height=3-----------------------------------------------
+## ---- message=F---------------------------------------------------------------
 n=50
 x0<-x1<-x<-1:n/n
 y0<-10+sin(2*pi*x) #sinusoidal relationship + intercept

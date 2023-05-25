@@ -18,7 +18,7 @@ gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action,
 }
 \arguments{
   \item{formula}{
-a standard R formula to specify the response in the left hand side, and the covariates in the right hand side, such as \code{y~ps(x)+z}, see Details for further eamples.
+a standard R formula to specify the response in the left hand side, and the covariates in the right hand side, such as \code{y~ps(x)+z}, see Details for further examples.
 }
   \item{tau}{
 a numeric vector to specify the quantile curves of interest. Default to probability values \eqn{(.1,.25,.5,.75,.9)}.

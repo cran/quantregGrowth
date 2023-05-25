@@ -1,7 +1,7 @@
 ps <-
 function(..., lambda=-1, d=3, by=NULL, ndx=NULL, deg=3, knots=NULL, 
     monotone=0, concave=0, var.pen=NULL, pen.matrix=NULL, dropc=TRUE, center=TRUE,
-    K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0){
+    K=NULL, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0){
 #------------
   #sc: se TRUE la variabile o le colonne della matrice sono standardizzate
   #ad: se >0 l'esponente per il lasso adattivo dove il peso e' "abs(b)^(-ad)" => quindi una bridge pen con esponente 1-ad 

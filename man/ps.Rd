@@ -12,7 +12,7 @@ passes relevant information to proper fitter functions.
 \usage{
 ps(..., lambda = -1, d = 3, by=NULL, ndx = NULL, deg = 3, knots=NULL,
     monotone = 0, concave = 0, var.pen = NULL, pen.matrix=NULL, dropc=TRUE, 
-    center=TRUE, K=2, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0)
+    center=TRUE, K=NULL, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -69,7 +69,7 @@ it is necessary to omit the model intercept AND not to center the basis, i.e. \c
 logical. If \code{TRUE} the smooth effects are 'centered' over the covariate values, i.e. \eqn{\sum_i \hat{f}(x_i)=0}{sum_i f(xi)=0}.
 }
   \item{K}{
-A factor tuning selection of wiggliness of the smoothed curve. The larger \code{K}, the smoother the curve. Simulations suggest \code{K=2}. See details.
+A scalar tuning the selection of wiggliness of the smoothed curve when \eqn{\lambda}{lambda} has to be estimated (i.e. \code{lambda<0} is set). The larger \code{K}, the smoother the curve. Simulations suggest \code{K=2} for the smoothing, and \code{K=log(n/p^(2/3))} for variable selection and random intercepts (\code{p} is the number of variables or number of subjects). See details.
 }
   \item{decom}{
 logical. If \code{TRUE}, the B-spline is decomposed into truncated power functions 
@@ -119,9 +119,9 @@ Statistical Sciences, 11:89-121.
 \author{
 Vito M. R. Muggeo
 }
-%%\note{
-%%  ~~further notes~~
-%%}
+\note{
+For shape-constrained fits, use \code{constr.fit=FALSE} only if you are using a single full and uncentred basis, namely something like \cr \code{gcrq(y~0+ps(x, center=FALSE, dropc=FALSE, monotone=1, constr.fit=FALSE),..)}.
+}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 

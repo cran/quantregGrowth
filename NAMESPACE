@@ -6,7 +6,7 @@ importFrom("graphics", "axis", "matlines", "matplot", "matpoints",
 importFrom("stats", "as.formula", ".getXlevels", "contrasts", "is.empty.model",
              "model.matrix", "model.response", "model.weights", "terms",
              "var","formula","qnorm","splinefun","update","printCoefmat",
-             "dnorm", "poly", "quantile", "update.formula", "pchisq", "lm.fit")
+             "dnorm", "poly", "quantile", "update.formula", "pchisq", "sd")
 importFrom("grDevices", "adjustcolor", "grey", "colorRampPalette","devAskNewPage")
 importFrom("utils", "tail","flush.console","write.csv")
 

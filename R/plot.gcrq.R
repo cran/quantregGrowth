@@ -2,7 +2,7 @@ plot.gcrq <-
   function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, axis.tau=FALSE, interc=TRUE, se.interc=FALSE,
            legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, transf=NULL, lambda0=FALSE, shade=FALSE, 
            overlap=NULL, rug=FALSE, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, 
-           shift=0, type=c("sandw","boot"), ...){
+           shift=0, type=c("sandw","boot"), ...){ #palette="Roma",
     #===============================================================================
     bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
       # x: vettore di dati
@@ -220,6 +220,8 @@ plot.gcrq <-
           xx1 <- 1:length(b)
         }
           
+        #browser()
+        
         if(add) {
           if(is.matrix(b)) matpoints(xx1, b, ...) else points(xx1, b, ...)
         } else {
@@ -229,7 +231,7 @@ plot.gcrq <-
            if(is.null(opz$xlab)) opz$xlab<-tt
            if(is.null(opz$ylab)) opz$ylab<-"Estimate"
            opz$x<- xx1
-           opz$y<- b
+           opz$y<- b #b[,select.tau,drop=FALSE]
            if(is.matrix(b)){
              if(is.null(opz$col)) opz$col<-(1:ncol(b))+1
              if(is.null(opz$pch)) opz$pch<-(1:ncol(b))
@@ -243,7 +245,7 @@ plot.gcrq <-
           abline(h=0, lty=3)
           abline(v=1:nrow(as.matrix(b))+.7, col=grey(.8))
           if(legend) {
-            opz.leg<-list(pch=opz$pch, col=opz$col, bty="n", legend=x$taus, cex=.5, x="topright")
+            opz.leg<-list(pch=opz$pch, col=opz$col, bty="n", legend=formatC(x$taus[select.tau], digits=2, format="f"), cex=.5, x="topright")
             do.call("legend", opz.leg)
             #legend("topright", legend=x$taus, bty="n", cex  = .5, ...)
           }
@@ -269,6 +271,7 @@ plot.gcrq <-
         # }
         #  shift<-0
         #}
+        #browser()
         
         id.model.interc <- "(Intercept)"%in%rownames(as.matrix(x$coefficients)) 
         if(interc && id.model.interc) {#NB qui interc e' sempre FALSE per termini VC 
@@ -423,6 +426,9 @@ plot.gcrq <-
         l$cex.p<-NULL
         l$pch.p<-NULL
         #browser()
+        if(is.null(l$col)) l$col<- 2#hcl.colors(length(select.tau),alpha = .6, palette="Roma") #seq(2, length.out=length(select.tau))
+        if(is.null(l$lwd)) l$lwd<-1.6
+        if(is.null(l$lty)) l$lty<-1
         if(add){
           if(!is.null(l$col)) l$col<-adjustcolor(l$col,.65)
           do.call(matlines, l)

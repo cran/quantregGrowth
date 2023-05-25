@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The package `quantregGrowth` aims to estimate the smooth, but unspecified, effect of numerical covariate(s) on one or more quantiles of the numerical response variable. The quantile regression equation can also include linear effect(s) of numerical or categorical covariates. Each flexible and unspecified relationship is expressed via a B-spline basis whose coefficients are somehow shrunken to control the wiggliness of the curve(s). The amount of smoothness is estimated as part of the model fitting as described in [Muggeo et al., 2021](https://journals.sagepub.com/doi/full/10.1177/1471082X20929802).
+The package `quantregGrowth` aims to estimate the smooth, but unspecified, effect of numerical covariate(s) on one or more quantiles of the numerical response variable. The quantile regression equation can also include linear effect(s) of numerical or categorical covariates. Each flexible and unspecified relationship is expressed via a B-spline basis whose coefficients are somehow shrunken to control the wiggliness of the curve(s). The amount of smoothness is estimated as part of the model fitting as described in [Muggeo et al. (2021)](https://journals.sagepub.com/doi/full/10.1177/1471082X20929802).
 
 The package relies on the well known `quantreg` package by Roger Koenker by exploiting full functionality and efficiency of its fitter functions.
 
@@ -48,7 +48,7 @@ data(SiChildren)
 
 o <-gcrq(height ~ ps(age), tau=seq(.05,.95,l=7), data=SiChildren)
 
-plot(o, res=TRUE) #res=TRUE displays data too
+plot(o, res=TRUE, col=-1) #res=TRUE displays data too; col<0 for the default palette
 ```
 
 In addition to the graphical output, we could look at the estimated quantile values via the function `charts()` which is a simple wrapper of `predict.gcrq()` to facilitate production of growth charts based on the fitted model. We display the quantiles just at some age values
@@ -143,7 +143,7 @@ It should be noted we also specify the linear term `x1`, since `ps()` makes the 
 
 When the linear covariate `x1` is categorical, e.g. the gender, fitting VC terms means to fit the smooth effect of `x2` into each category of `x1`. We illustrate that with a simulated dataset
 
-```{r, fig.width=7, fig.height=3} 
+```{r, message=F} 
 n=50
 x0<-x1<-x<-1:n/n
 y0<-10+sin(2*pi*x) #sinusoidal relationship + intercept

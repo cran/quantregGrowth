@@ -3,20 +3,15 @@ ncross.rq.fitXB <-
            nomiBy=NULL, byVariabili=NULL,
            ndx=10, deg=3, dif=3, lambda=0, eps=.0001, var.pen=NULL, penMatrix=NULL,
            lambda.ridge=0,  dropcList=FALSE, decomList=FALSE, vcList=FALSE, dropvcList=FALSE, centerList=FALSE, 
-           ridgeList=FALSE, ps.matrix.list=FALSE, colmeansB=NULL, Bconstr=NULL, adjX.constr=TRUE , ...){
-    #Stima dei non-crossing rq, possibly monotone
-    #B: la base di spline o una lista di Bspline. Se NULL viene costruita attraverso la variabile x
-    #x: la variabile o la matrice di variabili rispetto a cui viene (o vengono) costruita la base, ammesso che B sia NULL.
-    #nomiBy, byVariabili:  nomi e variabili (matrice)  rispetto a cui viene (o vengono) costruita la base. Inutili se B e' fornita.  
-    #err.rho: se TRUE usa la sigma2 basata su rho, altrimenti quella basata sui residui al quadrato pesati
-    #u.rho: if TRUE, returns the (squared) sum of absolute values of the penalized coeffs
-    # C:\Rtools\bin
-    #plott {0,1,2} se 0 non disegna, se 1 aggiunge se 2 apre un nuovo device. Se x non ? fornita
-    #   plott viene posto a 0.
+           ridgeList=FALSE, ps.matrix.list=FALSE, colmeansB=NULL, Bconstr=NULL, adjX.constr=TRUE, 
+           adList=FALSE, it.j=10, myeps=NULL, ...){
+    #usare spam??
+
     plott=0 #prima era un argomento
     adj.middle=FALSE
     err.rho=TRUE #prima era un argomento
     u.rho=TRUE ##prima era un argomento
+    if(is.null(myeps)) myeps<-1e-06
     #--------------------------------------------------------
     Rho <- function(u, tau) u * (tau - (u < 0))
     #--------------------------------------------------------
@@ -165,22 +160,7 @@ ncross.rq.fitXB <-
       names(list.b)<- nomiGruppi
       if(any(vConc!=0)) list.b1 <-list.b #creato list.b1 per l'eventuale concav (infatti list.b viene sovrascritto dalla monot)
       id.Xlin <- match("Xlin", nomiGruppi, 0)
-      if(output<=2){
-        stop("df.option not allowed")
-        #df.j<-n.coef.pen<- vNdx +vDeg - vDiff # un vettore - riferito ai termini smooth
-        if(output>1) { #output==2 #QUA DEVI FARE LA PRE-MOLTIPLICAZIONE PER LE MATRICI D
-        #  coef.pen<- obj$D.matrix%*%b #NB comprende termini param (con valori che sono 0)
-        #  if(!is.null(obj$pLin) && obj$pLin>0) coef.pen<-coef.pen[-(1:obj$pLin)]
-        #  id.coef.pen<-rep(1:length(n.coef.pen), n.coef.pen)
-        #  df.j<-tapply(coef.pen,id.coef.pen, function(.x)sum(abs(.x)>.000001) ) #df of penalized coeffs 
-        }
-        #df.j<- df.j + (vDiff-1) #*total* df of each smooth term - DIVIDERE PER QUESTO? NB (vDiff-1) ? il n. di coef unpen!
-        if(!is.null(obj$pLin) && obj$pLin>0) df.j<-c(obj$pLin, df.j)          
-        names(df.j)<-attr(id.coef, "nomi")
-        return(df.j)
-      }   
       P<- if(nrow(D.matrix)==0) crossprod(D.matrix) else crossprod(drop(pesiL1)*D.matrix[(1:length(pesiL1)),,drop=FALSE])
-      
       #browser()
       
       if(any(vMonot!=0)){
@@ -216,11 +196,12 @@ ncross.rq.fitXB <-
       #if(paste(tau)%in%colnames(DF.all)) diag(P) <- diag(P) + 10^6*DF.all[1:length(b),paste(tau)]
       #}
       
-      fittedvalues <-drop(obj$fitted.values)[1:n]
+#      fittedvalues <-drop(obj$fitted.values)[1:n]
       e<- drop(obj$residuals)[1:n]
       #Y<- obj$y[1:n]
       #X<-obj$x[1:n,,drop=FALSE] #design matrix
-      w<-ifelse(Y > fittedvalues, tau, 1-tau)
+      #w<-ifelse(Y > fittedvalues, tau, 1-tau)
+      w<-ifelse(e > 0, tau, 1-tau)
       w<-w/(abs(e)+.00001)
       XtWX<-crossprod(X*sqrt(w))
       A<-try(solve(XtWX+P, XtWX), silent=TRUE)
@@ -275,7 +256,6 @@ ncross.rq.fitXB <-
     # B <-matrix(unlist(B), n, pSmooth) #matrix(unlist(B), nrow=3,byrow = FALSE)
     # XB<-cbind(X,B)
     # p<-ncol(XB) #all coeffs, lineari + smooth
-    
     if(!is.null(X)) {
       pLin <- ncol(X)
       id.interc <- match("(Intercept)", colnames(X), 0)
@@ -312,12 +292,7 @@ ncross.rq.fitXB <-
       }
 
     if(pLin!=(p-pSmooth)) stop("errore") #pSmooth=p1 #n. termini lineari
-    #id.interc<- "(Intercept)" %in% colnames(XB)
-    #id.smooth<-c(rep(FALSE, pLin),rep(TRUE,pSmooth))
-    #if(!is.null(colmeansB)) 
-    #listaMedieB<- lapply(1:length(colmeansB), function(.x){if(is.null(colmeansB[[.x]])) rep(0, all.p[.x]) else colmeansB[[.x]]})
-    #all.means.B <- unlist(listaMedieB) #con basi noncentrate e' 0,0...
-    
+
     all.edf<-matrix(NA,p,length(taus))
     group.edf<- matrix(NA, H+(pLin>0),length(taus))
     colnames(all.edf)<-colnames(group.edf)<-paste(taus)
@@ -341,17 +316,9 @@ ncross.rq.fitXB <-
     
     id.intc.VC<- which((id.intercVC)) #le posizioni delle intercette dei VC (quando ci sono gruppi)
     exist.VC <-sum(vcList) #se >0 ci sono VC
-    #which.VC <-which(vcList)
-    
-    
-    #if(("(Intercept)" %in% colnames(XB)) && length(id.interc)<=0) stop("errore") #un piccolo controllo..
-
     #n.righe = p
     #n.colonne = n. di termini lineari + n.smooth. Se non ci sono termini lineari la 1st colonna e' una colonna di FALSE..
     id.Matr <- sapply(0:length(all.p), function(.x) I(c(rep(0, pLin), rep(1:length(all.p), all.p))==.x))
-    
-    #browser()
-    
     all.maxB<-as.list(rep(1,H))
     
     for(j in 1:H){
@@ -362,36 +329,9 @@ ncross.rq.fitXB <-
         colnames(B[[j]]) <- cln
       }
     }
-    
-    #browser()
-    
     #H <-length(B) #no. of smooth terms
     B <-matrix(unlist(B), n, pSmooth) #matrix(unlist(B), nrow=3,byrow = FALSE)
     XB<-cbind(X,B)
-    #p<-ncol(XB) #all coeffs, lineari + smooth
-    
-    
-    
-    
-    
-    # id.interc.Constr <- (id.interc>0 && any(!vcList))
-    # id.VC.Constr <- (exist.VC>0 && any(centerList))
-    # 
-    # if(id.interc.Constr){
-    #   #idsmoothInter <-rowSums(id.Matr[,-1, drop=FALSE][, !dropvcList, drop=FALSE])==1
-    #   idsmoothInter <-rowSums(id.Matr[,-1, drop=FALSE][, !vcList, drop=FALSE])==1 #cambiato 24/5 per la 1.3-0
-    #   idsmoothInter[id.interc] <- TRUE #questa riga non fa niente se id.interc = 0 (cioe se non c'e' interc)
-    #   valueNcrosInterc <- c(1, unlist(colmeansB[!vcList])) #intercetta si assume nella posiz 1.. colmeansB e' 0 per basi noncentrate
-    # }
-    # if(exist.VC) {
-    #   id.Matr <- id.Matr[,-1, drop=FALSE][, vcList, drop=FALSE] #ORA!!!!!!!!!!!
-    #   valueNcrosVC <- colmeansB[vcList]
-    # }
-    
-    #Dalla 1.6-0 ho realizzato che il vincolo NC sull'interc "b0-sum Bmedio" vale anche se ci sono 
-    #termini VC, quindi e' inutile fare distinzione con VC. Basta sapere se c'e' l'intercetta.
-    #vincoli sotto..
-#----------------------------------------------------------------------------------------
     
     id.start.tau<-which.min(abs(taus-0.5))
     lambda.tau.spec<-FALSE
@@ -414,6 +354,7 @@ ncross.rq.fitXB <-
           D1[[j]] <-sign(monotone[j])*diff(diag(nrow(Bconstr[[j]])), diff=1) %*% Bconstr[[j]]
         } else {
           D1[[j]]<-if(dropcList[j]) sign(monotone[j])*(diff(diag(all.p[j]+1), diff=1)[,-1]) else sign(monotone[j])*diff(diag(all.p[j]), diff=1)
+          #browser()
           #D1[[j]]<- sign(monotone[j])*diff(diag(all.p[j]), diff=1)
         }
       } else { 
@@ -461,12 +402,73 @@ ncross.rq.fitXB <-
     if(any(lambda>0)){
       XB<- rbind(XB.orig, D.matrix.lambda)
     }
-    #browser()
-    
     if(lambda.ridge>0) XB<-rbind(XB, lambda.ridge*diag(ncol(XB))) #a small ridge penalty
     y<-c(y, rep(0,nrow(XB)-n))
-    o.start<-if(any(monotone!=0 | concave!=0)) rq.fit(x=XB, y=y, tau=start.tau, method="fnc", R=R.monot, r=r.monot)
-      else rq.fit(x=XB, y=y, tau=start.tau)
+    
+    
+    #apprx=TRUE
+    
+    #browser()
+    
+    if(it.j<=2){
+      #o<-rq.fit.fnb(y=y, x=XB, tau=taus) #restituisce solo coef p x ntau
+      #colnames(o$coefficients)<- paste(taus)
+      #o$fitted.values <- XB.orig%*%o$coefficients
+      #o$residuals<- sapply(1:length(taus), function(.x) y[1:n]-o$fitted.values[,.x])
+      
+      #all.rho <-sapply(1:length(taus), function(.x) sum(Rho(o$residuals[,.x], taus[.x])))
+      id.coef.spline<-vector("list", length=H+1)
+      id.coef.spline[[1]]<- if(ncol(X)>0) 1:ncol(X) else 0
+      for(j in 1:H) id.coef.spline[[j+1]] <- max(id.coef.spline[[j]]) + seq_len(all.p[j])
+      names(id.coef.spline)<-c("Xlin", names(lambda))
+      id.df<-rep(1:length(id.coef.spline), sapply(id.coef.spline,length))
+      attr(id.df, "nomi")<-c("Xlin", names(lambda))
+      if(length(id.coef.spline[[1]])==1 && id.coef.spline[[1]]==0) {
+        id.df<-id.df[-1]
+        attr(id.df, "nomi")<-names(lambda)
+      }
+      
+      all.rho <- taus
+      all.sigma2u<-matrix(,H, length(taus))
+      epss<-if(it.j==1) .01 else .001
+      
+      #browser()
+      
+      for(i in 1:length(taus)){
+        o<-rq.fit.fnb(y=y, x=XB, tau=taus[i], eps=epss) 
+        all.rho[i] <- sum(Rho(drop(o$residuals)[1:n], taus[i]))
+        o$n<-n   #serve a edf.rqXB() 
+        
+        pesiL1 <- abs((D.matrix%*%o$coefficients))
+        lambdasTutti<- rep(lambdaM[,i], sapply(D.list, nrow)) #controlla se serve -1*dropcList
+        if(!is.null(pLin) && pLin>0) lambdasTutti<-c(rep(0, pLin),lambdasTutti)
+        pesiL1<-sqrt(lambdasTutti/(pesiL1+.00001)) #(pesiL1[,k]+.00001)
+        df.start.tau <- edf.rqXB(o, tau=taus[i], id.coef=id.df, vMonot = monotone, vConc=concave, pesiL1=pesiL1,
+                               output=list(...)$df.option, df.nc=FALSE, DFvalues=NULL, D.matrix, Bconstr, D1, D2, 
+                               Y=y[1:n], X=XB.orig)
+        
+        all.edf[,i]<- df.start.tau$edf.all
+        group.edf[,i]<-df.start.tau$edf.j
+        for(j in 1:H) all.sigma2u[j,i] <- sum(abs(D.list[[j]]%*%o$coefficients[id.coef.spline[[j+1]]]))
+      }
+      
+      r<-list()
+      r$edf.all<- all.edf
+      r$edf.j <-group.edf
+      r$id.coef <- id.df
+      r$rho <- all.rho
+      r$all.dev2u=all.sigma2u
+      r$all.dev2e=all.rho #ll.sigma2e
+      return(r)
+    }
+    
+    #browser()
+
+    o.start<-if(any(monotone!=0 | concave!=0)) rq.fit.fnc(x=XB, y=y, tau=start.tau, R=R.monot, r=r.monot, eps=myeps)
+      else rq.fit(x=XB, y=y, tau=start.tau, method="fn") # eps=myeps) #rq.fit.pfn()?
+    if(is.null(o.start$fitted.values)) o.start$fitted.values<- y - o.start$residuals
+    #browser()
+    #Attenzione.. guarda gli oggetti che restitruisce e che deve usare edf.rqXB(). Altrimenti non va..
     
     if(!all(is.finite(o.start$coefficients))) warning(paste("Some NA estimate in the quantile tau =", start.tau, sep="" ))
     
@@ -494,7 +496,8 @@ ncross.rq.fitXB <-
     if(!is.null(pLin) && pLin>0) lambdasTutti<-c(rep(0, pLin),lambdasTutti)
     pesiL1<-sqrt(lambdasTutti/(pesiL1+.00001)) #(pesiL1[,k]+.00001)
     df.start.tau <- edf.rqXB(o.start, tau=start.tau, id.coef=id.df, vMonot = monotone, vConc=concave, pesiL1=pesiL1,
-                             output=list(...)$df.option, df.nc=FALSE, DFvalues=NULL, D.matrix, Bconstr, D1, D2, Y=y[1:n], X=XB.orig)
+                             output=list(...)$df.option, df.nc=FALSE, DFvalues=NULL, D.matrix, 
+                             Bconstr, D1, D2, Y=y[1:n], X=XB.orig)
     all.edf[,paste(start.tau)]<- df.start.tau$edf.all
     group.edf[,paste(start.tau)]<-df.start.tau$edf.j
     #-------------------
@@ -503,7 +506,6 @@ ncross.rq.fitXB <-
     if(length(taus)<=1){ #se length(taus)==1
       all.COEF<-as.matrix(o.start$coef) #era all.COEF<- o.start$coef 
       colnames(all.COEF)<-paste(taus)
-      #all.df<- sum(round(o.start$residuals[1:n],2)==0)
       all.rho<-sum(Rho(o.start$residuals[1:n], start.tau)) 
       r<-list(coefficients=all.COEF, x=XB, rho=all.rho, #tolto df=all.df,
               fitted.values=o.start$fitted.values[1:n],residuals=o.start$residuals[1:n],
@@ -542,19 +544,13 @@ ncross.rq.fitXB <-
           RR<- Ident
           rr<- b.start + eps
         }
+        
+        #browser()
+        
         #DF per NONcrossing
         DF.POS <- matrix(,nrow(RR),n.pos.taus)
         colnames(DF.POS) <- paste(pos.taus)
         
-        #NB dalla versione 1.6-0 ho cambiato i vincoli quando ci sono VC perche' le basi dei VC sono comunque "incomplete" 
-        # per cui non ha piu' senso di parlare delle intercette di gruppo..
-        #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
-        #if(id.VC.Constr) {#se ci sono VC 
-        #  for(i in 1:length(id.intc.VC)){
-        #    RR[id.intc.VC[i], id.Matr[,i]] <- valueNcrosVC[[i]]
-        #    rr[id.intc.VC[i]] <-  sum( valueNcrosVC[[i]] * b.start[id.Matr[,i]] )
-        #  }
-        #}
         if(id.interc.Constr){ #se c'e' interc con smooth (incompleti, cioe' chiamati con dropc=FALSE)
           RR[1, idsmoothInter] <- valueNcrosInterc #valueNcrosInterc sono le "-colmeansB"
           rr[1] <- b.start[1] + sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]+sum((-all.means.B)*b.start[id.smooth])
@@ -609,8 +605,8 @@ ncross.rq.fitXB <-
             if(lambda.ridge>0) XB<-rbind(XB, lambda.ridge*diag(ncol(XB))) #a small ridge penalty
           }
           o<-rq.fit(x=XB, y=y, tau=pos.taus[i], method="fnc", R=RR, r=rr)
+          #o<-rq.fit.fnc(x=XB, y=y, tau=pos.taus[i], method="fnc", R=RR, r=rr, eps=myeps)
           if(!all(is.finite(o$coefficients))) warning(paste("Some NA estimate in the quantile tau =", pos.taus[i], sep="" ))
-          
           
           o$rho<-sum(Rho(o$residuals[1:n], pos.taus[i]))
           #estrai fitted e residuals
@@ -622,9 +618,8 @@ ncross.rq.fitXB <-
           #estrai sigma2u
           for(j in 1:H) sigma2u.pos.tau[j,i]<- sum(abs(drop(D.list[[j]]%*%o$coefficients[id.coef.spline[[j+1]]])))
 
-          
           #estrai sigma2e
-          sigma2e.pos.tau[i]<-if(err.rho) o$rho else sum(o$residuals[1:n]^2*abs(pos.taus[i]-I(o$residuals[1:n]<0)))
+          sigma2e.pos.tau[i]<-o$rho #if(err.rho) o$rho else sum(o$residuals[1:n]^2*abs(pos.taus[i]-I(o$residuals[1:n]<0)))
           
           #estrai i coeff per "aggiornare" i vincoli rr
           b.start<-o$coef
@@ -636,13 +631,6 @@ ncross.rq.fitXB <-
 
           rr<- if(any(monotone!=0 | concave!=0)) c(b.start+eps, r.monot) else b.start + eps
           
-          #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
-          #if(id.VC.Constr) {#se ci sono VC 
-          #  for(ii in 1:length(id.intc.VC)){
-          #    rr[id.intc.VC[ii]] <-  sum( valueNcrosVC[[ii]] * b.start[id.Matr[,ii]] )
-          #  }
-          #}
-          #nuovi vincoli NC dalla 1.6-0
           if(id.interc.Constr){ #se ci sono smooth con interc
             #  rr[1] <- sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
             rr[1] <- b.start[1] + sum(valueNcrosInterc * b.start[idsmoothInter])
@@ -664,26 +652,27 @@ ncross.rq.fitXB <-
               }
             }
           }
-          
-          
-          
+
           o$n<-n
           #--------calcolo edf
           pesiL1<-abs((D.matrix%*%o$coefficients))
-          
 
           #lambdaM ha tante colonne quanti i tau...
           lambdasTutti<- rep(lambdaM[,paste(pos.taus[i])], sapply(D.list, nrow)) #controlla se serve -1*dropcList
           if(!is.null(pLin) && pLin>0) lambdasTutti<-c(rep(0, pLin),lambdasTutti)
           pesiL1<-sqrt(lambdasTutti/(pesiL1+.00001)) #(pesiL1[,k]+.00001)
           df.pos.tau <- edf.rqXB(o, tau=pos.taus[i], id.coef=id.df, vMonot = monotone, vConc=concave, pesiL1=pesiL1,
-                                   output=list(...)$df.option, df.nc=list(...)$df.nc, DFvalues=DF.POS[,i], D.matrix, Bconstr, D1, D2, Y=y[1:n], X=XB.orig)
+                                   output=list(...)$df.option, df.nc=list(...)$df.nc, DFvalues=DF.POS[,i], 
+                                 D.matrix, Bconstr, D1, D2, Y=y[1:n], X=XB.orig)
           all.edf[,paste(pos.taus[i])]<- df.pos.tau$edf.all
           group.edf[,paste(pos.taus[i])]<-df.pos.tau$edf.j
           #-------------------
           }#end for
       }#end if(n.pos.taus>0)
       ### PER I tau "negativi"..
+      
+      #browser()
+      
       if(n.neg.taus>0){
         rho.neg.tau <-df.neg.tau <- vector(length=n.pos.taus)
         COEF.NEG<- matrix(,ncol(XB),n.neg.taus)
@@ -693,7 +682,7 @@ ncross.rq.fitXB <-
         if(any(monotone!=0 | concave!=0)){
           Ident<-diag(p)
           RR<-rbind(-Ident, R.monot)
-          rr<-c(-b.start - eps, r.monot)
+          rr <-c(-b.start - eps, r.monot)
         } else {
           RR<- -Ident
           rr<- -b.start - eps
@@ -701,9 +690,6 @@ ncross.rq.fitXB <-
         #DF per NONcrossing
         DF.NEG<- matrix(,nrow(RR),n.neg.taus)
         colnames(DF.NEG)<-paste(neg.taus)
-        
-        #browser()
-        
         
         if(id.interc.Constr){ #se ci sono smooth con interc
           RR[1, idsmoothInter] <- -valueNcrosInterc #valueNcrosInterc sono le "-colmeansB"
@@ -743,24 +729,17 @@ ncross.rq.fitXB <-
           }
         }
         
-        #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
-        # if(id.interc.Constr){ #se ci sono smooth con interc
-        #   RR[1,idsmoothInter] <- -valueNcrosInterc
-        #   rr[1] <- -sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
-        # }
-        # if(id.VC.Constr) {#se ci sono VC 
-        #   for(i in 1:length(id.intc.VC)){
-        #     RR[id.intc.VC[i], id.Matr[,i]] <- -valueNcrosVC[[i]]
-        #     rr[id.intc.VC[i]] <-  -sum( valueNcrosVC[[i]] * b.start[id.Matr[,i]] )
-        #   }
-        # }
-        
+
         FIT.NEG<-RES.NEG<-matrix(,n,n.neg.taus)
         sigma2u.neg.tau<-matrix(,H,n.neg.taus)
         sigma2e.neg.tau<-vector(length=n.neg.taus)
         
+        #browser()
         for(i in 1:n.neg.taus){
           #AGGIORNA XB PER INCLUDERE i tau-specific lambda
+          
+          #if(i==2) browser()
+          
           if(lambda.tau.spec){
             lambda <- lambda.matrix[,paste(neg.taus[i])]
             for(j in 1:H) D.list.lambda[[j]]<- D.list[[j]]*lambda[j]
@@ -769,10 +748,10 @@ ncross.rq.fitXB <-
             if(any(lambda>0)) XB<-rbind(XB.orig, D.matrix.lambda)
             if(lambda.ridge>0) XB<-rbind(XB, lambda.ridge*diag(ncol(XB))) #a small ridge penalty
           }
-          
-          #browser()
-          
           o<-rq.fit(x=XB,y=y,tau=neg.taus[i],method="fnc",R=RR,r=rr)
+          #o<-rq.fit.fnc(x=XB,y=y,tau=neg.taus[i], R=RR, r=rr, eps=myeps)
+          ##########==============================================================
+          
           if(!all(is.finite(o$coefficients)))  warning(paste("At least one estimate is NA in the quantile curve tau = ", neg.taus[i], sep="" ))
           o$rho<-sum(Rho(o$residuals[1:n], neg.taus[i]))
           FIT.NEG[,i]<-o$fitted.values[1:n]
@@ -786,6 +765,9 @@ ncross.rq.fitXB <-
                 else sum(drop(D.list[[j]]%*%o$coefficients[id.coef.spline[[j+1]]])^2)
           }
           #estrai sigma2e
+          
+          
+          
           sigma2e.neg.tau[i]<-if(err.rho) o$rho else sum(o$residuals[1:n]^2*abs(neg.taus[i]-I(o$residuals[1:n]<0)))
           #estrai i coeff per aggiornare i vincoli
           b.start<-o$coef
@@ -793,16 +775,6 @@ ncross.rq.fitXB <-
           DF.NEG[,i] <- 1*(drop(RR%*%b.start-rr)<=1e-8)
           # rr<- if(monotone!=0) c(-b.start+eps, rep(0,p1-1) ) else -b.start+eps
           rr<- if(any(monotone!=0 | concave!=0)) c(-b.start+eps, r.monot) else -b.start + eps
-          
-          #NUOVO APRILE 2021: se c'e' intercetta e spline centrate devi cambiare il vincolo
-          # if(id.interc.Constr){ #se ci sono smooth con interc
-          #   rr[1] <- -sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
-          # }
-          # if(id.VC.Constr) {#se ci sono VC 
-          #   for(ii in 1:length(id.intc.VC)){
-          #     rr[id.intc.VC[ii]] <-  -sum( valueNcrosVC[[ii]] * b.start[id.Matr[,ii]] )
-          #   }
-          # }
           
           if(id.interc.Constr){ #se ci sono smooth con interc
             #  rr[1] <- sum(valueNcrosInterc * b.start[idsmoothInter]) #b.start[1]-sum(all.means.B*b.start[id.smooth])
@@ -835,24 +807,14 @@ ncross.rq.fitXB <-
           if(!is.null(pLin) && pLin>0) lambdasTutti<-c(rep(0, pLin),lambdasTutti)
           pesiL1<-sqrt(lambdasTutti/(pesiL1+.00001)) #(pesiL1[,k]+.00001)
           df.neg.tau <- edf.rqXB(o, tau=neg.taus[i], id.coef=id.df, vMonot = monotone, vConc=concave, pesiL1=pesiL1,
-                                 output=list(...)$df.option, df.nc=list(...)$df.nc, DFvalues=DF.NEG[,i], D.matrix, Bconstr, D1, D2, Y=y[1:n], X=XB.orig)
+                                 output=list(...)$df.option, df.nc=list(...)$df.nc, DFvalues=DF.NEG[,i], 
+                                 D.matrix, Bconstr, D1, D2, Y=y[1:n], X=XB.orig)
           all.edf[,paste(neg.taus[i])]<- df.neg.tau$edf.all
           group.edf[,paste(neg.taus[i])]<-df.neg.tau$edf.j
           #-------------------
 
         }#end for
       }#end if(n.neg.taus>0)
-      #------------------------------
-      #      if(adj.middle){
-      #            if(monotone!=0){
-      #              RR<-rbind(Ident,-Ident,R)
-      #              rr<-c(COEF.NEG[,1],-COEF.POS[,1], rep(0, p-1))
-      #              } else {
-      #              RR<-rbind(Ident, -Ident)
-      #              rr<-c(COEF.NEG[,1],-COEF.POS[,1])
-      #              }
-      #      o.start<-rq.fit(x=XB,y=y,tau=start.tau,method="fnc",R=RR,r=rr)
-      #        }
       #-------------------------------
       #browser()
       all.COEF<-cbind(COEF.NEG[,n.neg.taus:1], o.start$coef, COEF.POS)
@@ -863,7 +825,7 @@ ncross.rq.fitXB <-
       colnames(all.RES)<-paste(taus)
       
       
-      all.rho<-c(rho.neg.tau[n.neg.taus:1], sum(Rho(o.start$residuals[1:n], start.tau)) , rho.pos.tau)
+      all.rho<-c(rho.neg.tau[n.neg.taus:1], o.start$rho , rho.pos.tau)
       all.sigma2e<-c(sigma2e.neg.tau[n.neg.taus:1], sigma2e, sigma2e.pos.tau)
       all.sigma2u <-cbind(sigma2u.neg.tau[,n.neg.taus:1,drop=FALSE], sigma2u, sigma2u.pos.tau)
       colnames(all.sigma2u)<-paste(taus)      
@@ -872,7 +834,8 @@ ncross.rq.fitXB <-
               dev2u=sigma2u, dev2e=sigma2e, all.dev2u=all.sigma2u, all.dev2e=all.sigma2e, DF.NEG=DF.NEG, DF.POS=DF.POS) #
     } #end se length(taus)>1
     #browser()
-    #Attenzione XB include nella 2nd parte la penalizzazione relativa all'*ultima* curva stimata (quindi puo' essere un "problema" se i lambda sono diversi per quantili)
+    #Attenzione XB include nella 2nd parte la penalizzazione relativa all'*ultima* curva stimata 
+    #    (quindi puo' essere un "problema" se i lambda sono diversi per quantili)
     r$edf.all<- all.edf
     r$edf.j <-group.edf
       
@@ -889,7 +852,7 @@ ncross.rq.fitXB <-
     if(!is.null(minX)) r$minX<- minX
     pesiPen <- NULL
     #browser()
-    for(j in 1:H) pesiPen[[j]]<- abs(D.list[[j]]%*%all.COEF[id.coef.spline[[j+1]],,drop=FALSE])
+    if(any(adList>0)) for(j in 1:H) pesiPen[[j]]<- abs(D.list[[j]]%*%all.COEF[id.coef.spline[[j+1]],,drop=FALSE])
     r$pesiPen <- pesiPen
     return(r)
   }

@@ -5,7 +5,7 @@ vcov.gcrq <- function(object, term, type=c("sandw","boot"),...){
               #object <- update(object, n.boot=100)
               #warning("The fit misses boot replicates.. 100 runs have been performed now")
               stop("the object fit misses the boot replicates")  
-              }
+        }
         #if(is.null(object$boot.coef)) stop(" 'vcov.gcrq' works only with boot")
         coef.boot<-object$boot.coef
         n.boot<-dim(coef.boot)[3]

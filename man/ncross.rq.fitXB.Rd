@@ -19,7 +19,7 @@ ncross.rq.fitXB(y, x, B=NULL, X=NULL, taus, monotone=FALSE, concave=FALSE,
     var.pen=NULL, penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, 
     decomList=FALSE, vcList=FALSE, dropvcList=FALSE, centerList=FALSE, 
     ridgeList=FALSE, ps.matrix.list=FALSE, colmeansB=NULL, Bconstr=NULL, 
-    adjX.constr=TRUE, ...)
+    adjX.constr=TRUE, adList=FALSE, it.j=10, myeps=NULL, ...)
 
 ncross.rq.fitX(y, X = NULL, taus, adjX.constr=TRUE, lambda.ridge = 0, eps = 1e-04,...) 
     %sgn.constr=1, adjX.constr=TRUE, ...)
@@ -127,6 +127,13 @@ returning cv scores; see the same arguments in \code{\link{gcrq}}.
 }
   \item{adjX.constr}{logical to shift the linear covariates. Appropriate only with linear terms.
 }
+  \item{adList}{see \code{ad} in \code{\link{ps}}.
+}
+  \item{it.j}{Ignore.
+}
+  \item{myeps}{Ignore.
+}
+
   \item{\dots}{
 optional.
 }
