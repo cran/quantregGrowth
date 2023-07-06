@@ -40,11 +40,12 @@ vcov.gcrq <- function(object, term, type=c("sandw","boot"),...){
     } else {
         #stop("only 'type=boot' allowed ")
         #.. uses a kernel estimate of the sandwich as proposed by Powell(1990).
-        taus<-object$taus
+      #browser()  
+      taus<-object$taus
         n.tau<-length(taus) #if(length(tau)>1) stop("multiple taus not yet allowed")
         n<-nrow(as.matrix(object$fitted.values))
         ##################
-        x.tildeUp<-object$x[1:n,,drop=FALSE] 
+        x.tildeUp<-as.matrix(object$x)[1:n,,drop=FALSE] 
         
         #browser()
         
@@ -67,7 +68,7 @@ vcov.gcrq <- function(object, term, type=c("sandw","boot"),...){
             f <- dnorm(uhat/h)/h
             if(!is.null(object$lambda)){
                 D.lambda <- t(c(rep(0,object$pLin), rep(lambda[,j], n.coefs))*Dt)
-                x.tilde<-rbind(x.tildeUp, D.lambda)
+                x.tilde<-rbind(x.tildeUp, as.matrix(D.lambda))
                 f<-c(f, rep(1, nrowD))
             } else {
                 x.tilde<-rbind(x.tildeUp)

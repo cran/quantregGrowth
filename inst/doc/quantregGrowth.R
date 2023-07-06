@@ -41,8 +41,7 @@ o <- gcrq(y ~ ps(x0) + ps(x1) + ps(x2) + ps(x3), data=d, tau=.5)
 
 ## ----fig-margin, fig.width=7, fig.height=5------------------------------------
 # Plot the fit
-par(mfrow=c(2,2))
-plot(o, res=TRUE, col=2, conf.level=.95, shade=TRUE, cex.p=.6) #cex.p<1 to reduce the points..
+plot(o, res=TRUE, col=2, conf.level=.95, shade=TRUE, cex.p=.6, split=TRUE) #cex.p<1 to reduce the points..
 
 
 ## ----3, message = F-----------------------------------------------------------
@@ -122,20 +121,29 @@ plot(o6, res=TRUE, col=4, lwd=3, ylim=c(0,12))
 n <- 50
 z <-1:n/n
 p <-20
+set.seed(1515)
 X<-matrix(runif(n*p),n,p)
 true.coef <-rep(0,p)
 true.coef[c(3,5,11)] <- c(.7,1.5,-1)
 y<-5 + 1.5*z+  drop(X%*%true.coef) + rnorm(n)*.25
 
 ## ---- fig.width=6, fig.height=4-----------------------------------------------
-o <-gcrq(y~ z + ps(X), tau=.5) 
+o <-gcrq(y~ z + ps(X), tau=.5)
 plot(o, term=1)
 
+## ---- fig.width=6, fig.height=4-----------------------------------------------
+o1 <-gcrq(y~ z + ps(X, ad=1), tau=.5) 
+plot(o, term=1, ylim=c(-1.3,1.5))
+plot(o1, term=1, add=TRUE, col=3, pch=2)
+points(true.coef, pch=3, col=4) #true coefficients
+
 ## ---- fig.width=9, fig.height=4-----------------------------------------------
-o <-gcrq(y ~ z + ps(X)) 
+o <-gcrq(y ~ z + ps(X))       #standard lasso
+o1 <-gcrq(y ~ z + ps(X, ad=1)) #adaptive lasso
 par(mfrow=c(1,2))
 plot(o, term=1, legend=TRUE)
-plot(o, term=2)
+plot(o1, term=1, legend=TRUE)
+
 
 ## ---- echo=FALSE, results='asis'----------------------------------------------
 knitr::kable(head(mtcars, 10))

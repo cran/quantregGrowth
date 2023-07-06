@@ -25,7 +25,8 @@ If \code{TRUE}, the log likelihood values (and relevant edf) are summed over the
 Optional numeric specifying the penalty of the edf in the AIC formula. \code{k < 0} means \code{k=log(n)}.
 }
 \item{bondell}{
-Logical. If \code{TRUE}, the \emph{SIC} according to formula (7) in Bondell et al. (2010) is computed. \code{k} is ignored and \eqn{k=\log(n)}{k=log(n)} is always used.
+Logical. If \code{TRUE}, the \emph{SIC} according to formula (7) in Bondell et al. (2010) is computed. 
+%\code{k} is ignored and \eqn{k=\log(n)}{k=log(n)} is always used.
 }
 
   \item{\dots}{

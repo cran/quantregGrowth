@@ -9,9 +9,10 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 }
 \usage{
 \method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, axis.tau=FALSE, 
-   interc=TRUE, se.interc=FALSE, legend = FALSE, select.tau, deriv = FALSE, cv = FALSE, 
-   transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, overall.eff=TRUE, %%n.points=100,
-   grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), ...)
+   interc=TRUE, se.interc=FALSE, legend = FALSE, select.tau, deriv = FALSE, 
+   cv = FALSE, transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, 
+   overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), 
+   ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

@@ -1,6 +1,7 @@
 summary.gcrq <- function(object, type = c("sandw", "boot"), digits = max(3, getOption("digits") - 3), 
          signif.stars = getOption("show.signif.stars"), ...) {
    edfS <- object$edf.j
+   #browser()
    if (length(object$info.smooth) > 0) {
       if (rownames(edfS)[1] == "Xlin") 
          edfS <- edfS[-1, , drop = FALSE]

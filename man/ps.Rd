@@ -12,7 +12,8 @@ passes relevant information to proper fitter functions.
 \usage{
 ps(..., lambda = -1, d = 3, by=NULL, ndx = NULL, deg = 3, knots=NULL,
     monotone = 0, concave = 0, var.pen = NULL, pen.matrix=NULL, dropc=TRUE, 
-    center=TRUE, K=NULL, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, st=FALSE, ad=0)
+    center=TRUE, K=NULL, decom=FALSE, constr.fit=TRUE, shared.pen=FALSE, 
+    st=FALSE, ad=0)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -82,14 +83,14 @@ logical. If \code{monotone} or \code{concave} are different from 0, \code{constr
 logical. If \code{TRUE} and the smooth is a VC term with a factor specified in \code{by}, the smooths in each level of the factor share the same smoothing parameter.
 }
   \item{st}{
-logical. If \code{TRUE} the variable(s) are standardized via the \code{scale()} function. Typically used for lasso, i.e. when a matrix of covariates is passed in \code{ps()}.
+logical. If \code{TRUE} the variable(s) are standardized via the \code{scale()} function. Typically used for variable selection via lasso, i.e. when a matrix of covariates is passed in \code{ps()}.
 }
   \item{ad}{
-a positive number. If a matrix has been supplied in \code{ps()}, a form of \emph{adaptive} lasso is employed. More specifically, at each step the penalty is \eqn{\lambda\sum_jw_j|\beta_j|}{sumj wj |betaj|} where \eqn{w_j=|\tilde{\beta}_j|^\mathtt{-ad}}{w_j=|prev.beta_j|^(-ad)} and \eqn{\tilde{\beta}_j}{prev.beta_j} are estimates coming from the previous iteration with a different value of  \eqn{\lambda}{lambda}. \code{ad=0} means the standard lasso and \code{ad=1} the adaptive lasso. Currently not implemented.
+a positive number to carry out a form of \emph{adaptive} lasso. More specifically, at each step of the iterative algorithm, the penalty is \eqn{\lambda\sum_jw_j|\beta_j|}{sumj wj |betaj|} where \eqn{w_j=|\tilde{\beta}_j|^\mathtt{-ad}}{w_j=|prev.beta_j|^(-ad)} and \eqn{\tilde{\beta}_j}{prev.beta_j} are estimates coming from the previous iteration with a different value of  \eqn{\lambda}{lambda}. \code{ad=0} means the standard lasso and \code{ad=1} the adaptive lasso. 
 }
 }
 \details{
-If a numeric variable has been supplied, \code{ps()} builds a B-spline basis having \code{ndx+deg} (or \code{length(knots)-deg-1}) columns. However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability, and the spline coefficients are penalized via differences of order \code{d}; \code{d=0} leads to a penalty on the coefficients themselves.  If \code{pen.matrix} is supplied, \code{d} is ignored. Since versions 1.5-0 and 1.6-0, a factor or matrix can be supplied.
+If a numeric variable has been supplied, \code{ps()} builds a B-spline basis with number of columns equal to \code{ndx+deg} (or \code{length(knots)-deg-1}). However, unless \code{dropc=FALSE} is specified, the first column is removed for identifiability, and the spline coefficients are penalized via differences of order \code{d}; \code{d=0} leads to a penalty on the coefficients themselves.  If \code{pen.matrix} is supplied, \code{d} is ignored. Since versions 1.5-0 and 1.6-0, a factor or matrix can be supplied.
 
 \code{lambda} is the tuning parameter, fixed or to be estimated. When \code{lambda}=0 an unpenalized (and typically wiggly) fit is obtained, and as lambda increases the curve gets smoother till a \code{d-1} degree polynomial. At 'intermediate' lambda values, the fitted curve is a \emph{piecewise} polynomial of degree \code{d-1}.
 

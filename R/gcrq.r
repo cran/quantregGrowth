@@ -2,9 +2,9 @@ gcrq <-
 function(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, transf=NULL,
     y=TRUE, n.boot=0, eps=0.001,  #ho rimosso cv=FALSE, interc=TRUE,
     display=FALSE, method=c("REML","ML"), df.opt=2, df.nc=FALSE,
-    lambda0=.1, h=0.8, lambda.max=2000, tol=0.01, it.max=20, single.lambda=TRUE, 
+    lambda0=.1, h=0.8, lambda.max=1000, tol=0.01, it.max=15, single.lambda=TRUE, 
     foldid=NULL, nfolds=10, lambda.ridge=0, adjX.constr=TRUE, #sgn.constr=NULL, ,
-    contrasts=NULL, ...){
+    contrasts=NULL, sparse=FALSE){
 #df.nc: se TRUE, i df calcolati tengono conto dei vincoli noncross (ignorato se la stima e' di una singolo tau)
 #single.lambda: if TRUE (and multiple quantile curves are being estimated) a common spar across the tau values is computed
 #sett 19: aggiunto df.opt=4 (tutto approx quadratica..)
@@ -111,13 +111,13 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       #else {
       #if(length(knots)!=(ndx+1+2*deg)) stop("errore nel numero di nodi fornito")
       #}
-    B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok)
+    B <- splineDesign(knots, x, ord = deg + 1, derivs = rep(deriv, length(x)), outer.ok=outer.ok) #,sparse=TRUE
     B
 }
   ##### ====================================================================================
   ##### INIZIO FUNZIONE
     #settiamo qualche opzione che forse non ? molto utile..
-    
+    #sparse=FALSE
     n.points=200 #questo serve per i disegni e per i vincoli di monot e conc (se ps(..,constr.fit=TRUE))
     
     #all.perc=FALSE
@@ -173,7 +173,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     mt <- attr(mf, "terms")
     intercMt<-attr(mt,"intercept")
     interc<-intercMt==1
-    Y <- model.response(mf, "any")
+    Y <- stats::model.response(mf, "any")
     if (length(dim(Y)) == 1L) {
         nm <- rownames(Y)
         dim(Y) <- NULL
@@ -184,6 +184,9 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         Y <- eval(parse(text=transf), list(y=Y))
         transf.inv<-splinefun(Y, Y.orig, ties=min, method="monoH.FC")
     }
+    
+    
+    #browser()
     
     #----------- vedi dove mettere i seguenti. Va bene qui?
     # colnames(mf)[id.ps]<-testo.ps #devi sostituire i nome altrimenti .getXlevels() non funziona
@@ -202,11 +205,12 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     #---
 
     X <- if(!is.empty.model(mt)){
-        model.matrix(mt, mf, contrasts) 
-      } else {stop("error in the design matrix")}#matrix(, NROW(Y), 0L)
+      stats::model.matrix(mt, mf, contrasts) 
+      } else {
+        stop("error in the design matrix")
+        }#matrix(, NROW(Y), 0L)
     attrContr<-attr(X, "contrasts")
     n<-nrow(X)
-
     #browser()
     
     if(ncol(X)>0 && any(apply(X,2,sd)==0)){
@@ -273,7 +277,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       nomiPS<-unlist(sapply(l,function(xx)attr(xx,"nomeX")))
       var.pen<-unlist(sapply(l,function(xx)attr(xx,"var.pen"))) 
       K<- sapply(l,function(xx)attr(xx,"K"))
-      ridgeList<-unlist(sapply(l,function(xx)attr(xx,"ridge")))
+      ridgeList<-unlist(sapply(l,function(xx)attr(xx,"ridge"))) #TRUE se la variabile e' una matrice o un fattore
       nomiBy<-unlist(sapply(l,function(xx)attr(xx,"nomeBy")))
       levelsBy<-lapply(l,function(xx)attr(xx,"levelsBy"))
       dimSmooth<-unlist(sapply(l,function(xx)attr(xx,"dimSmooth")))
@@ -291,7 +295,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
 		  #controlla se ci soo vincoli monot e concav con constr.fit=FALSE e base centrata
 		  #vMonot, vConc, constr.fitList,dropcList,centerList
 		  
-		  
+		  #browser()
 		  if(any(centerList & !dropcList)) stop(paste("center=TRUE and dropc=FALSE incompatible for the smooth term #: ", which(centerList & !dropcList)))
 		  #per il msg di sotto, devi guardare bene... se ci sono VC terms?
 		  #if(any(!dropcList) && "(Intercept)"%in%colnames(X)) stop() 
@@ -352,8 +356,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           "pdiff", "deg","adapt","sc")) attr(variabileSmooth,jj)<-NULL
         
         #browser()
-        
-        
+        if(sparse) decomList[j]<-centerList[j] <- dropcList[j]<- ridgeList[j] <- constr.fitList[j]<- FALSE
+
         if(ridgeList[j]){
           dropcList[j] <- FALSE
           vMonot[j]<-0 #per evitare sorprese..
@@ -369,12 +373,12 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
             B[[j]]<-variabileSmooth
             if(scList[j]) B[[j]] <- scale(variabileSmooth)
             colnames(B[[j]])<- if(is.null(colnames(variabileSmooth))) paste(nomiPS[j], 1:ncol(variabileSmooth), sep="") else colnames(variabileSmooth)
-            if(is.null(K[[j]])) K[[j]] <- log(nrow(B[[j]])/(ncol(B[[j]])^(1/2))) #log(n/p^(2/3))
+            if(is.null(K[[j]])) K[[j]] <- log(nrow(B[[j]])/(ncol(B[[j]])^(2/3))) #log(n/p^(1/2)) e' troppo severo! (lambda tende ad essere grande)
             } else { #se random intercepts
               ps.matrix.list[j] <- FALSE
-              B[[j]]<-model.matrix(~0+factor(variabileSmooth))
+              B[[j]]<-stats::model.matrix(~0+factor(variabileSmooth))
               colnames(B[[j]])<- paste(nomiPS[j], sort(unique(variabileSmooth)), sep="")
-              if(is.null(K[[j]])) K[[j]] <- log(nrow(B[[j]])/(ncol(B[[j]])^(1/2))) #log(n/p^(2/3))
+              if(is.null(K[[j]])) K[[j]] <- log(nrow(B[[j]])/(ncol(B[[j]])^(2/3))) #log(n/p^(1/2))
             }
           #browser()
           #se NON e' specificata, la matrice di Pen e' Ident
@@ -388,7 +392,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           if(is.null(K[[j]])) K[[j]] <- 2
           ps.matrix.list[j] <- FALSE
           rangeSmooth[[j]] <- range(variabileSmooth)
-          B[[j]]<- bspline(variabileSmooth,ndx=vNdx[j],deg=vDeg[j], knots=knotsList[[j]]) 
+          B[[j]]<- bspline(variabileSmooth,ndx=vNdx[j],deg=vDeg[j], knots=knotsList[[j]])
+
           if(decomList[j]) {
             Dj<-diff(diag(ncol(B[[j]])), diff = vDiff[j])
             B[[j]]<- B[[j]]%*%t(solve(tcrossprod(Dj),Dj)) #sono ncol(B[[j]])-vDiff[j]
@@ -423,7 +428,8 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
               B[[j]] <-variabileBy*B[[j]]
               nomiCoefPEN[[j]]<- sapply(1:ncol(B[[j]]), function(x) gsub(":", paste(".",x, ":", sep="") , nomiPS.ps[j]))
             } else {
-              M<-model.matrix(~0+factor(variabileBy))
+              names(levelsBy)[j] <- nomiBy[j]
+              M<-stats::model.matrix(~0+factor(variabileBy))
               #B[[j]]<- if(dropvcList[j]) lapply(1:ncol(M), function(.x) cbind(M[,.x],M[,.x]*B[[j]])) else lapply(1:ncol(M), function(.x) M[,.x]*B[[j]])
               B[[j]]<- lapply(1:ncol(M), function(.x) M[,.x]*B[[j]])
               nomiCoefPEN[[j]] <- lapply(1:length(B[[j]]), 
@@ -443,8 +449,6 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       
       #se B include liste (se ci sono vc terms con by factor), bisogna eliminarle e riportarle nella lista principale B..
       #rep() funziona anche con le liste!!!!
-      
-      #browser()
       
       repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
       colMeansBorig.list <- rep(colMeansBorig.list, repl)
@@ -505,7 +509,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           variabileSmooth <- if(is.null(nomiBy.j)) drop(mVariabili[[j]]) else mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
           if(ridgeList[j]){
             #variabileSmooth <- if(is.null(nomiBy.j)) drop(mVariabili[[j]]) else mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE]
-            BB1 <- if(is.matrix(variabileSmooth)) variabileSmooth else model.matrix(~0+ factor(unique(variabileSmooth)))
+            BB1 <- if(is.matrix(variabileSmooth)) variabileSmooth else stats::model.matrix(~0+ factor(unique(variabileSmooth)))
             colnames(BB1)<- colnames(B[[j]])
             attr(BB1,"covariate.n")<- variabileSmooth #NB mVariabili[,j] (che viene assegnato a attr(,"covariate.n")) contiene altri attributi "ndx", "deg", "pdiff", "monot", "lambda","nomeX"
             attr(BB1,"covariate.35")<- "ridge"
@@ -550,9 +554,14 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
             BB[[j]]<-BB1
             Bderiv[[j]]<-bspline(xdisegno, ndx=vNdx[j], deg=vDeg[j], knots=knotsList[[j]], deriv=1)
             if(dropcList[j]) Bderiv[[j]]<-Bderiv[[j]][,-1]
+            
             if(is.null(penMatrixList[[j]])) {
-              penMatrixList[[j]] <- diff(diag(vNdx[j]+vDeg[j]), diff=vDiff[j])
-              if(dropcList[j]) penMatrixList[[j]] <- penMatrixList[[j]][,-1] 
+              penMatrixList[[j]] <- if(dropcList[j]) diff(diag(ncol(BB[[j]])+1), diff=vDiff[j])[,-1]
+                                          else diff(diag(ncol(BB[[j]])), diff=vDiff[j])
+              
+              #penMatrixList[[j]] <- diff(diag(vNdx[j]+vDeg[j]), diff=vDiff[j])
+              #if(dropcList[j]) penMatrixList[[j]] <- penMatrixList[[j]][,-1]
+              
             }
           }
       } #end for(j in 1:length(mVariabili))
@@ -576,7 +585,10 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     }
     X<- X[,-grep( "ps[(]" , colnames(X)), drop=FALSE]
     
-    #browser()
+   if(sparse && ncol(X)>0) {
+     X<-X[,-(1:ncol(X)),drop=FALSE]
+     warning("removing linear terms (including the intercept)' not allowed with 'sparse=TRUE' ")
+   }
     
     BBlin<-vector("list", ncol(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE]))
     if(length(setdiff(colnames(X),"(Intercept)"))>=1){ #se ci sono termini lineari (oltre l'intercetta)
@@ -599,7 +611,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       r.cv<- gcrq.rq.cv(Y, B[[1]], X, tau, monotone=vMonot, concave=vConc, ndx=vNdx, lambda=lambdas, deg=vDeg, dif=vDiff, 
                    var.pen=var.pen, penMatrix=penMatrixList, lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, 
                    vcList=vcList, dropvcList=dropvcList, centerList=centerList, colmeansB=colMeansB.list, 
-                   nfolds=nfolds, foldid=foldid, eps=eps, Bconstr=BB, df.option=df.option, df.nc=df.nc, ...)
+                   nfolds=nfolds, foldid=foldid, eps=eps, Bconstr=BB, df.option=df.option, df.nc=df.nc, sparse=sparse)
       lambda<-r.cv[[1]]
     } else {
         cv<-FALSE
@@ -608,12 +620,11 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     #nomiPS.ps
     #[1] "ps(x)"    "ps(x):z1"
     
-    #browser()
-    
     names(lambda)<-names(vMonot)<-names(vConc)<- unlist(nomiPS.ps.ok) #nomiVariabPEN #meglio nomiPS.ps
     #-------------------------------------------
-    shared.penList1<- unlist(tapply(shared.penList, nomiPS.ps, function(.x) if(!.x[1]) seq_len(length(.x)) else rep(100,length(.x))))
-    id.shared.pen <-as.numeric(interaction(shared.penList, nomiPS.ps, drop=TRUE))+shared.penList1
+    shared.penList1 <- unlist(tapply(shared.penList, unlist(nomiPS.ps.ok), function(.x) if(!.x[1]) seq_len(length(.x)) else rep(100,length(.x))))
+    id.shared.pen   <- as.numeric(interaction(shared.penList, unlist(nomiPS.ps.ok), drop=TRUE))+shared.penList1 #era nomiPS.ps
+    id.shared.pen   <- id.shared.pen[names(lambda)]
     #-----------------------------------------------
     idCoefGroup <- rep(0:length(B), c(ncol(X),sapply(B, ncol)))
     
@@ -634,9 +645,13 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     #-----------------------------------------------
     penMatrixList0 <- penMatrixList
     
-    #browser()
+    
+    # fitter<- if(sparse) get("ncross.rq.fitXBsparse", mode="function") else get("ncross.rq.fitXB", mode="function") 
+    
     if(any(lambda<0)){
+        sigma2uValues<-matrix(,it.max,length(B))
         lambda<- tapply(lambda, id.shared.pen, mean) #riduci i lambda se c'e' qualcuno condiviso..
+        names(lambda) <- names(vMonot) #il tapply() perde i nomi.. quindi recuperali..
         id.lambda.est<-(lambda<0) #which lambdas should be estimated?
         lambda[id.lambda.est]<-lambda0 #.5
         lambdaFixed<-lambda[!id.lambda.est]
@@ -649,9 +664,11 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         ############################################################################################
         #==================================================================
         #browser()
+        sigma2u.Rel<-rep(1, length(B))
+        sigma2u<- rep(1, length(B))
+        All.lambda<-matrix(NA,it.max,length(B))
+        if(!single.lambda && length(B)>1) stop(" tau-specific lambdas allowed only with one smooth ")
         for(j in 1:it.max){ #
-          
-          #if(j==3) browser()
           
           expand.lambda<- rep(lambda, tapply(id.shared.pen, id.shared.pen, length))
           if(!single.lambda) expand.lambda <- matrix(expand.lambda, ncol=length(tau))
@@ -669,20 +686,27 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
               }
             }
           }
-          #browser()
-          fit <-suppressWarnings(ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
-                  lambda=expand.lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
-                  lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList, 
-                  centerList=centerList, colmeansB=colMeansB.list, ridgeList=ridgeList, ps.matrix.list=ps.matrix.list,
-                  Bconstr=BB, df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, myeps=myepsV[j], it.j=10,
-                  adList=adList))
-                  #NB colMeansBorig.list ha un valore in meno per VC terms!
-
-          #browser()
           
-          #giugno 2021, usa gli edf.j calcolati in ncross.rq.fitXB()
-          edf.jM<-edf.j<-fit$edf.j
+          if(sparse){
+            fit <-suppressWarnings(ncross.rq.fitXBsparse(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
+                                                   lambda=expand.lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
+                                                   lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList,
+                                                   centerList=centerList, colmeansB=colMeansB.list, ridgeList=ridgeList, ps.matrix.list=ps.matrix.list,
+                                                   Bconstr=BB, df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, myeps=myepsV[j], it.j=10,
+                                                   adList=adList))
+          } else {
+            fit <-suppressWarnings(ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
+                    lambda=expand.lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
+                    lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList,
+                    centerList=centerList, colmeansB=colMeansB.list, ridgeList=ridgeList, ps.matrix.list=ps.matrix.list,
+                    Bconstr=BB, df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, myeps=myepsV[j], it.j=10,
+                    adList=adList))
+                  #NB colMeansBorig.list ha un valore in meno per VC terms!
+          }
 
+          edf.jM<-edf.j<-fit$edf.j
+          sigma2u.old <- sigma2u
+          
           if(single.lambda){ #un unico lambda per tutti i percentili..
             dev2u<-apply(fit$all.dev2u,1,sum) #all.dev2u e' matrice . con un singolo tau era "fit$dev2u"
             if(attr(fit$id.coef, "nomi")[1]!="Xlin") edf.jM<-rbind(0, edf.jM) #edf.j<-c(0,edf.j)
@@ -705,30 +729,44 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           ###########################################################
           #attenzione ai nomi... magari names(lambda)<-names(lambda.old) ??
           
-          
+          #if(j==8) browser()
           
           if(!single.lambda) lambda.old<-matrix(lambda.old, ncol=ncol(lambda), nrow=nrow(lambda))
           
           d<-lambda-lambda.old
           if(j>=it.max) h.ok<-h^(j-it.max)
-          lambda<-pmin(lambda.old+h.ok*d,lambda.max)
-          lambda[!id.lambda.est]<-lambdaFixed #funziona anche con matrici !!! :-))) che culo!!! :-)))
+          lambda <- pmin(lambda.old+h.ok*d,lambda.max)
+          lambda[!id.lambda.est] <- lambdaFixed #funziona anche con matrici !!! :-))) che culo!!! :-)))
+          if(single.lambda) All.lambda[j,]<- lambda
           #---------------------------------------------
           #se vuoi valutare diff in rho..
           old.rho<-new.rho
           new.rho<-fit$rho
           #---------------------------------------------
-          if(all(abs((lambda.old-lambda)/(lambda.old+1e-8))< tol)) {
-            break
+          if(all(abs((lambda.old-lambda)/(lambda.old+1e-8))< tol)) break
+          
+          if(single.lambda && j>=5){
+            #controlla e fermati se tra gli ultimi 4 valori dei lambda stimati quelli diversi sono <=2 (il che significa 
+            #   che si stanno ripetendo sempre gli stessi valori)
+            #browser()
+            n.diversi.lambda <- apply(round(All.lambda[j:(j-3),, drop=FALSE], 3), 2, function(.x) length(unique(.x)))
+            if(all(n.diversi.lambda <=2)) break
           }
+          
+          #if(all((abs(sigma2u-sigma2u.old)/sum(sigma2u)) < tol)) break
+           
           #if() Fellner: change in Variance/sum(AllVariances)
+          #sigma2u.Rel.old <- sigma2u.Rel
+          #sigma2uValues[j,] <- sigma2u.Rel<- sigma2u /sum(sigma2u)
+          #if(all(abs(sigma2u.Rel.old - sigma2u.Rel)< tol)) break
+          
           ###### non convergenza: continua!
           if(display) {
             flush.console()
             cat("iteration:", if(j<10) paste("",j) else j,
                 " lambda:", formatC(ifelse(lambda==lambda.max,Inf,lambda), digits=3, width=8, format="f"), "\n") #prima era format="f"/"g"
             #writeLines(strwrap(paste("iteration", j, " lambda", formatC(ifelse(lambda==lambda.max,Inf,lambda), digits=3, width=7, format="f")),"\n"))
-            }
+          }
           #---------------------------------------------
           #if(all(abs((old.rho-new.rho)/(old.rho+1e-8))< tol)) break
           #if(all(abs((lambda.old-lambda)/(lambda.old+1e-8))< tol)) break
@@ -756,14 +794,27 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
         #     }
         #   }
         # }
+        if(sparse){
+          fit <-suppressWarnings(ncross.rq.fitXBsparse(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
+                                                       lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
+                                                       lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList,
+                                                       centerList=centerList, colmeansB=colMeansB.list, ridgeList=ridgeList, ps.matrix.list=ps.matrix.list,
+                                                       Bconstr=BB, df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, it.j=10))
+        } else {
+          fit <-suppressWarnings(ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx,
+                                                 lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList,
+                                                 lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList,
+                                                 centerList=centerList, colmeansB=colMeansB.list, ridgeList=ridgeList, ps.matrix.list=ps.matrix.list,
+                                                 Bconstr=BB, df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, it.j=10))
+          #NB colMeansBorig.list ha un valore in meno per VC terms!
+        }
         
         #browser()
-        
-        fit<-ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx, 
-          lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList, 
-          lambda.ridge=lambda.ridge,dropcList=dropcList,decomList=decomList, vcList=vcList, dropvcList=dropvcList, 
-          centerList=centerList, colmeansB=colMeansB.list,ridgeList=ridgeList, ps.matrix.list=ps.matrix.list, Bconstr=BB, 
-          df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, adList=adList)
+            # fit<-ncross.rq.fitXB(y=Y, B=B, X=X, taus=tau, monotone=vMonot, concave=vConc, ndx=vNdx, 
+            #   lambda=lambda, deg=vDeg, dif=vDiff, var.pen=var.pen, eps=eps, penMatrix=penMatrixList, 
+            #   lambda.ridge=lambda.ridge,dropcList=dropcList,decomList=decomList, vcList=vcList, dropvcList=dropvcList, 
+            #   centerList=centerList, colmeansB=colMeansB.list,ridgeList=ridgeList, ps.matrix.list=ps.matrix.list, Bconstr=BB, 
+            #   df.option=df.option, df.nc=df.nc, adjX.constr=adjX.constr, adList=adList, it.j=10)
         
         K.matrix<-NULL
         #K.matrix<-matrix(K, nrow=length(K), ncol=length(tau))
@@ -793,8 +844,6 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
           warning(paste(length(id.NA), "boot resamples without convergence"), call.=FALSE)
         }
       } #end if n.boot
-    
-    #browser()
     
     nomiCoefUNPEN<-rownames(as.matrix(fit$coefficients))[1:ncol(X)]
       nn<-c(nomiCoefUNPEN,unlist(nomiCoefPEN))
@@ -835,7 +884,18 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       attr(fit$fitted.values, "transf.inv") <- transf.inv
       attr(fit$fitted.values, "transf") <- eval(parse(text=paste("function(y){", transf, "}"))) 
     }
-    fit$contrasts <- attrContr  
+    fit$contrasts <- attrContr
+    
+    #se il modello e' stato chiamato con  y ~ 0 + ps(x, by = g, dropc = FALSE, center = FALSE), .xlivelli non ha informazioni
+    #sulla categoriale nomiBy con categoria levelsBy . Questo puo' essere un problema per predict.gcrq() che deve usare le info
+    #di .xlivelli. Quindi "aggiorniamo" .xlivelli
+    #browser()
+    
+    if(length(testo.ps)>0 && any(!sapply(levelsBy, is.null))){
+      .xlivelli<-c(.xlivelli, levelsBy)
+      .xlivelli <- .xlivelli[unique(names(.xlivelli))]
+    }
+    
     fit$xlevels <- .xlivelli 
     fit$taus<-tau
     fit$call<-call

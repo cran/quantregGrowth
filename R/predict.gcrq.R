@@ -44,7 +44,7 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         id.var<-match(nomiVariabiliMod, names(newdata))
         #Qui controlla i nomi... come fare a controllare se factor?
         if(any(is.na(id.var))) stop("`newdata' does not include all the covariates in the model")
-        xreg <-model.matrix(as.formula(paste("~0+",paste(colnames(newdata),collapse = "+"))), data= newdata)
+        xreg <-stats::model.matrix(as.formula(paste("~0+",paste(colnames(newdata),collapse = "+"))), data= newdata)
         nomiCoef <- rownames(b)
         if("(Intercept)" %in% nomiCoef ) xreg<-cbind("(Intercept)"=1, xreg)
         xreg <- xreg[,nomiCoef]
@@ -75,6 +75,11 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
         nomiID<-sapply(nomiVarModello, function(.x) grep(.x, nomiCoef),simplify =FALSE)
         nomiVarModello <-names(nomiID)[sapply(nomiID,length) !=0]
         id.var<-match(nomiVarModello, names(newdata))
+        
+        
+        #browser()
+        
+        
         #Qui controlla i nomi... come fare a controllare se factor?
         if(any(is.na(id.var))) stop("`newdata' does not include all the covariates in the model")
         newdata <-newdata[,id.var,drop=FALSE] 
@@ -112,7 +117,7 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
               #if(is.factor(xVC)){ #
               if(!is.null(attr(object$BB[[i]], "vcLevels"))){
                 xVC<-factor(xVC, levels=attr(object$BB[[i]], "vcLevels"))
-                Mm<-model.matrix(~0+xVC)
+                Mm<-stats::model.matrix(~0+xVC)
                 colnames(Mm) <- attr(object$BB[[i]], "vcLevels")
                 B.new<- Mm[,attr(object$BB[[i]], "vcCategory")]*B.new #cbind(1, B.new)
               } else {
@@ -123,18 +128,27 @@ function(object, newdata, se.fit=FALSE, transf=NULL, xreg, type=c("sandw","boot"
             B.new.list[[i]]<- B.new
         }
         #browser()
+
         B.new <- do.call(cbind, B.new.list)
         B.fixed.new <- do.call(cbind, B.fixed.list)
         B.new <- cbind(B.new, B.fixed.new)
         if(ncol(newdata)>0) {
-          newdata<-model.matrix(as.formula(paste("~0+",paste(colnames(newdata),collapse = "+"))), 
-                    data= newdata)
+          if("(Intercept)" %in% nomiCoef ) {
+            newdata<-stats::model.matrix(as.formula(paste("~1+",paste(colnames(newdata),collapse = "+"))), #perche' era paste("~0+",?? mha <=1.6-2
+                    data= newdata, contrasts = object$contrasts, xlev= object$xlevels)
+          } else {
+            newdata<-stats::model.matrix(as.formula(paste("~0+",paste(colnames(newdata),collapse = "+"))), #perche' era paste("~0+",?? mha <=1.6-2
+                                  data= newdata, contrasts = object$contrasts, xlev= object$xlevels)
+          }
           xreg <-as.matrix(cbind(newdata,B.new))
         } else {
           xreg<-B.new
         }
-        if("(Intercept)" %in% nomiCoef ) xreg<-cbind("(Intercept)"=1, xreg)
-        #xreg)<-c(nomiCoefUnpen, nomiCoefPen)
+        #browser()
+        #se non ci sono altre esplicative (e quindi ncol(newdata)=0) devi comunque aggiungere l'intercetta
+        if("(Intercept)" %in% nomiCoef && !"(Intercept)"%in%colnames(xreg)) xreg<-cbind("(Intercept)"=1, xreg)
+        #if(!"(Intercept)" %in% nomiCoef ) xreg<-xreg[,-match("(Intercept)", colnames(xreg)),drop=FALSE] 
+        
         xreg <- xreg[,nomiCoef]
         fit<-drop(xreg%*%b) #mettere b[nomiCoef,]? Non serve perche' nomiCoef<-rownames(b)
       } #end if there are smooths

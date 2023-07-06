@@ -312,7 +312,10 @@ plot.gcrq <-
           Ylab.ok <- paste("Effect of ", term)
         }
         #se col<0
-        if(!is.null(l$col) && !is.character(l$col) && l$col < 0){ 
+        
+        #browser()
+        
+        if(!is.null(l$col) && !is.character(l$col) && all(l$col < 0)){ 
           Lab.palette <- colorRampPalette(c("blue", "green", "red"), space = "Lab")      #c("blue", "orange", "red")
           l$col<-Lab.palette(length(select.tau))
           #terrain.colors(length(select.tau), alpha = .6) #anche rainbow() or heat.colors(..)

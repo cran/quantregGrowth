@@ -1,7 +1,7 @@
 gcrq.rq.cv <-
 function(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL,  #interc=FALSE,  
     penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, vcList=vcList, dropvcList=FALSE, 
-    nfolds=10, foldid=NULL, eps=.0001, ...){
+    nfolds=10, foldid=NULL, eps=.0001, sparse=FALSE, ...){
 #perform 'nfolds' cross-validation to select lambda.
 #B e X devono essere (eventualmente) matrici!!!
     cv=TRUE
@@ -20,17 +20,13 @@ function(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL, 
           y_sub = y[!which]
           B_sub<-list(B[!which, , drop = FALSE])
           if(ncol(X)<=0){
-            #fit<-try(ncross.rq.fitXB(y=y_sub, B=B_sub, X=NULL, taus=taus, monotone=monotone, concave=concave, 
-            #   ndx=ndx, lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, ...), silent=TRUE)
-            fit<-try(ncross.rq.fitXB(y=y_sub, B=B_sub, X=NULL, taus=taus, monotone=monotone, concave=concave, ndx=ndx,
+            fitter<- if(sparse) get("ncross.rq.fitXBsparse", mode="function") else get("ncross.rq.fitXB", mode="function")
+            fit<-try(fitter(y=y_sub, B=B_sub, X=NULL, taus=taus, monotone=monotone, concave=concave, ndx=ndx,
                         lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, eps=eps,  penMatrix=penMatrix, var.pen, 
                         lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList,...), 
                      silent=TRUE)
             xreg<-B[which,,drop=FALSE]
           } else {
-#            fit<-try(ncross.rq.fitXB(y=y_sub, B=B_sub, X=X[!which, , drop = FALSE], taus=taus, #interc=interc, 
-#              monotone=monotone, concave=concave, ndx=ndx, 
-#              lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, ...), silent=TRUE)
             fit<-try(ncross.rq.fitXB(y=y_sub, B=B_sub, X=X[!which, , drop = FALSE], taus=taus, monotone=monotone, concave=concave, ndx=ndx,
                             lambda=lambda1, deg=deg, dif=dif, var.pen=var.pen, eps=eps,  penMatrix=penMatrix, var.pen, 
                             lambda.ridge=lambda.ridge, dropcList=dropcList, decomList=decomList, vcList=vcList, dropvcList=dropvcList,...), 

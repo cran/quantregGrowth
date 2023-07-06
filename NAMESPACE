@@ -1,5 +1,6 @@
 import(splines)
 import(quantreg)
+import(methods)
 
 importFrom("graphics", "axis", "matlines", "matplot", "matpoints",
              "plot", "text","points", "abline", "par", "segments", "smoothScatter")
@@ -9,8 +10,9 @@ importFrom("stats", "as.formula", ".getXlevels", "contrasts", "is.empty.model",
              "dnorm", "poly", "quantile", "update.formula", "pchisq", "sd")
 importFrom("grDevices", "adjustcolor", "grey", "colorRampPalette","devAskNewPage")
 importFrom("utils", "tail","flush.console","write.csv")
+importFrom("SparseM", "as.matrix.csr")
 
-export(gcrq, gcrq.rq.cv, ncross.rq.fitX, ncross.rq.fitXB, 
+export(gcrq, gcrq.rq.cv, ncross.rq.fitX, ncross.rq.fitXB, ncross.rq.fitXBsparse,
       ps, summary.gcrq, print.gcrq, plot.gcrq, vcov.gcrq, predict.gcrq, logLik.gcrq, AIC.gcrq, charts)
 
 S3method(plot,gcrq)

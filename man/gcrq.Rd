@@ -12,9 +12,9 @@ more biologically plausible. Linear terms can be specified in the model formula.
 \usage{
 gcrq(formula, tau=c(.1,.25,.5,.75,.9), data, subset, weights, na.action, 
     transf=NULL, y=TRUE, n.boot=0, eps=0.001, display=FALSE, 
-    method=c("REML","ML"), df.opt=2, df.nc=FALSE, lambda0=.1, h=0.8, lambda.max=2000, 
-    tol=0.01, it.max=20, single.lambda=TRUE, foldid=NULL, nfolds=10, 
-    lambda.ridge=0, adjX.constr=TRUE, contrasts=NULL, ...) %, sgn.constr=NULL, 
+    method=c("REML","ML"), df.opt=2, df.nc=FALSE, lambda0=.1, h=0.8, lambda.max=1000, 
+    tol=0.01, it.max=15, single.lambda=TRUE, foldid=NULL, nfolds=10, 
+    lambda.ridge=0, adjX.constr=TRUE, contrasts=NULL, sparse=FALSE) %, sgn.constr=NULL, 
 }
 \arguments{
   \item{formula}{
@@ -106,7 +106,8 @@ Numerical value (typically very small) to stabilize model estimation.
   \item{adjX.constr}{logical. If \code{TRUE}, each linear covariate is shifted (by substracting its min) in order to set up effective constraints to prevent crossing. Useful only if \code{tau} is a vector and the model includes linear terms.
 }
   \item{contrasts}{an optional list. See argument \code{contrasts.arg} in \code{model.matrix.default}.}
-  \item{\dots}{further arguments.}
+  \item{sparse}{logical. If \code{TRUE}, the model is fitted via sparse algebra as implemented in the SparseM package. Typically \code{sparse=TRUE} is used when the model involves a single smooth with a very rich basis and a large sample size, see Details.}
+%  \item{\dots}{further arguments.}
 }
 \details{
 The function fits regression quantiles at specified percentiles given in \code{tau} as a function of 
@@ -114,7 +115,15 @@ covariates specified in the \code{formula} argument. The \code{formula} may incl
 terms to model nonlinear relationships with quantitative covariates, usually age in growth charts. When the \code{lambda} argument 
 in \code{ps()} is a negative scalar, the smoothing parameter is estimated iteratively as discussed in Muggeo et al. (2021). If a positive scalar, it represents the actual smoothing parameter value. 
 
-Smoothing parameter selection via 'K-fold' cross validation (CV) is also allowed (but not recommended) if the model includes a single \code{ps} term:  \code{lambda} should be a vector of candidate values, and the final fit is returned at the `optimal' lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique \code{ps} term in the formula.
+When the model includes a single \code{ps} term, setting \code{sparse=TRUE} (introduced since version 1.7-0) could reduce the computational time especially when the sample size is large and the basis involves several terms. However when \code{sparse=TRUE} is set, no linear term is allowed and for the smooth term a full and uncentred basis is used (i.e., equivalent to setting \code{dropc=FALSE} and \code{center=FALSE} along with \code{constr.fit=FALSE} in \code{ps()}). Therefore the correct call would be
+
+\code{gcrq(y ~ 0+ps(x), sparse=TRUE) #if y~ps(x), a warning is printed as the intercept is not explicitly removed}
+
+which is equivalent to
+
+\code{gcrq(y ~ 0+ps(x, dropc=FALSE, center=FALSE)) #sparse=FALSE is the default}
+
+Smoothing parameter selection via 'K-fold' cross validation (CV) is also allowed (but not recommended) if the model includes a single \code{ps} term:  \code{lambda} should be a vector of candidate values, and the final fit is returned at the `optimal' lambda value. To select the smoothing parameter via CV, \code{foldid} or \code{nfolds} may be supplied. If provided, \code{foldid} overwrites \code{nfolds}, otherwise \code{foldid} is obtained via random extraction, namely \code{sample(rep(seq(nfolds), length = n))}. However selection of smoothing parameter via CV is allowed only with a unique \code{ps} term in the formula.
 }
 \value{
 This function returns an object of class \code{gcrq}, that is a list with the following components (only the most important are listed)
@@ -156,6 +165,7 @@ Using \code{ps(.., center=TRUE)} in the formula leads to lower uncertainty in th
 
 Currently, decomposition of Bsplines (i.e. \code{ps(..,decom=TRUE)}) is incompatible with shape (monotonicity and concavity) restrictions and even with noncrossing constraints.
 
+
 %\cr
 }
 %The function (and underlying method) works pretty well in obtaining point estimates and displaying quantile curves accordingly.
@@ -173,7 +183,7 @@ Currently, decomposition of Bsplines (i.e. \code{ps(..,decom=TRUE)}) is incompat
 
 \note{
 This function is based upon the package quantreg by R. Koenker.
-Currently methods specific to the class \code{"gcrq"} are \code{print.gcrq}, \code{summary.gcrq}, \code{vcov.gcrq}, \code{plot.gcrq}, and \code{predict.gcrq}.
+Currently methods specific to the class \code{"gcrq"} are \code{print.gcrq}, \code{summary.gcrq}, \code{vcov.gcrq}, \code{plot.gcrq}, \code{predict.gcrq}, \code{AIC.gcrq}, and \code{logLik.gcrq}.
 
 If the sample is not large, and/or the basis rank is large (i.e. a large number of columns) and/or there are relatively few distinct values in the covariate distribution, the fitting algorithm may fail returning error messages like the following 
 

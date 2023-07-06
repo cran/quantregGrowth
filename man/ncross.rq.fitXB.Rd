@@ -1,5 +1,6 @@
 \name{ncross.rq.fitXB}
 \alias{ncross.rq.fitXB}
+\alias{ncross.rq.fitXBsparse}
 \alias{ncross.rq.fitX}
 %\alias{ncross.rq.fitB}
 \alias{gcrq.rq.cv}
@@ -21,12 +22,22 @@ ncross.rq.fitXB(y, x, B=NULL, X=NULL, taus, monotone=FALSE, concave=FALSE,
     ridgeList=FALSE, ps.matrix.list=FALSE, colmeansB=NULL, Bconstr=NULL, 
     adjX.constr=TRUE, adList=FALSE, it.j=10, myeps=NULL, ...)
 
-ncross.rq.fitX(y, X = NULL, taus, adjX.constr=TRUE, lambda.ridge = 0, eps = 1e-04,...) 
+ncross.rq.fitXBsparse(y, x, B=NULL, X=NULL, taus, monotone=FALSE, concave=FALSE,
+    nomiBy=NULL, byVariabili=NULL, ndx=10, deg=3, dif=3, lambda=0, eps=.0001, 
+    var.pen=NULL, penMatrix=NULL, lambda.ridge=0,  dropcList=FALSE, decomList=FALSE, 
+    vcList=FALSE, dropvcList=FALSE, centerList=FALSE, ridgeList=FALSE, 
+    ps.matrix.list=FALSE, colmeansB=NULL, Bconstr=NULL, adjX.constr=TRUE, 
+    adList=FALSE, it.j=10, myeps=NULL, ...)
+    
+
+ncross.rq.fitX(y, X = NULL, taus, adjX.constr=TRUE, lambda.ridge = 0, 
+    eps = 1e-04, ...) 
     %sgn.constr=1, adjX.constr=TRUE, ...)
 
 gcrq.rq.cv(y, B, X, taus, monotone, concave, ndx, lambda, deg, dif, var.pen=NULL, 
     penMatrix=NULL, lambda.ridge=0, dropcList=FALSE, decomList=FALSE, 
-    vcList=vcList, dropvcList=FALSE, nfolds=10, foldid=NULL, eps=.0001, ...)
+    vcList=vcList, dropvcList=FALSE, nfolds=10, foldid=NULL, eps=.0001, 
+    sparse=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -133,7 +144,8 @@ returning cv scores; see the same arguments in \code{\link{gcrq}}.
 }
   \item{myeps}{Ignore.
 }
-
+  \item{sparse}{logical, meaning if sparse computations have to be used. 
+}
   \item{\dots}{
 optional.
 }
