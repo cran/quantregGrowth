@@ -118,7 +118,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
   ##### INIZIO FUNZIONE
     #settiamo qualche opzione che forse non ? molto utile..
     #sparse=FALSE
-    n.points=200 #questo serve per i disegni e per i vincoli di monot e conc (se ps(..,constr.fit=TRUE))
+    n.points=100 #questo serve per i vincoli di monot e conc (se ps(..,constr.fit=TRUE))
     
     #all.perc=FALSE
     #g=0.20 #usato solo se df.opt=3 (comunque sconsigliato)
@@ -252,7 +252,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
       BB<-vector("list", ncol(X))
       names(BB)<-colnames(X)
       for(i in 1:ncol(X)){
-        xdisegno<-seq(min(X[,i]), max(X[,i]), l=150)
+        xdisegno<-seq(min(X[,i]), max(X[,i]), l=100)
         BB1<- matrix(xdisegno, ncol=1)
         attr(BB1,"covariate.35")<- xdisegno
         attr(BB1, "coef.names")<- colnames(X)[i]
@@ -532,6 +532,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
             }
             attr(BB1,"covariate.n")<- variabileSmooth #NB mVariabili[,j] (che viene assegnato a attr(,"covariate.n")) contiene altri attributi "ndx", "deg", "pdiff", "monot", "lambda","nomeX"
             attr(BB1,"covariate.35")<- xdisegno
+            attr(BB1,"range")<- rangeSmooth[[j]]
             attr(BB1,"colmeansB")<- colmeansB
             attr(BB1,"ndx")<- vNdx[j]
             attr(BB1,"deg")<- vDeg[j]
@@ -594,7 +595,7 @@ bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok
     if(length(setdiff(colnames(X),"(Intercept)"))>=1){ #se ci sono termini lineari (oltre l'intercetta)
       names(BBlin)<-colnames(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE])
       for(i in 1:ncol(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE])){
-        xdisegno<-seq(min(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE][,i]), max(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE][,i]), l=150)
+        xdisegno<-seq(min(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE][,i]), max(X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE][,i]), l=100)
         BB1<- matrix(xdisegno, ncol=1)
         attr(BB1,"covariate.35")<- xdisegno
         attr(BB1,"covariate.n")<- X[,setdiff(colnames(X),"(Intercept)"),drop=FALSE][,i]

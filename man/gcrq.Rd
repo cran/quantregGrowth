@@ -38,8 +38,7 @@ a function which indicates how the possible `NA's are handled.
 }
   \item{transf}{
 an optional character string (with \code{"y"} as argument) meaning a function to apply to the response variable 
-  before fitting. E.g. if \code{y>=0}, it could be advisable to model \code{"log(y+0.1)"}. It can be useful to guarantee fitted values within a specified range. If provided,
-  the resulting object fit refer to the model for the transformed response and it will include the corresponding inversefunction (numerically computed) to be used to back transform predictions (see argument \code{transf} in \code{predict.gcrq} and \code{plot.gcrq}).
+  before fitting. It can be useful to guarantee fitted values within a specified range; e.g. if \code{y>=0}, we could set \code{"log(y+0.1)"}. If provided, the resulting object fit refers to the model for the transformed response and it will include the corresponding inverse function (numerically computed) to be used to back transform predictions (see argument \code{transf} in \code{predict.gcrq} and \code{plot.gcrq}).
 }
   \item{y}{
 logical. If \code{TRUE} (default) the returned object includes also the responses vector.
@@ -248,16 +247,16 @@ m6<-gcrq(y~ps(x, monotone=1, lambda=10, var.pen="(1:k)"), tau=tauss, data=growth
 m6a<-gcrq(y~ps(x, monotone=1, lambda=10, var.pen="(1:k)^2"), tau=tauss, data=growthData) 
 
 par(mfrow=c(2,3))
-plot(m1, pch=20, res=TRUE)
+plot(m1, res=TRUE, col=-1)
 plot(m2, pch=20, res=TRUE)
-plot(m3, add=TRUE, lwd=2)
+plot(m3, add=TRUE, lty=2, col=4)
 plot(m4, pch=20, res=TRUE)
-plot(m5, pch=20, res=TRUE, legend=TRUE, col=2)
+plot(m5, pch=4, res=TRUE, legend=TRUE, col=2)
 plot(m6, lwd=2, col=3)
 plot(m6a, lwd=2, col=4)
 
 #select lambda via 'K-fold' CV (only with a single smooth term)
-m7<-gcrq(y~ps(x, lambda=seq(0.02,50,l=20)), tau=tauss, data=growthData) 
+m7<-gcrq(y~ps(x, lambda=seq(0,10,l=20)), tau=tauss, data=growthData) 
 par(mfrow=c(1,2))
 plot(m7, cv=TRUE) #display CV score versus lambda values
 plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fit at the best lambda (by CV) 
@@ -267,9 +266,9 @@ plot(m7, res=TRUE, grid=list(x=5, y=8), col=4) #fit at the best lambda (by CV)
 
 n=50
 x<-1:n/n
-y0<-10+sin(2*pi*x)
-y1<-seq(7,11,l=n)
-y<-c(y0,y1)+rnorm(2*n)*.2 #small noise.. just to illustrate..
+mu0<-10+sin(2*pi*x)
+mu1<- 7+4*x
+y<-c(mu0,mu1)+rnorm(2*n)*.2 #small noise.. just to illustrate..
 x<-c(x,x)
 z<-rep(0:1, each=n)
 
@@ -277,28 +276,25 @@ z<-rep(0:1, each=n)
 g<-factor(z)
 o <-gcrq(y~ g+ps(x,by=g), tau=.5) 
 predict(o, newdata=data.frame(x=c(.3,.7), g=factor(c(0,1))))
-par(mfrow=c(2,2))
-plot(x[1:50],y0)
-plot(x[1:50],y1)
-plot(o, term=1:2, split=FALSE)
+par(mfrow=c(1,2))
+plot(x[1:50],mu0,type="l")
+plot(o, term=1, add=TRUE)
+points(c(.3,.7), predict(o, newdata=data.frame(x=c(.3,.7), g=factor(c(0,0)))), pch=4, lwd=3,col=2)
 
-# multiple quantile curves..
-y<-c(y0,y1)+rnorm(2*n)*1.2
-o1 <-gcrq(y ~ g+ps(x,by=g), tau=seq(.1,.9,l=9)) 
+plot(x[1:50],mu1,type="l")
+plot(o, term=2, add=T, shift=coef(o)["g1",], col=3) #note the argument 'shift'
+points(c(.3,.7), predict(o, newdata=data.frame(x=c(.3,.7), g=factor(c(1,1)))), pch=4, lwd=3,col=3)
 
-o3 <-gcrq(y ~ 0+ps(x,by=g,dropc=FALSE, center=FALSE), tau=seq(.1,.9,l=9)) #using the full bases 
-
-par(mfcol=c(1,2))
-plot(o1,1:2)
 
 # approach 2: a general smooth plus the (smooth) 'interaction' with a continuous covariate..
 b1 <-gcrq(y~ ps(x) + z+ ps(x,by=z), tau=.5)
-par(mfrow=c(2,2))
-plot(x[1:50],y0)
-plot(x[1:50],y1-y0)
-plot(b1, split=FALSE)
+par(mfrow=c(1,2))
+plot(x[1:50],mu0,type="l")
+plot(b1, add=TRUE, term=1) #plot the 1st smooth term
 
-predict(b1, newdata=data.frame(x=c(.3,.7), z=c(0,1)))
+#plot the 2nd smooth of 'b1' (which is actually the difference mu1-mu0) 
+plot(x[1:50], mu1-mu0, type="l")
+plot(b1, term=2, add=TRUE, interc=FALSE, shift=coef(b1)["z",]) 
 
 
 

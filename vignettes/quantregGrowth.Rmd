@@ -11,6 +11,9 @@ vignette: >
   %\VignetteEngine{knitr::knitr}
   %VignetteEncoding{UTF-8}  
 --- 
+
+
+
 <style>
 body {
 text-align: justify}
@@ -41,7 +44,7 @@ When focus is on multiple response quantiles (1%, 5%,..., 95%, say) depending on
 We build growth charts of height versus age using the data set `SiChildren` shipped with the package. The main function is `gcrq()` which requires the usual model formula including the `ps()` function on the right hand side. `gcrq()` returns quantile curves at (default) probability values `c(.1, .25, .5, .75, .9)`, but in this example we choose different values via the argument `tau`, and display the result by means of the `plot` method function: 
 
 
-```{r 1, message = F, fig.width=5, fig.height=4}
+```{r 1, message = F, fig.width=7, fig.height=5}
 library(quantregGrowth)
 data(SiChildren)
 
@@ -71,7 +74,7 @@ oM<-gcrq(height ~ ps(age, monotone=1), data=SiChildren, tau=seq(.05,.95,l=7))
 
 In the following, we report two plots: the first one focuses on the early ages by stressing differences between the fitted curves, and the second figure could be possibly closer to the usual growth charts, with legend (set at the age value `overlap=15`), underlying grid (with 15 vertical and 10 horizontal lines) and `customized' axis labels.  
 
-```{r 1b, message = F, fig.width=7, fig.height=4}
+```{r 1b, message = F, fig.width=9, fig.height=5}
 par(mfrow=c(1,2))
 #the 1st plot..
 plot(o, xlim=c(10.2,12.5), col=1, lty=3, lwd=2)
@@ -82,6 +85,31 @@ plot(oM, legend=TRUE, overlap=15, grid=list(x=15,y=10), col=2, lty=1,
 ```
 
 Several options are available when plotting a `gcrq` object, see `?plot.gcrq`.
+
+By default `ps()` uses 11 basis functions which is appropriate for most of situations met in practice. However, if the underlying signal is strongly nonlinear, a richer basis is recommended to better capture changes in the curve. The following example presents data with a Doppler-like trend
+
+```{r 1c, message = F}
+n <- 20000
+x <- 1:n/n
+mu <- sqrt(x*(1-x))*sin((2*pi*(1+2^((9-4*6)/5)))/(x+2^((9-4*6)/5)))
+set.seed(3008) #just for riproducibility
+y <- mu+0.2*rnorm(n)
+```
+When the reader fits the model using the default values, the results appear unsatisfactory with the fitted curves missing the general trend. The practitioner can check that increasing `ndx` improves the smoothing on the left side, but two issues rise: i) the computational load increases as the number of spline coefficients (which depend on `ndx`); ii) at larger covariate values the curve is clearly undersmoothed. `gcrq` offers two solutions at the aforementioned issues. Firstly, to improve computational efficiency we could exploit sparse algebra methods via argument `sparse` as implemented by the package `SparseM`; and secondly, to get a fitted curve with different amount of smoothing across the covariate range, we can exploit *adaptive* smoothing, by means of the argument `ad` in `ps()`. Therefore the model can be fitted via
+
+```{r 1d, message = F, fig.width=8, fig.height=7}
+as <-gcrq(y ~ 0+ps(x, ndx=100, ad=.8), sparse=TRUE)
+par(mfrow=c(2,1))
+plot(as)
+plot(as, col=4, n.points=500, add=TRUE)
+#the same plot but zoomed in on the left side
+plot(as, xlim=c(0,.1))
+plot(as, col=4, n.points=500, add=TRUE)
+lines(x, mu, col=1, lwd=2)
+
+```
+
+Note we need to increase the number of values (by `n.points` in `plot.gcrq()`) to portray correctly the lines on the left side.
 
 ## Additive model
 
@@ -95,7 +123,7 @@ o <- gcrq(y ~ ps(x0) + ps(x1) + ps(x2) + ps(x3), data=d, tau=.5)
 ```
 The plots including the fitted relationships for all 4 terms are ready obtained by 
 
-```{r fig-margin, fig.width=7, fig.height=5} 
+```{r fig-margin, fig.width=8, fig.height=6} 
 # Plot the fit
 plot(o, res=TRUE, col=2, conf.level=.95, shade=TRUE, cex.p=.6, split=TRUE) #cex.p<1 to reduce the points..
 
@@ -157,7 +185,7 @@ Again, the same model could be obtained using a full B-spline in each group, i.e
 
 We compare the true and fitted quantile curves in the next plots 
 
-```{r, fig.width=7, fig.height=3} 
+```{r, fig.width=9, fig.height=5} 
 par(mfrow=c(1,2))
 plot(x0, y[1:50]);lines(x0,y0)
 plot(o, term=1, add=TRUE, col=2, lwd=2)
@@ -217,7 +245,7 @@ The length of the zero-slope curve piece depends on number of large values in $w
 Figure below reports results of the aforementioned constrained fit, along with the fits obtained using unweighted first order-differences without and with additional monotonicity constraints
 
 
-```{r, fig.width=7, fig.height=3} 
+```{r, fig.width=9, fig.height=4} 
 o5 <-gcrq(y~ps(x, d=1), data=growthData, tau=.5)
 o6 <-gcrq(y~ps(x, d=1, monotone = 1), data=growthData, tau=.5)
 
@@ -245,33 +273,33 @@ y<-5 + 1.5*z+  drop(X%*%true.coef) + rnorm(n)*.25
 
 In order to discard noisy covariates we use the lasso penalty on corresponding coefficients. More specifically, the penalized objective to be minimized is $\sum_i\rho_\tau (y_i-\beta_0-\beta_1z_i-\sum_j\gamma_jx_{ij})+\lambda \sum_j|\gamma_j|$, where $\rho_\tau(\cdot)$ is the usual check function. Note the lasso penalty refers to the coefficients of the $x_j$'s only; $\beta_0$ and $\beta_1$ are unpenalized. The model is fitted straightforwardly by including the matrix `X` in `ps()`, and the unpenalized covariate in the main formula.  
 
-```{r, fig.width=6, fig.height=4} 
+```{r, fig.width=7, fig.height=4} 
 o <-gcrq(y~ z + ps(X), tau=.5)
 plot(o, term=1)
 ```
 The `plot` method returns the estimated coefficients relevant to the columns of `X`. 
 
-Since version 1.6-0, it is possible to set an adaptive penalty via the weighted lasso, where the weights are updated iteratively. `ad=1`specified in `ps()` leads to the adaptive lasso 
+By means of the argument `ad` in `ps()` is possible to set an adaptive penalty via weights that are updated iteratively. `ad=1` leads to the adaptive lasso wherein the weights are given by the reciprocal of the coefficients at the previous iteration: 
 
-```{r, fig.width=6, fig.height=4} 
+```{r, fig.width=7, fig.height=4} 
 o1 <-gcrq(y~ z + ps(X, ad=1), tau=.5) 
-plot(o, term=1, ylim=c(-1.3,1.5))
-plot(o1, term=1, add=TRUE, col=3, pch=2)
-points(true.coef, pch=3, col=4) #true coefficients
+plot(o, term=1, ylim=c(-1.3,1.5)) #naive lasso, red circles
+plot(o1, term=1, add=TRUE, col=3, pch=2) #adaptive lasso, green triangles 
+points(true.coef, pch=3, col=4) #true coefficients, blue crosses
 ```
 
-It is also possible to fit multiple quantile curves and to display to results accordingly
+It is also possible to fit multiple quantile curves and to display the results accordingly
 
-```{r, fig.width=9, fig.height=4} 
+```{r, fig.width=10, fig.height=5} 
 o <-gcrq(y ~ z + ps(X))       #standard lasso
 o1 <-gcrq(y ~ z + ps(X, ad=1)) #adaptive lasso
 par(mfrow=c(1,2))
-plot(o, term=1, legend=TRUE)
-plot(o1, term=1, legend=TRUE)
+plot(o, term=1, legend=TRUE)  #left panel: naive lasso 
+plot(o1, term=1, legend=TRUE) #right panel: adaptive lasso
 
 ```
 
-Note each symbol refers to a specific quantile curve, and results from the adaptive lasso are closer to the true ones.
+Note each symbol refers to a specific quantile curve, and results from the adaptive lasso (right plot) are closer to the true ones with noisy coefficients (all but those corresponding to columns 4 and 15) being substantially zero. 
 
 
 <!--

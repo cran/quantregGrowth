@@ -164,12 +164,12 @@ ncross.rq.fitXBsparse <-
       if(any(vConc!=0)) list.b1 <-list.b #creato list.b1 per l'eventuale concav (infatti list.b viene sovrascritto dalla monot)
       id.Xlin <- match("Xlin", nomiGruppi, 0)
       if(nrow(D.matrix)==0) {
-        P<- t(D.matrix) %*% D.matrix #crossprod(D.matrix) 
+        P<- SparseM::t(D.matrix) %*% D.matrix #crossprod(D.matrix) 
         } else {
           #browser()
           #P<- crossprod(drop(pesiL1)*D.matrix[(1:length(pesiL1)),,drop=FALSE])
           D.matrix <- drop(pesiL1)*D.matrix
-          P<- t(D.matrix) %*% D.matrix
+          P<- SparseM::t(D.matrix) %*% D.matrix
           #P<- crossprod(drop(pesiL1)*D.matrix[(1:length(pesiL1)),,drop=FALSE])
         }
       
@@ -181,7 +181,7 @@ ncross.rq.fitXBsparse <-
           if(vMonot[j]!=0){
             if(attr(Bconstr[[j]], "constr.fit")) list.b[[j + id.Xlin]] <-  drop(Bconstr[[j]] %*% list.b[[j + id.Xlin]])
             .D1<- 10^6*(abs(diff(list.b[[j+ id.Xlin]], diff=1))<.00001)*D1[[j]]
-            wMon[[j]]  <- t(.D1)%*% .D1
+            wMon[[j]]  <- SparseM::t(.D1)%*% .D1
           } else {
             wMon[[j]]  <- as.matrix.csr(0,n.par[j],n.par[j])
           }
@@ -197,7 +197,7 @@ ncross.rq.fitXBsparse <-
           if(vConc[j]!=0){
             if(attr(Bconstr[[j]], "constr.fit")) list.b1[[j+ id.Xlin]] <-  drop(Bconstr[[j]] %*% list.b1[[j+ id.Xlin]])
             .D2 <- crossprod((10^6*(abs(diff(list.b1[[j+ id.Xlin]], diff=2))<.00001))*D2[[j]])
-            wConc[[j]]  <- t(.D2)%*% .D2
+            wConc[[j]]  <- SparseM::t(.D2)%*% .D2
           } else {
             wConc[[j]]  <- as.matrix.csr(0,n.par[j],n.par[j])
           }
@@ -222,7 +222,7 @@ ncross.rq.fitXBsparse <-
       w<-ifelse(e > 0, tau, 1-tau)
       w<-w/(abs(e)+.00001)
       Xw <- X*sqrt(w)
-      XtWX<- t(Xw) %*% Xw #
+      XtWX<- SparseM::t(Xw) %*% Xw #
       #XtWX<- t(X) %*% as(w,"matrix.diag.csr") %*% X
       A<-try(solve(XtWX+P, XtWX), silent=TRUE)
       #A<-try(backsolve(chol(XtWX+P), XtWX), silent=TRUE)

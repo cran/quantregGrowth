@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   tidy=FALSE
 )
 
-## ----1, message = F, fig.width=5, fig.height=4--------------------------------
+## ----1, message = F, fig.width=7, fig.height=5--------------------------------
 library(quantregGrowth)
 data(SiChildren)
 
@@ -24,7 +24,7 @@ knitr::kable(charts(o, k=19:21))
 ## ----1a, message = F----------------------------------------------------------
 oM<-gcrq(height ~ ps(age, monotone=1), data=SiChildren, tau=seq(.05,.95,l=7))
 
-## ----1b, message = F, fig.width=7, fig.height=4-------------------------------
+## ----1b, message = F, fig.width=9, fig.height=5-------------------------------
 par(mfrow=c(1,2))
 #the 1st plot..
 plot(o, xlim=c(10.2,12.5), col=1, lty=3, lwd=2)
@@ -33,13 +33,31 @@ plot(oM, add=TRUE, col=2, lty=1, lwd=2)
 plot(oM, legend=TRUE, overlap=15, grid=list(x=15,y=10), col=2, lty=1, 
      ylab="Height (cm)", xlab="Age (years)")
 
+## ----1c, message = F----------------------------------------------------------
+n <- 20000
+x <- 1:n/n
+mu <- sqrt(x*(1-x))*sin((2*pi*(1+2^((9-4*6)/5)))/(x+2^((9-4*6)/5)))
+set.seed(3008) #just for riproducibility
+y <- mu+0.2*rnorm(n)
+
+## ----1d, message = F, fig.width=8, fig.height=7-------------------------------
+as <-gcrq(y ~ 0+ps(x, ndx=100, ad=.8), sparse=TRUE)
+par(mfrow=c(2,1))
+plot(as)
+plot(as, col=4, n.points=500, add=TRUE)
+#the same plot but zoomed in on the left side
+plot(as, xlim=c(0,.1))
+plot(as, col=4, n.points=500, add=TRUE)
+lines(x, mu, col=1, lwd=2)
+
+
 ## ----2, message=FALSE---------------------------------------------------------
 set.seed(1515)
 d<-mgcv::gamSim(n=200, eg=1, verbose=FALSE) #verbose=FALSE just suppresses the message..
 
 o <- gcrq(y ~ ps(x0) + ps(x1) + ps(x2) + ps(x3), data=d, tau=.5)
 
-## ----fig-margin, fig.width=7, fig.height=5------------------------------------
+## ----fig-margin, fig.width=8, fig.height=6------------------------------------
 # Plot the fit
 plot(o, res=TRUE, col=2, conf.level=.95, shade=TRUE, cex.p=.6, split=TRUE) #cex.p<1 to reduce the points..
 
@@ -73,7 +91,7 @@ z<-rep(0:1, each=n) #numeric variable
 g <-factor(z)  #factor
 o<-gcrq(y ~ g + ps(x, by=g), tau=.5)
 
-## ---- fig.width=7, fig.height=3-----------------------------------------------
+## ---- fig.width=9, fig.height=5-----------------------------------------------
 par(mfrow=c(1,2))
 plot(x0, y[1:50]);lines(x0,y0)
 plot(o, term=1, add=TRUE, col=2, lwd=2)
@@ -108,7 +126,7 @@ A <- diag(w) %*% D1 #the penalty matrix
 o4 <-gcrq(y~ps(x, ndx=20, pen.matrix=A), data=growthData, tau=.5)
 
 
-## ---- fig.width=7, fig.height=3-----------------------------------------------
+## ---- fig.width=9, fig.height=4-----------------------------------------------
 o5 <-gcrq(y~ps(x, d=1), data=growthData, tau=.5)
 o6 <-gcrq(y~ps(x, d=1, monotone = 1), data=growthData, tau=.5)
 
@@ -127,22 +145,22 @@ true.coef <-rep(0,p)
 true.coef[c(3,5,11)] <- c(.7,1.5,-1)
 y<-5 + 1.5*z+  drop(X%*%true.coef) + rnorm(n)*.25
 
-## ---- fig.width=6, fig.height=4-----------------------------------------------
+## ---- fig.width=7, fig.height=4-----------------------------------------------
 o <-gcrq(y~ z + ps(X), tau=.5)
 plot(o, term=1)
 
-## ---- fig.width=6, fig.height=4-----------------------------------------------
+## ---- fig.width=7, fig.height=4-----------------------------------------------
 o1 <-gcrq(y~ z + ps(X, ad=1), tau=.5) 
-plot(o, term=1, ylim=c(-1.3,1.5))
-plot(o1, term=1, add=TRUE, col=3, pch=2)
-points(true.coef, pch=3, col=4) #true coefficients
+plot(o, term=1, ylim=c(-1.3,1.5)) #naive lasso, red circles
+plot(o1, term=1, add=TRUE, col=3, pch=2) #adaptive lasso, green triangles 
+points(true.coef, pch=3, col=4) #true coefficients, blue crosses
 
-## ---- fig.width=9, fig.height=4-----------------------------------------------
+## ---- fig.width=10, fig.height=5----------------------------------------------
 o <-gcrq(y ~ z + ps(X))       #standard lasso
 o1 <-gcrq(y ~ z + ps(X, ad=1)) #adaptive lasso
 par(mfrow=c(1,2))
-plot(o, term=1, legend=TRUE)
-plot(o1, term=1, legend=TRUE)
+plot(o, term=1, legend=TRUE)  #left panel: naive lasso 
+plot(o1, term=1, legend=TRUE) #right panel: adaptive lasso
 
 
 ## ---- echo=FALSE, results='asis'----------------------------------------------

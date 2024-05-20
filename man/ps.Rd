@@ -73,8 +73,7 @@ logical. If \code{TRUE} the smooth effects are 'centered' over the covariate val
 A scalar tuning the selection of wiggliness of the smoothed curve when \eqn{\lambda}{lambda} has to be estimated (i.e. \code{lambda<0} is set). The larger \code{K}, the smoother the curve. Simulations suggest \code{K=2} for the smoothing, and \code{K=log(n/p^(2/3))} for variable selection and random intercepts (\code{p} is the number of variables or number of subjects). See details.
 }
   \item{decom}{
-logical. If \code{TRUE}, the B-spline is decomposed into truncated power functions 
-such as [x, ..., x^{d-1}, Z], where \eqn{Z= B D'(DD')^{-1}}{Z= B D'(DD')^{-1}}, \eqn{d}{d} is the difference order and \eqn{B}{B} is the B-spline basis. Only the coefficients of Z are penalized via an identity matrix. Currently \code{decom=TRUE} does not work with shape (monotonicity and concavity) restrictions and noncrossing constraints.
+logical. If \code{TRUE}, the B-spline \eqn{B}{B} (with a \eqn{d}{d} order difference penalty) is decomposed into truncated power functions namely unpenalized polynomial terms up to degree d-1, and additional terms \eqn{Z= B D'(DD')^{-1}}{Z= B D'(DD')^{-1}}. Only the coefficients of \eqn{Z}{Z} are penalized via an identity matrix, i.e. a lasso penalty. Currently \code{decom=TRUE} does not work with shape (monotonicity and concavity) restrictions and noncrossing constraints.
 }
   \item{constr.fit}{
 logical. If \code{monotone} or \code{concave} are different from 0, \code{constr.fit=TRUE} means that these constraints are set on the fitted quantiles rather than on the spline coefficients.
@@ -86,7 +85,7 @@ logical. If \code{TRUE} and the smooth is a VC term with a factor specified in \
 logical. If \code{TRUE} the variable(s) are standardized via the \code{scale()} function. Typically used for variable selection via lasso, i.e. when a matrix of covariates is passed in \code{ps()}.
 }
   \item{ad}{
-a positive number to carry out a form of \emph{adaptive} lasso. More specifically, at each step of the iterative algorithm, the penalty is \eqn{\lambda\sum_jw_j|\beta_j|}{sumj wj |betaj|} where \eqn{w_j=|\tilde{\beta}_j|^\mathtt{-ad}}{w_j=|prev.beta_j|^(-ad)} and \eqn{\tilde{\beta}_j}{prev.beta_j} are estimates coming from the previous iteration with a different value of  \eqn{\lambda}{lambda}. \code{ad=0} means the standard lasso and \code{ad=1} the adaptive lasso. 
+a positive number to carry out a form of \emph{adaptive} lasso. More specifically, at each step of the iterative algorithm, the penalty is \eqn{\lambda\sum_jw_j|\beta_j|}{sumj wj |betaj|} where \eqn{w_j=|\tilde{\beta}_j|^\mathtt{-ad}}{w_j=|prev.beta_j|^(-ad)} and \eqn{\tilde{\beta}_j}{prev.beta_j} are estimates coming from the previous iteration with a different value of  \eqn{\lambda}{lambda}. \code{ad=0} means the standard lasso and \code{ad=1} adaptive lasso (with weights updated during the iterative process. 
 }
 }
 \details{

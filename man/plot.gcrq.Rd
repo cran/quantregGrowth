@@ -11,8 +11,8 @@ Displaying the estimated growth charts from a \code{gcrq} fit.
 \method{plot}{gcrq}(x, term=NULL, add = FALSE, res = FALSE, conf.level=0, axis.tau=FALSE, 
    interc=TRUE, se.interc=FALSE, legend = FALSE, select.tau, deriv = FALSE, 
    cv = FALSE, transf=NULL, lambda0=FALSE, shade=FALSE, overlap=NULL, rug=FALSE, 
-   overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"), 
-   ...)
+   overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, shift=0, type=c("sandw","boot"),
+   n.points=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -103,7 +103,9 @@ Numerical value(s) to be added to the curve(s) to be plotted. If vector with len
   \item{type}{
 If \code{conf.level>0}, which covariance matrix should be used to compute and to portray the pointwise confidence intervals? \code{'boot'} means case-resampling bootstrap (see \code{n.boot} in \code{gcrq()}, \code{'sandw'} mean via the sandwich formula.
 }
-
+  \item{n.points}{
+On how many values the plotted lines should rely on? If \code{NULL}, 100 values which suffice most of times. Increasing \code{n.points} can be useful when adaptive smoothing is used.
+}
   \item{\dots}{
 Additional graphical parameters:\cr 
 \code{xlab}, \code{ylab}, \code{ylim}, and \code{xlim} (effective when \code{add=FALSE});\cr

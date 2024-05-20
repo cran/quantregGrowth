@@ -2,7 +2,7 @@ plot.gcrq <-
   function(x, term=NULL, add=FALSE, res=FALSE, conf.level=0, axis.tau=FALSE, interc=TRUE, se.interc=FALSE,
            legend=FALSE, select.tau, deriv=FALSE, cv=FALSE, transf=NULL, lambda0=FALSE, shade=FALSE, 
            overlap=NULL, rug=FALSE, overall.eff=TRUE, grid=NULL, smoos=NULL, split=FALSE, 
-           shift=0, type=c("sandw","boot"), ...){ #palette="Roma",
+           shift=0, type=c("sandw","boot"), n.points=NULL, ...){ #palette="Roma",
     #===============================================================================
     bspline <- function(x, ndx, xlr = NULL, knots=NULL, deg = 3, deriv = 0, outer.ok=FALSE) {
       # x: vettore di dati
@@ -168,29 +168,54 @@ plot.gcrq <-
     for(term in all.term.names){
       #if(term=="x") browser()
       #browser()
+      isLin <- (!is.null(x$minX) && term%in%names(x$minX)) #is a linear term?
       interc <- interc00
       shift<-shift00
+      Bderiv <- x$Bderiv[[term]]
       BB<-x$BB[[term]] 
-      if(!is.null(x$minX) && term%in%names(x$minX)) BB<- BB - x$minX[[term]] 
+      nomi.okF <- attr(BB,"name.fixed.params")
       nomi.ok<- attr(BB, "coef.names") ##nomi.ok<-paste(term,"ps",1:ncol(BB),sep=".")
       xvar.n <-attr(BB,"covariate.n") 
       xvar.35 <-attr(BB,"covariate.35") 
+      isRidge <- is.character(xvar.35) && xvar.35[1]=="ridge"
       vc.term<-attr(BB,"vc")
       smoothName<-attr(BB,"smoothName") #attr(BB,"smoothName1") ps(x) o ps(x):z
-      
-      
-      #if(isTRUE(vc.term)) {
-      #  if(isTRUE(attr(BB,"drop"))){
-      #    #if(interc) {BB<-cbind(1,BB)} else {nomi.ok<-nomi.ok[-1]}
-      #  } else {
-      #    if(!interc) warning(" 'interc=FALSE' ignored with vc terms called with 'dropc=FALSE' ", call.=FALSE)
-      #  }
-      #  interc<-FALSE  
-      #} else {
-      #  if(is.null(shift)) shift<-0 #se NON e' un VC e shift=NULL (default), poni shift<-0
-      #}
-      #shift=0
-      
+      colmeansB <-attr(BB, "colmeansB")
+      rangeX <-attr(BB, "range")
+      dropcX <- attr(BB, "drop")
+      centerX <- attr(BB, "center")
+      ndxX <- attr(BB, "ndx")
+      degX <- attr(BB, "deg")
+      knotsX <- attr(BB, "knots")
+      decomX <- attr(BB,"decom")
+#browser()
+
+      if(isLin){
+        BB<- BB - x$minX[[term]] 
+      } else {
+        if(is.null(n.points)){ #se NULL usa BB che e' fatta in gcrq() da 100 valori..
+          if(deriv) {
+            BB<- x$Bderiv[[term]]
+            if(dropcX) BB <- BB[,-1]
+          }
+        } else { #.. altrimenti ricostruiscila usando xvar.35 su n.points valori..
+          xvar.35 <- seq(min(rangeX), max(rangeX), l= n.points)
+          if(deriv) {
+            BB <- bspline(xvar.35, ndx=ndxX, deg=degX, knots=knotsX, deriv=1)
+            if(dropcX) BB <- BB[,-1]
+            } else {
+              BB<- bspline(xvar.35, ndx=ndxX, deg=degX, knots=knotsX)
+              if(dropcX) BB <- BB[,-1]
+              if(centerX) BB <- sweep(BB, 2, colmeansB)
+            }
+          
+        }
+      }
+      #se c'e' decomp spline come fare??? proprio non saprei...
+      # if(decomX) {
+      #   BB<-BB%*%t(solve(tcrossprod(Dj),Dj))
+      #   attr(BB1,"name.fixed.params")<- colnames(BFixed[[j]])
+      # }
       
       ###################################
       ### ATTENZIONE: con vc models interc e' posto FALSE il che preclude di disegnare l'effetto con la model intercept
@@ -199,11 +224,10 @@ plot.gcrq <-
       
       b<-if(length(x$tau)<=1) drop(x$coefficients)[nomi.ok] else x$coefficients[nomi.ok,select.tau]
       
-      fit.35<-if(deriv) x$Bderiv[[term]]%*%b else BB%*%b #matrici
+      fit.35<-  BB%*%b #if(deriv) Bderiv%*%b else BB%*%b #matrici
       ###########=================================================
       corr.df<-0
-      #browser()
-      if(is.character(xvar.35) && xvar.35[1]=="ridge") { #if ridge, plot the single coeffs 
+      if(isRidge) { #if ridge, plot the single coeffs 
         if(conf.level>0) warning(" 'conf.level>0' not (yet) implemented", call.=FALSE, immediate. = FALSE)
         #browser()
         tt <- sub("\\)","",gsub("ps\\(","" ,term, ))
@@ -252,10 +276,9 @@ plot.gcrq <-
         }
       } else { #altrimenti disegni del segnale smooth..
   #browser()
-        if(!is.null(attr(BB,"name.fixed.params"))){ #se c'e' stata una decomp di spline 
+        if(!is.null(nomi.okF)){ #se c'e' stata una decomp di spline 
         #if(!missing(n.points)) warning("argument 'n.points' ignored", call. = FALSE)
           if(overall.eff){ #e vuoi disegnare tutto l'effetto  
-            nomi.okF<-attr(BB,"name.fixed.params")
             b.fix<-if(is.matrix(x$coefficients)) x$coefficients[nomi.okF,select.tau] else x$coefficients[nomi.okF]
             fit.35<- fit.35 +  drop(poly(xvar.35, degree=length(b.fix), raw=TRUE)%*%b.fix)  
             corr.df <-length(nomi.okF) #serve per correggere i df in Ylab
@@ -285,6 +308,10 @@ plot.gcrq <-
         xvar.n<-xvar.n[select.n]
         select.35<-xvar.35>=m.x & xvar.35<=M.x
         xvar.35<-xvar.35[select.35]
+        
+        
+#        browser()
+        
         fit.35<-fit.35[select.35, , drop=FALSE]
         l<-c(list(x=xvar.35, y=fit.35),list(...))
         cexL<-if(is.null(l$cex)) .65 else l$cex #sara' usato solo se legend=TRUE
@@ -328,7 +355,7 @@ plot.gcrq <-
           fac <- qnorm(a)
           #se vc e interc=FALSE la BB ha una colonna in meno!! (certo perche' interc=FALSE ha portato alla rimozione ...)
           
-          if(id.model.interc && se.interc) {
+          if(id.model.interc && se.interc && !deriv) {
             nomi.ok <- c("(Intercept)", nomi.ok)
             BB <- cbind(1, BB)
           }

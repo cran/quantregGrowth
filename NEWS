@@ -5,20 +5,67 @@
 *******************************
 
 
+messo esempio doppler per adaptive smoothing in vignette. Aggiustalo.
+perché la vignette sul cran ha una formazzione diversa?
+allora vedi la vignette di mgcviz che appare "buona" su cran.. Vedi sotto le differenze tra mgcviz e quantregGrowth
+
+============mgcviz
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{mgcViz_vignette}
+  %\VignetteEncoding{UTF-8}
+---
+
+description:
+
+Suggests: rgl, knitr, rmarkdown, testthat, MASS, webshot2
+VignetteBuilder: knitr
+
+==========la mia:
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{quantregGrowth: Non-crossing additive quantile regression for smooth and semiparametric models with focus on growth charts} 
+  %\VignetteEngine{knitr::knitr}
+  %VignetteEncoding{UTF-8}  
+--- 
+
+description:
+Suggests: knitr, rmarkdown, mgcv, markdown
+VignetteBuilder: knitr
+
+description:
+
+Suggests: knitr, rmarkdown, mgcv, markdown, SparseM
+VignetteBuilder: knitr
+---
 
 
 =============
-version 1.7-0  (2023-7-05)
+version 1.7-1  (2024-05-20)
+=============
+* new argument 'n.points' in plot.gcrq() to better display results from adaptive smoothing 
+* New worked examples in vignette: adaptive smoothing and variable selection
+
+
+
+=============
+version 1.7-0  (2023-07-05)
 =============
 * new argument 'sparse' in gcrq() (calling new function ncross.rq.fitXBsparse()) to gain some computational efficency when the B-spline and the the sample size are (quite) large
 * new arguments 'st' and 'ad' in ps() for adaptive smoothing/tuning parameter selection
 * a bug fixed when managing multiple additive terms both with and without shape constraints
 * a bug fixed in predict.gcrq() when managing ordered factors
-* a small change in the convergence criterion in gcrq() when estimating the smoothing parameters (too avoid (rare) loops)
+* a small change in the convergence criterion of gcrq() when estimating the smoothing parameters (too avoid (rare) loops)
 
 
 =============
-version 1.6-2  (2023-5-25)
+version 1.6-2  (2023-05-25)
 =============
 * small change in gcrq() when estimating the smoothing parameter: it is slightly more efficient when the sample size is large and the number of percentiles is high, larger than 10, say
 * change in the dafault of K in ps() (the change concerns variable selection procedure via lasso where K is set to log(n/p^(2/3))) where p is the number of covariates
